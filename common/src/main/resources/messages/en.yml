@@ -58,6 +58,9 @@ profile:
     - "&7======================"
 help:
     - "&7======================"
+    - "/denemeac &f- &7Main command, aliased to &f/dac"
+    - "/denemeacalerton &f- &7Receive alerts"
+    - "/denemeacalertoff &f- &7Stop receiving alerts"
     - "/denemeac alerts &f- &7Toggle alerts"
     - "/denemeac brands &f- &7Toggle brands"
     - "/denemeac profile <player> &f- &7View player info"
