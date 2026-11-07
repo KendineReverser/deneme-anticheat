@@ -39,6 +39,8 @@ Punishments:
       - "Knockback"
       - "SprintTamper"
       - "Explosion"
+      - "VelocityVector"
+      - "ExplosionRatio"
     commands:
       - "5:5 [alert]"
       - "1:1 [log]"
@@ -106,6 +108,11 @@ Punishments:
     checks:
       - "Interact"
       - "Aim"
+      - "SwingRatio"
+      - "ClickWhileAimStill"
+      - "KeepSprint"
+      - "CombatEvidence"
+      - "RotationMovementMismatch"
     commands:
       - "20:40 [alert]"
       - "1:1 [log]"
@@ -116,6 +123,8 @@ Punishments:
     checks:
       - "Autoclicker"
       - "ClickTiming"
+      - "ClickBurst"
+      - "ClickIntervalEntropy"
     commands:
       - "20:40 [alert]"
       - "1:1 [log]"

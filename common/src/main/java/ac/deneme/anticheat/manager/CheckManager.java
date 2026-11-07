@@ -7,8 +7,13 @@ import ac.deneme.anticheat.api.common.BasicReloadable;
 import ac.deneme.anticheat.checks.Check;
 import ac.deneme.anticheat.checks.impl.aim.AimDuplicateLook;
 import ac.deneme.anticheat.checks.impl.aim.AimModulo360;
+import ac.deneme.anticheat.checks.impl.aim.AimAttackAngleEntropy;
+import ac.deneme.anticheat.checks.impl.aim.AimPostAttackRotation;
 import ac.deneme.anticheat.checks.impl.aim.AimSensitivity;
 import ac.deneme.anticheat.checks.impl.aim.AimSnap;
+import ac.deneme.anticheat.checks.impl.aim.AimSwitchTime;
+import ac.deneme.anticheat.checks.impl.aim.AimTargetAngle;
+import ac.deneme.anticheat.checks.impl.aim.AimThroughWall;
 import ac.deneme.anticheat.checks.impl.aim.processor.AimProcessor;
 import ac.deneme.anticheat.checks.impl.badpackets.*;
 import ac.deneme.anticheat.checks.impl.breaking.*;
@@ -27,6 +32,7 @@ import ac.deneme.anticheat.checks.impl.misc.GhostBlockMitigation;
 import ac.deneme.anticheat.checks.impl.misc.Post;
 import ac.deneme.anticheat.checks.impl.misc.TransactionOrder;
 import ac.deneme.anticheat.checks.impl.movement.NoSlow;
+import ac.deneme.anticheat.checks.impl.movement.RotationMovementMismatch;
 import ac.deneme.anticheat.checks.impl.movement.PredictionRunner;
 import ac.deneme.anticheat.checks.impl.movement.SetbackBlocker;
 import ac.deneme.anticheat.checks.impl.movement.VehiclePredictionRunner;
@@ -41,8 +47,10 @@ import ac.deneme.anticheat.checks.impl.sprint.*;
 import ac.deneme.anticheat.checks.impl.timer.*;
 import ac.deneme.anticheat.checks.impl.vehicle.*;
 import ac.deneme.anticheat.checks.impl.velocity.ExplosionHandler;
+import ac.deneme.anticheat.checks.impl.velocity.ExplosionRatio;
 import ac.deneme.anticheat.checks.impl.velocity.KnockbackHandler;
 import ac.deneme.anticheat.checks.impl.velocity.SprintTamper;
+import ac.deneme.anticheat.checks.impl.velocity.VelocityVector;
 import ac.deneme.anticheat.checks.type.*;
 import ac.deneme.anticheat.events.packets.PacketChangeGameState;
 import ac.deneme.anticheat.events.packets.PacketEntityReplication;
@@ -163,12 +171,28 @@ public class CheckManager implements BasicReloadable {
                 .put(AimDuplicateLook.class, new AimDuplicateLook(player))
                 .put(AimSensitivity.class, new AimSensitivity(player))
                 .put(AimSnap.class, new AimSnap(player))
+                .put(AimTargetAngle.class, new AimTargetAngle(player))
+                .put(AimPostAttackRotation.class, new AimPostAttackRotation(player))
+                .put(AimSwitchTime.class, new AimSwitchTime(player))
+                .put(AimAttackAngleEntropy.class, new AimAttackAngleEntropy(player))
+                .put(AimThroughWall.class, new AimThroughWall(player))
+                .put(SwingRatio.class, new SwingRatio(player))
+                .put(ClickBurst.class, new ClickBurst(player))
+                .put(ClickIntervalEntropy.class, new ClickIntervalEntropy(player))
+                .put(ClickWhileAimStill.class, new ClickWhileAimStill(player))
+                .put(KeepSprint.class, new KeepSprint(player))
+                .put(ReachTimestamp.class, new ReachTimestamp(player))
+                .put(ReachRotated.class, new ReachRotated(player))
+                .put(CombatEvidence.class, new CombatEvidence(player))
+                .put(RotationMovementMismatch.class, new RotationMovementMismatch(player))
                 .put(VehiclePredictionRunner.class, new VehiclePredictionRunner(player))
 
                 .put(NegativeTimer.class, new NegativeTimer(player))
                 .put(ExplosionHandler.class, new ExplosionHandler(player))
                 .put(KnockbackHandler.class, new KnockbackHandler(player))
                 .put(SprintTamper.class, new SprintTamper(player))
+                .put(VelocityVector.class, new VelocityVector(player))
+                .put(ExplosionRatio.class, new ExplosionRatio(player))
                 .put(GhostBlockDetector.class, new GhostBlockDetector(player))
                 .put(Phase.class, new Phase(player))
                 .put(Post.class, new Post(player))
