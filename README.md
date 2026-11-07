@@ -34,8 +34,8 @@ statistical combat analysis, all of it severity based rather than single-event b
 - `SprintTamper` - sprint state rewritten inside the knockback tick, the classic
   knockback reduction trick.
 
-The last three ship experimental and require `experimental-checks` to be enabled in the
-config. Nothing in this build punishes on a single event.
+All four are active out of the box and nothing in this build punishes on a single
+event.
 
 ## Commands
 

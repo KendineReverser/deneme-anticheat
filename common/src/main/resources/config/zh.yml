@@ -221,8 +221,6 @@ exploit:
 # 启用在加入时注入 netty 的日志插件以调试兼容性问题
 debug-pipeline-on-join: false
 
-# 启用实验性检查
-experimental-checks: false
 
 # 在玩家之间共享相同的区块分区以节省内存（写入时复制）。
 experimental-chunk-sharing: false

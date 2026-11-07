@@ -180,8 +180,6 @@ exploit:
 # Abilita il registro dei plugin che si sono iniettati in netty all'ingresso per diagnosticare problemi di compatibilità
 debug-pipeline-on-join: false
 
-# Abilita i check sperimentali
-experimental-checks: false
 
 # Condivide le sezioni dei chunk identiche tra i giocatori per risparmiare memoria (copia in scrittura).
 # Sperimentale: abilita solo dopo la verifica con /denemeac chunkmemory sul tuo server.

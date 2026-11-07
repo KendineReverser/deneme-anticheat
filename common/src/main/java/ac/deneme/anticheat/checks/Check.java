@@ -124,7 +124,7 @@ public class Check extends DenemeProcessor implements AbstractCheck {
     }
 
     private boolean recordFlag(@NotNull Supplier<String> verbose) {
-        if (player.disableDeneme || (experimental && !player.isExperimentalChecks()) || exemptPermission)
+        if (player.disableDeneme || exemptPermission)
             return false;
 
         if (FLAG_CHANNEL.fire(player, this, verbose)) return false;
@@ -140,7 +140,7 @@ public class Check extends DenemeProcessor implements AbstractCheck {
         Supplier<String> rendered = verbose.rendered();
         byte[] verboseData = verbose.data();
 
-        if (player.disableDeneme || (experimental && !player.isExperimentalChecks()) || exemptPermission)
+        if (player.disableDeneme || exemptPermission)
             return false;
 
         if (FLAG_CHANNEL.fire(player, this, rendered)) return false;

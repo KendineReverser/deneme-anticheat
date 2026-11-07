@@ -266,10 +266,6 @@ public class ConfigManagerFileImpl implements ConfigManager, BasicReloadable {
     private void addSuperDebug(File config, String configString) throws IOException {
 
         configString = configString.replace("threshold: 0.0001", "threshold: 0.001");
-        if (!configString.contains("experimental-checks")) {
-            configString += "\n\n# Enables experimental checks\n" +
-                    "experimental-checks: false\n\n";
-        }
         configString += "\nverbose:\n" +
                 "  print-to-console: false\n";
         Files.write(config.toPath(), configString.getBytes());

@@ -201,8 +201,6 @@ exploit:
 # Netty'ye enjekte olan eklentileri giriş sırasında günlüklemeyi etkinleştirerek uyumluluk sorunlarını gider
 debug-pipeline-on-join: false
 
-# Deneysel kontrolleri etkinleştir
-experimental-checks: false
 
 # Bellek tasarrufu için aynı chunk bölümlerini oyuncular arasında paylaşır (yazma sırasında kopyalama).
 experimental-chunk-sharing: false

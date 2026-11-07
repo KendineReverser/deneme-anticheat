@@ -201,8 +201,6 @@ exploit:
 # Logging plugins inschakelen die geïnjecteerd zijn in netty on join om compatibiliteitsproblemen te debuggen
 debug-pipeline-on-join: false
 
-# Experimentele controles inschakelen
-experimental-checks: false
 
 # Deelt identieke chunksecties tussen spelers om geheugen te besparen (kopie bij schrijven).
 experimental-chunk-sharing: false

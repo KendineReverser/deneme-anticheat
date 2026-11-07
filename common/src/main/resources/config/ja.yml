@@ -210,8 +210,6 @@ exploit:
 # Nettyに参加時にプラグインが注入された場合の互換性問題をデバッグするためにログを有効にします
 debug-pipeline-on-join: false
 
-# 実験的なチェックを有効にします
-experimental-checks: false
 
 # メモリ節約のため、同一チャンクセクションをプレイヤー間で共有します（書き込み時コピー）。
 experimental-chunk-sharing: false

@@ -249,7 +249,6 @@ public class DenemePlayer implements DenemeUser {
     private int spamThreshold = 100;
     private int maxTransactionTime = 60;
     @Getter private boolean ignoreDuplicatePacketRotation;
-    @Getter @Setter private boolean experimentalChecks;
     @Getter private boolean cancelDuplicatePacket = true;
     @Getter @Setter private boolean exemptElytra;
     @Getter @Setter private boolean forceStuckSpeed = true;

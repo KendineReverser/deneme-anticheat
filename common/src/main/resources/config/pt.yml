@@ -206,8 +206,6 @@ exploit:
 # Registra plugins que são injetados na netty ao entrar para depurar erros de compatibilidade.
 debug-pipeline-on-join: false
 
-# Habilita verificações experimentais.
-experimental-checks: false
 
 # Compartilha seções de chunks idênticas entre jogadores para economizar memória (cópia ao escrever).
 experimental-chunk-sharing: false

@@ -201,8 +201,6 @@ exploit:
 # Enable logging plugins who have injected into netty on join to debug compatibility issues
 debug-pipeline-on-join: false
 
-# Enables experimental checks
-experimental-checks: false
 
 # Shares identical chunk sections between players to save memory (copy-on-write on edit).
 experimental-chunk-sharing: false

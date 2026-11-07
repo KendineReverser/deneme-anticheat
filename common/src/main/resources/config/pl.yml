@@ -201,8 +201,6 @@ exploit:
 # Włącz logowanie pluginów, które wstrzyknęły się do netty podczas dołączania gracza, w celu debugowania problemów z kompatybilnością.
 debug-pipeline-on-join: false
 
-# Włącza eksperymentalne checki.
-experimental-checks: false
 
 # Współdzieli identyczne sekcje chunków między graczami, aby oszczędzać pamięć (kopiowanie przy zapisie).
 experimental-chunk-sharing: false
