@@ -35,6 +35,7 @@ Punishments:
     remove-violations-after: 300
     checks:
       - "Knockback"
+      - "SprintTamper"
       - "Explosion"
     commands:
       - "5:5 [alert]"
