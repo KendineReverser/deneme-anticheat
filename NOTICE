@@ -1,0 +1,13 @@
+deneme anticheat
+
+This product includes software derived from GrimAC and GrimAPI, both
+Copyright (C) DefineOutside and contributors, licensed under the GNU
+General Public License version 3.
+
+Upstream sources:
+  https://github.com/GrimAnticheat/Grim
+  https://github.com/GrimAnticheat/GrimAPI
+
+The files in this repository are modified. Any distribution of binaries built
+from this repository must be accompanied by the complete corresponding source
+code under GPL-3.0.

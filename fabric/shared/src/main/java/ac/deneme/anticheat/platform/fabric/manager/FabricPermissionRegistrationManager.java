@@ -1,0 +1,51 @@
+package ac.deneme.anticheat.platform.fabric.manager;
+
+import ac.deneme.anticheat.platform.api.manager.PermissionRegistrationManager;
+import ac.deneme.anticheat.platform.api.permissions.PermissionDefaultValue;
+import ac.deneme.anticheat.platform.fabric.sender.AbstractFabricSenderFactory;
+
+import java.util.function.Consumer;
+
+/**
+ * Registers Deneme's permission defaults the same way for every Fabric mapping family.
+ *
+ * <p>Each call does two things:
+ * <ul>
+ *   <li>{@code fabricSenderFactory.registerPermissionDefault(...)} records Deneme's default
+ *       (e.g. {@code deneme.exempt = FALSE}) in the shared registry, so an unset permission
+ *       resolves to that default instead of silently granting access.</li>
+ *   <li>{@code onRegister.accept(name)} runs the per-variant permissions-API hook. That hook is
+ *       exactly the old {@code if (HAS_PERMISSIONS_API) Permissions.check(commandSource, name)}
+ *       line -- it was not removed, only lifted out to the loader plugins, because it touches
+ *       {@code net.minecraft} command sources and the {@code Permissions} API and so cannot live
+ *       in the NMS-free fabric-common module. Each loader plugin passes that lambda in; a variant
+ *       with nothing to prime passes a no-op.</li>
+ * </ul>
+ */
+public class FabricPermissionRegistrationManager implements PermissionRegistrationManager {
+
+    private final AbstractFabricSenderFactory<?> fabricSenderFactory;
+    private final Consumer<String> onRegister;
+
+    public FabricPermissionRegistrationManager(AbstractFabricSenderFactory<?> fabricSenderFactory,
+                                               Consumer<String> onRegister) {
+        this.fabricSenderFactory = fabricSenderFactory;
+        this.onRegister = onRegister;
+        registerPermission("deneme.exempt", PermissionDefaultValue.FALSE);
+        registerPermission("deneme.nosetback", PermissionDefaultValue.FALSE);
+        registerPermission("deneme.nomodifypacket", PermissionDefaultValue.FALSE);
+        registerPermission("deneme.disabled", PermissionDefaultValue.FALSE);
+        registerPermission("deneme.alerts.enable-on-join", PermissionDefaultValue.FALSE);
+        registerPermission("deneme.verbose.enable-on-join", PermissionDefaultValue.FALSE);
+        registerPermission("deneme.brand.enable-on-join", PermissionDefaultValue.FALSE);
+        registerPermission("deneme.alerts.enable-on-join.silent", PermissionDefaultValue.FALSE);
+        registerPermission("deneme.verbose.enable-on-join.silent", PermissionDefaultValue.FALSE);
+        registerPermission("deneme.brand.enable-on-join.silent", PermissionDefaultValue.FALSE);
+    }
+
+    @Override
+    public void registerPermission(String name, PermissionDefaultValue defaultValue) {
+        fabricSenderFactory.registerPermissionDefault(name, defaultValue);
+        onRegister.accept(name);
+    }
+}

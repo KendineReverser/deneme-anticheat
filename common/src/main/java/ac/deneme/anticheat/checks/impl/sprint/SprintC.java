@@ -1,0 +1,42 @@
+package ac.deneme.anticheat.checks.impl.sprint;
+
+import ac.deneme.anticheat.checks.Check;
+import ac.deneme.anticheat.checks.CheckData;
+import ac.deneme.anticheat.checks.type.PostPredictionListener;
+import ac.deneme.anticheat.player.DenemePlayer;
+import ac.deneme.anticheat.utils.anticheat.update.PredictionComplete;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+
+@CheckData(name = "SprintC", stableKey = "deneme.sprint.using_item", description = "Sprinting while using an item", setback = 5, experimental = true)
+public class SprintC extends Check implements PostPredictionListener {
+    private boolean flaggedLastTick = false;
+
+    public SprintC(DenemePlayer player) {
+        super(player);
+    }
+
+
+    @Override
+    public boolean isApplicable() {
+        // https://bugs.mojang.com/browse/MC-152728
+        return player.getClientVersion().isOlderThan(ClientVersion.V_1_14_2) || player.getClientVersion() == ClientVersion.V_1_21_4;
+    }
+
+    @Override
+    public void onPredictionComplete(final PredictionComplete predictionComplete) {
+        if (player.packetStateData.isSlowedByUsingItem()) {
+            if (!player.wasTouchingWater || player.getClientVersion().isOlderThan(ClientVersion.V_1_13)) {
+                flaggedLastTick = false;
+                return;
+            }
+
+            if (player.isSprinting) {
+                if (flaggedLastTick) flagWithSetback();
+                flaggedLastTick = true;
+            } else {
+                reward();
+                flaggedLastTick = false;
+            }
+        }
+    }
+}

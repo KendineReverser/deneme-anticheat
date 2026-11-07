@@ -1,0 +1,89 @@
+package ac.deneme.anticheat.utils.latency;
+
+import ac.deneme.anticheat.DenemeAPI;
+import ac.deneme.anticheat.player.DenemePlayer;
+import ac.deneme.anticheat.utils.anticheat.LogUtil;
+import ac.deneme.anticheat.utils.anticheat.MessageUtil;
+import ac.deneme.anticheat.utils.common.arguments.CommonDenemeArguments;
+import ac.deneme.anticheat.utils.data.IntToObjectPair;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.ListIterator;
+
+public class LatencyUtils {
+    private final LinkedList<IntToObjectPair<Runnable>> transactionMap = new LinkedList<>();
+    private final DenemePlayer player;
+
+    // Built from transactionMap and cleared at start of every handleNettySyncTransaction() call
+    // The actual usage scope of this variable's use is limited to within the synchronized block of handleNettySyncTransaction
+    private final ArrayList<Runnable> tasksToRun = new ArrayList<>();
+
+    public LatencyUtils(DenemePlayer player) {
+        this.player = player;
+    }
+
+    public void addRealTimeTask(int transaction, Runnable runnable) {
+        if (player.lastTransactionReceived.get() >= transaction) { // If the player already responded to this transaction
+            runnable.run();
+            return;
+        }
+        synchronized (this) {
+            transactionMap.add(new IntToObjectPair<>(transaction, runnable));
+        }
+    }
+
+    public void handleNettySyncTransaction(int transaction) {
+        /*
+         * This code uses a two-pass approach within the synchronized block to prevent CMEs.
+         * First we collect and remove tasks using the iterator, then execute all collected tasks.
+         *
+         * The issue:
+         *     We cannot execute tasks during iteration because if a runnable modifies transactionMap
+         *     or calls addRealTimeTask, it will cause a ConcurrentModificationException.
+         *     While only seen on Folia servers, this is theoretically possible everywhere.
+         *
+         * Why this solution:
+         *     Rather than documenting "don't modify transactionMap in runnables" and risking subtle
+         *     bugs from future contributions or Check API usage, we prevent the issue entirely
+         *     at a small performance cost.
+         *
+         * Future considerations:
+         *     If this becomes a performance bottleneck, we may revisit using a single-pass approach
+         *     on non-Folia servers. We could also explore concurrent data structures or parallel
+         *     execution, but this would lose the guarantee that transactions are processed in order.
+         */
+        synchronized (this) {
+            tasksToRun.clear();
+
+            // First pass: collect tasks and mark them for removal
+            ListIterator<IntToObjectPair<Runnable>> iterator = transactionMap.listIterator();
+            while (iterator.hasNext()) {
+                IntToObjectPair<Runnable> pair = iterator.next();
+
+                // We are at most a tick ahead when running tasks based on transactions, meaning this is too far
+                if (transaction + 1 < pair.first())
+                    break;
+
+                // This is at most tick ahead of what we want
+                if (transaction == pair.first() - 1)
+                    continue;
+
+                tasksToRun.add(pair.second());
+                iterator.remove();
+            }
+
+            for (Runnable runnable : tasksToRun) {
+                try {
+                    runnable.run();
+                } catch (Exception e) {
+                    LogUtil.error("An error has occurred when running transactions for player: " + player.user.getName(), e);
+                    // Kick the player SO PEOPLE ACTUALLY REPORT PROBLEMS AND KNOW WHEN THEY HAPPEN
+                    if (CommonDenemeArguments.KICK_ON_TRANSACTION_ERRORS.value()) {
+                        player.disconnect(MessageUtil.miniMessage(MessageUtil.replacePlaceholders(player, DenemeAPI.INSTANCE.getConfigManager().getDisconnectPacketError())));
+                    }
+                }
+            }
+        }
+    }
+}
