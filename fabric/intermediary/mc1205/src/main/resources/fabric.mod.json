@@ -3,11 +3,11 @@
   "id": "denemeanticheat-mc1205",
   "version": "${version}",
   "name": "DenemeAC for 1.20+ built against 1.20.5",
-  "description": "Libre simulation anticheat designed for 1.21 with 1.8-1.21 support, powered by PacketEvents 2.0.",
+  "description": "deneme anticheat - server side anticheat for Fabric.",
   "authors": [
-    "DenemeAC"
+    "deneme anticheat"
   ],
-  "license": "GPLv3",
+  "license": "GPL-3.0",
   "environment": "server",
   "entrypoints": {
     "denemeMainLoad": [

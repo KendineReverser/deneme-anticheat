@@ -53,7 +53,6 @@ public class PunishmentManager implements ConfigReloadable {
         try {
             groups.clear();
 
-            // To support reloading
             for (AbstractCheck check : player.getChecks()) {
                 check.setEnabled(false);
             }
@@ -75,9 +74,9 @@ public class PunishmentManager implements ConfigReloadable {
                         exclude = true;
                         command = command.substring(1);
                     }
-                    for (AbstractCheck check : player.getChecks()) { // o(n) * o(n)?
+                    for (AbstractCheck check : player.getChecks()) {
                         if (check.getCheckName().toLowerCase(Locale.ROOT).contains(command)
-                                || check.getAlternativeName().toLowerCase(Locale.ROOT).contains(command)) { // Some checks have equivalent names like AntiKB and AntiKnockback
+                                || check.getAlternativeName().toLowerCase(Locale.ROOT).contains(command)) {
                             if (exclude) {
                                 excluded.add(check);
                             } else {
@@ -130,16 +129,13 @@ public class PunishmentManager implements ConfigReloadable {
     public boolean handleAlert(DenemePlayer player, Supplier<String> verbose, Check check) {
         boolean sentDebug = false;
 
-        // Check commands
         for (PunishGroup group : groups) {
             if (group.checks.contains(check)) {
                 final int vl = getViolations(group, check);
                 final int violationCount = group.violations.size();
                 for (ParsedCommand command : group.commands) {
                     @Nullable Set<@Nullable PlatformPlayer> verboseListeners = null;
-                    // Verbose that prints all flags: /deneme verbose subscribers get EVERY flag, not just thresholded
-                    // alerts. The verbose string is only rendered (safeGet) when there are listeners, so the flag
-                    // path stays lazy when nobody is subscribed.
+
                     if (command.command.equals("[alert]") && DenemeAPI.INSTANCE.getAlertManager().hasVerboseListeners()) {
                         sentDebug = true;
                         String verboseForListeners = safeGet(verbose);
@@ -164,7 +160,7 @@ public class PunishmentManager implements ConfigReloadable {
                             switch (command.command) {
                                 case "[webhook]" -> DenemeAPI.INSTANCE.getDiscordManager().sendAlert(player, renderedVerbose, check.getDisplayName(), vl);
                                 case "[log]" -> {
-                                    // Binary flags already stored a row; avoid an extra legacy text row.
+
                                     if (!check.isLastFlagStoredBinaryVerbose()) {
                                         String verboseWithoutGl = renderedVerbose.replaceAll(" /gl .*", "");
                                         DenemeAPI.INSTANCE.getDataStoreLifecycle().liveWriteHooks()
@@ -175,7 +171,7 @@ public class PunishmentManager implements ConfigReloadable {
                                 case "[alert]" -> {
                                     sentDebug = true;
                                     Component message = MessageUtil.miniMessage(cmd);
-                                    if (testMode) { // secret test mode
+                                    if (testMode) {
                                         if (verboseListeners == null || verboseListeners.contains(player.platformPlayer)) {
                                             player.sendMessage(message);
                                         }
@@ -194,8 +190,7 @@ public class PunishmentManager implements ConfigReloadable {
 
                         if (command.interval > 0) command.executeCount++;
                     } else {
-                        // Interval commands re-arm after the active rolling count
-                        // cools below their threshold.
+
                         command.nextBoundary = command.threshold;
                     }
                 }
@@ -238,16 +233,16 @@ class PunishGroup {
     public final List<AbstractCheck> checks;
     public final List<ParsedCommand> commands;
     public final ViolationHistory<AbstractCheck> violations = new ViolationHistory<>();
-    public final int removeViolationsAfter; // time to remove violations after in milliseconds
+    public final int removeViolationsAfter;
 }
 
 class ParsedCommand {
     public final int threshold;
     public final int interval;
     public final String command;
-    // Legacy M=0 gate: execute once for this loaded command state.
+
     public int executeCount;
-    // For M>0, the next active violation count that should run this command.
+
     public int nextBoundary;
 
     public ParsedCommand(int threshold, int interval, String command) {

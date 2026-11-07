@@ -13,8 +13,7 @@ public class VehiclePredictionRunner extends DenemeProcessor implements VehicleL
 
     @Override
     public void process(final VehiclePositionUpdate vehicleUpdate) {
-        // Vehicle onGround = false always
-        // We don't do vehicle setbacks because vehicle netcode sucks.
+
         player.movementCheckRunner.processAndCheckMovementPacket(new PositionUpdate(vehicleUpdate.from(), vehicleUpdate.to(), false, null, null, vehicleUpdate.isTeleport()));
     }
 }

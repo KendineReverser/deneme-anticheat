@@ -18,14 +18,14 @@ public class OffsetHandler extends Check implements PostPredictionListener {
     private static final Verbose V = Verbose.of("{offset}");
 
     private static final AtomicInteger flags = new AtomicInteger(0);
-    // Config
+
     private double setbackDecayMultiplier;
     private double threshold;
     private double immediateSetbackThreshold;
     private double maxAdvantage;
     private double maxCeiling;
     private double setbackViolationThreshold;
-    // Current advantage gained
+
     private double advantageGained = 0;
     private static final CompletePredictionEvent.Channel COMPLETE_CHANNEL = DenemeAPI.INSTANCE.getEventBus().get(CompletePredictionEvent.class);
 
@@ -45,7 +45,7 @@ public class OffsetHandler extends Check implements PostPredictionListener {
             giveOffsetLenienceNextTick(offset);
 
             synchronized (flags) {
-                int flagId = (flags.get() & 255) + 1; // 1-256 as possible values
+                int flagId = (flags.get() & 255) + 1;
 
                 if (flag(V.write(verbose()).f64(offset), () -> humanFormattedOffset(offset) + " /gl " + flagId)) {
                     flags.incrementAndGet();
@@ -69,27 +69,23 @@ public class OffsetHandler extends Check implements PostPredictionListener {
 
     public static String humanFormattedOffset(double offset) {
         String humanFormattedOffset;
-        if (offset < 0.001) { // 1.129E-3
+        if (offset < 0.001) {
             humanFormattedOffset = String.format("%.4E", offset);
-            // Squeeze out an extra digit here by E-03 to E-3
+
             humanFormattedOffset = humanFormattedOffset.replace("E-0", "E-");
         } else {
-            // 0.00112945678 -> .001129
+
             humanFormattedOffset = String.format("%6f", offset);
-            // I like the leading zero, but removing it lets us add another digit to the end
+
             humanFormattedOffset = humanFormattedOffset.replace("0.", ".");
         }
         return humanFormattedOffset;
     }
 
     private void giveOffsetLenienceNextTick(double offset) {
-        // Don't let players carry more than 1 offset into the next tick
-        // (I was seeing cheats try to carry 1,000,000,000 offset into the next tick!)
-        //
-        // This value so that setting back with high ping doesn't allow players to gather high client velocity
+
         double minimizedOffset = Math.min(offset, 1);
 
-        // Normalize offsets
         player.uncertaintyHandler.lastHorizontalOffset = minimizedOffset;
         player.uncertaintyHandler.lastVerticalOffset = minimizedOffset;
     }

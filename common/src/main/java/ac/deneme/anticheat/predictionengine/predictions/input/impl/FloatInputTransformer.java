@@ -7,7 +7,7 @@ import ac.deneme.anticheat.predictionengine.predictions.input.InputTransformer;
 import ac.deneme.anticheat.utils.math.DenemeMath;
 import ac.deneme.anticheat.utils.math.Vector3dm;
 
-public class FloatInputTransformer implements InputTransformer<FloatInput> { // 1.7 - 1.13.2
+public class FloatInputTransformer implements InputTransformer<FloatInput> {
     @Override
     public FloatInput transformInputsToVector(DenemePlayer player, int sideways, int vertical, int forward) {
         float bestPossibleX;

@@ -31,10 +31,7 @@ public class BadPacketsL extends Check implements PacketReceiveListener {
                 return;
 
             final boolean directionChange = packet.getAction() == DiggingAction.CHANGE_DESTROY_DIRECTION;
-            // 1.8 and above clients always send digging packets that aren't used for digging at 0, 0, 0, face 0
-            // 1.7 and below clients do the same, except use face 255 for RELEASE_USE_ITEM
-            // as of https://github.com/ViaVersion/ViaRewind/commit/e7b0606e187afbccf98ef7c88d3f3af27fe11da3, ViaRewind maps the face to 0
-            // let's allow both, just to be safe
+
             final boolean allowLegacyFace = player.getClientVersion().isOlderThanOrEquals(ClientVersion.V_1_7_10)
                     && packet.getAction() == DiggingAction.RELEASE_USE_ITEM;
             final boolean isValidFace = directionChange ? packet.getBlockFaceId() >= 0 && packet.getBlockFaceId() <= 5

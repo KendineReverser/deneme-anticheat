@@ -57,7 +57,7 @@ public final class SteppedInterpolationUtils {
     }
 
     public static float segmentProgress(double pathProgress, double segmentStart, int durationTicks) {
-        // A step with no duration is finished as soon as the client receives it
+
         if (durationTicks == 0) {
             return 1;
         }

@@ -61,9 +61,7 @@ public class DenemeHistoryMigrate implements BuildableCommand {
         boolean delete = context.flags().hasFlag("delete");
 
         DataStoreLifecycle lifecycle = DenemeAPI.INSTANCE.getDataStoreLifecycle();
-        // isEnabled() is false when database.yml sets enabled=false;
-        // isLoaded() is false when start() caught an init failure. Surface
-        // each separately so the operator sees why the command won't run.
+
         if (!lifecycle.isEnabled()) {
             sender.sendMessage(MessageUtil.miniMessage("%prefix% &cHistory subsystem is disabled!"));
             return;
@@ -110,10 +108,7 @@ public class DenemeHistoryMigrate implements BuildableCommand {
         V0Reader reader =
                 new V0Reader(
                         source.jdbcUrl(), source.username(), source.password());
-        // Legacy migration only targets SQLite today — V0Reader understands
-        // the old deneme_history_* schema and writes through SqliteBackend's
-        // bulk-import path. /deneme history copy is the general-purpose
-        // cross-backend hammer once more targets exist.
+
         SqliteBackend v1 = lifecycle.sqliteBackendForCommands();
         if (v1 == null) {
             throw new BackendException(
@@ -167,8 +162,7 @@ public class DenemeHistoryMigrate implements BuildableCommand {
 
     private static void logBoth(Sender sender, Component msg) {
         sender.sendMessage(msg);
-        // Console log in plain text so operators still see progress if the
-        // command channel (RCON connection) closes mid-run.
+
         LogUtil.info(plain(msg));
     }
 

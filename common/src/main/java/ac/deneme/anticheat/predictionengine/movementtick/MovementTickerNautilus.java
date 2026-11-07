@@ -16,7 +16,6 @@ public class MovementTickerNautilus extends MovementTickerLivingVehicle {
 
         player.speed = getRiddenSpeed(player);
 
-        // Setup player inputs
         float sideways = player.vehicleData.vehicleHorizontal;
         float forward = 0.0F;
         float upAndDown = 0.0F;

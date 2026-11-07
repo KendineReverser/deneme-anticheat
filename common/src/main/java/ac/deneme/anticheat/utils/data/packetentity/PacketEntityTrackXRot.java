@@ -5,7 +5,6 @@ import com.github.retrooper.packetevents.protocol.entity.type.EntityType;
 
 import java.util.UUID;
 
-// We use simple interpolation here to be "close enough"
 public class PacketEntityTrackXRot extends PacketEntity {
     public float packetYaw;
     public float interpYaw;

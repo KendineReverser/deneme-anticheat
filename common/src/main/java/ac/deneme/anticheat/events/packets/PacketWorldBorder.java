@@ -68,7 +68,7 @@ public class PacketWorldBorder extends DenemeProcessor implements PacketSendList
             WrapperPlayServerWorldBorder packet = new WrapperPlayServerWorldBorder(event);
 
             player.sendTransaction();
-            // Names are misleading, it's diameter not radius.
+
             if (packet.getAction() == WrapperPlayServerWorldBorder.WorldBorderAction.SET_SIZE) {
                 double size = packet.getRadius();
                 player.addRealTimeTaskNow(() -> setSize(size));
@@ -158,10 +158,10 @@ public class PacketWorldBorder extends DenemeProcessor implements PacketSendList
 
     @Contract("_, _, _ -> new")
     private @NotNull BorderExtent createMovingExtent(double from, double to, long speed) {
-        if (player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_21_11)) { // tick-based
+        if (player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_21_11)) {
             long durationTicks = SERVER_TICK_BASED ? speed : (speed / 50);
             return new TickBasedMovingBorderExtent(from, to, durationTicks);
-        } else { // real-time based
+        } else {
             long durationMs = SERVER_TICK_BASED ? (speed * 50) : speed;
             return new RealTimeMovingBorderExtent(from, to, durationMs);
         }

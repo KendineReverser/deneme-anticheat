@@ -64,7 +64,7 @@ public final class VerboseCodecs {
      * rows render; class initialization performs the actual work once.
      */
     public static void ensureRegistered() {
-        // Static initializer has run by the time this returns.
+
     }
 
     /** Null-safe enum encoding for the {@code registerEnum} family of tags. */

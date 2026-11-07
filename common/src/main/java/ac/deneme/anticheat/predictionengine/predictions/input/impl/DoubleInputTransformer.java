@@ -8,13 +8,12 @@ import ac.deneme.anticheat.utils.math.DenemeMath;
 import ac.deneme.anticheat.utils.math.Vector3dm;
 import ac.deneme.anticheat.utils.math.VectorUtils;
 
-public class DoubleInputTransformer implements InputTransformer<DoubleInput> { // 1.14 - 1.21.4
+public class DoubleInputTransformer implements InputTransformer<DoubleInput> {
     @Override
     public DoubleInput transformInputsToVector(DenemePlayer player, int sideways, int vertical, int forward) {
         float bestPossibleX;
         float bestPossibleZ;
 
-        // Slow movement was determined by the previous pose
         if (player.isSlowMovement) {
             bestPossibleX = sideways * player.sneakingSpeedMultiplier;
             bestPossibleZ = forward * player.sneakingSpeedMultiplier;
@@ -31,7 +30,6 @@ public class DoubleInputTransformer implements InputTransformer<DoubleInput> { /
         Vector3dm inputVector = new Vector3dm(bestPossibleX, 0, bestPossibleZ);
         inputVector.multiply(0.98F);
 
-        // Simulate float rounding imprecision
         inputVector = new Vector3dm((float) inputVector.getX(), (float) inputVector.getY(), (float) inputVector.getZ());
 
         if (inputVector.lengthSquared() > 1) {

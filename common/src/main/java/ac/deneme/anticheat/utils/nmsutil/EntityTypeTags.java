@@ -4,7 +4,6 @@ import com.github.retrooper.packetevents.protocol.entity.type.EntityType;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import lombok.experimental.UtilityClass;
 
-// this class represents vanilla entity tags that packetevents lacks
 @UtilityClass
 public class EntityTypeTags {
 

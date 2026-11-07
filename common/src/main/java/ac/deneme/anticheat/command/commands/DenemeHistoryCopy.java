@@ -61,8 +61,7 @@ public class DenemeHistoryCopy implements BuildableCommand {
         boolean delete = context.flags().hasFlag("delete");
 
         DataStoreLifecycle lifecycle = DenemeAPI.INSTANCE.getDataStoreLifecycle();
-        // Disabled in database.yml, or start() failed — either way there's
-        // no backend pool to copy between.
+
         if (!lifecycle.isLoaded()) {
             sender.sendMessage(MessageUtil.miniMessage("%prefix% &cHistory subsystem not loaded!"));
             return;

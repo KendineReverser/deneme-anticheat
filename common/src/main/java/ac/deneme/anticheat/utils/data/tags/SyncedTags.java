@@ -79,8 +79,6 @@ public final class SyncedTags {
         synced.put(location, tags);
     }
 
-    // The servers block, plus the block Via shows a client older than the server in its place if that's a different one
-    // (copper chests are chests on 1.21.8). FastBreak checks the block the client sees, climbable gets checked with the servers
     private Collection<StateType> getBlocks(int id) {
         final StateType serverType = StateTypes.getById(VERSION.toClientVersion(), id);
         if (serverType == null || !ViaVersionUtil.isAvailable || player.getClientVersion().isNewerThanOrEquals(VERSION.toClientVersion())

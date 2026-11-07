@@ -9,7 +9,7 @@ public class PlatformPlayerCache {
     private final Map<UUID, PlatformPlayer> playerCache = new ConcurrentHashMap<>();
 
     private PlatformPlayerCache() {
-        // Private constructor to prevent instantiation
+
     }
 
     public static PlatformPlayerCache getInstance() {
@@ -26,7 +26,7 @@ public class PlatformPlayerCache {
     public PlatformPlayer addOrGetPlayer(UUID uuid, PlatformPlayer player) {
         return playerCache.compute(uuid, (key, existing) -> {
             if (existing != null) {
-                return existing; // Return existing instance if already cached
+                return existing;
             }
             return player;
         });

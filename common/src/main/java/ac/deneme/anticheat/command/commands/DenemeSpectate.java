@@ -48,7 +48,6 @@ public class DenemeSpectate implements BuildableCommand {
 
         @NotNull PlatformPlayer platformPlayer = Objects.requireNonNull(sender.getPlatformPlayer(), "platformPlayer");
 
-        // hide player from tab list
         if (DenemeAPI.INSTANCE.getSpectateManager().enable(platformPlayer)) {
             sender.sendMessage(MessageUtil.getParsedComponent(sender, "spectate-return", "<click:run_command:/deneme stopspectating><hover:show_text:\"/deneme stopspectating\">\n%prefix% &fClick here to return to previous location\n</hover></click>"));
         }

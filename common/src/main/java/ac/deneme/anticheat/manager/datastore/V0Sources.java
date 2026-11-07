@@ -41,8 +41,7 @@ public final class V0Sources {
     public static @Nullable V0Source sqliteSource(@NotNull Path dataFolder) {
         Path legacy = dataFolder.resolve("violations.sqlite");
         if (!Files.isRegularFile(legacy)) {
-            // Older builds dropped the file at <dataFolder>/data/violations.sqlite.
-            // Fall back to that layout before giving up.
+
             Path fallback = dataFolder.resolve("data").resolve("violations.sqlite");
             if (!Files.isRegularFile(fallback)) return null;
             legacy = fallback;

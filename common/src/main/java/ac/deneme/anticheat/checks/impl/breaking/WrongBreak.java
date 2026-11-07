@@ -28,19 +28,16 @@ public class WrongBreak extends Check implements BlockBreakListener {
         super(player);
     }
 
-    // The client sometimes sends a weird cancel packet
     private boolean shouldExempt(final WrappedBlockState block, int yPos) {
-        // lastLastBlock is always null when this happens, and lastBlock isn't
+
         if (lastLastBlock != null || lastBlock == null)
             return false;
 
-        // on pre 1.14.4 clients, the YPos of this packet is always the same
         if (player.getClientVersion().isOlderThan(ClientVersion.V_1_14_4) && yPos != exemptedY)
             return false;
-        // and if this block is not an instant break
+
         return player.getClientVersion().isOlderThan(ClientVersion.V_1_14_4)
-                // getBlockDamage might not return the correct value if the player
-                // switched slots before this, check all slots just to be safe
+
                 || !BlockBreakSpeed.couldInstantlyBreakBlock(player, block.getType());
     }
 
@@ -49,8 +46,6 @@ public class WrongBreak extends Check implements BlockBreakListener {
         if (blockBreak.action == DiggingAction.START_DIGGING) {
             final Vector3i pos = blockBreak.position;
 
-            // getBlockDamage might not return the correct value if the player
-            // switched slots before this, check all slots just to be safe
             lastBlockWasInstantBreak = BlockBreakSpeed.couldInstantlyBreakBlock(player, blockBreak.block.getType());
             lastCancelledBlock = null;
             lastLastBlock = lastBlock;
@@ -61,7 +56,7 @@ public class WrongBreak extends Check implements BlockBreakListener {
             final Vector3i pos = blockBreak.position;
 
             if (!shouldExempt(blockBreak.block, pos.y) && !pos.equals(lastBlock)) {
-                // https://github.com/DenemeAnticheat/Deneme/issues/1512
+
                 if (player.getClientVersion().isOlderThan(ClientVersion.V_1_14_4) || (!lastBlockWasInstantBreak && pos.equals(lastCancelledBlock))) {
                     var buf = V.write(verbose()).uint(VerboseCodecs.enumId(DiggingAction.CANCELLED_DIGGING))
                             .bool(lastBlock != null)
@@ -84,7 +79,6 @@ public class WrongBreak extends Check implements BlockBreakListener {
         if (blockBreak.action == DiggingAction.FINISHED_DIGGING) {
             final Vector3i pos = blockBreak.position;
 
-            // when a player looks away from the mined block, they send a cancel, and if they look at it again, they don't send another start. (thanks mojang!)
             if (!pos.equals(lastCancelledBlock) && (!lastBlockWasInstantBreak || player.getClientVersion().isOlderThan(ClientVersion.V_1_14_4)) && !pos.equals(lastBlock)) {
                 var buf = V.write(verbose()).uint(VerboseCodecs.enumId(DiggingAction.FINISHED_DIGGING))
                         .bool(lastBlock != null)
@@ -97,7 +91,6 @@ public class WrongBreak extends Check implements BlockBreakListener {
                 }
             }
 
-            // 1.14.4+ clients don't send another start break in protected regions
             if (player.getClientVersion().isOlderThan(ClientVersion.V_1_14_4)) {
                 lastCancelledBlock = null;
                 lastLastBlock = null;

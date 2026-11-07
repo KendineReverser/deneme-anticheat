@@ -103,7 +103,7 @@ abstract class WriteLog {
         }
 
         @Override @NotNull Map<String, Object> finalState() {
-            // Sibling logs flush via the shared queue, not finalState().
+
             return Map.of();
         }
     }

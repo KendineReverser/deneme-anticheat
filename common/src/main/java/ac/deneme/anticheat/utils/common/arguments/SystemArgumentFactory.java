@@ -46,7 +46,7 @@ public record SystemArgumentFactory(Map<String, String> arguments,
         private Builder(final String prefix) {
             this.prefix = prefix;
             this.parseBuilder = new HashMap<>();
-            // Register default parsers
+
             registerDefaultParsers();
         }
 
@@ -81,7 +81,7 @@ public record SystemArgumentFactory(Map<String, String> arguments,
         }
 
         public SystemArgumentFactory build() {
-            // Parse arguments from JVM arguments
+
             final String findPrefix = "-d" + prefix.toLowerCase();
             Map<String, String> builder = getSystemPropertiesMap(findPrefix);
             if (envSupport) {
@@ -101,7 +101,7 @@ public record SystemArgumentFactory(Map<String, String> arguments,
                 if (line.toLowerCase().startsWith(findPrefix)) {
                     int index = line.indexOf('=');
                     if (index > 0 && index < line.length() - 1) {
-                        String key = line.substring(2, index); // remove -D
+                        String key = line.substring(2, index);
                         String value = line.substring(index + 1);
                         builder.put(key.toLowerCase(), value);
                     } else {
@@ -127,7 +127,7 @@ public record SystemArgumentFactory(Map<String, String> arguments,
     public <T> SystemArgument<T> create(ArgumentOptions.Builder<T> builder) {
         if (optionModifier != null) optionModifier.accept(builder);
         final ArgumentOptions<T> options = builder.build();
-        //
+
         final String value = arguments.get(options.getKey().toLowerCase());
         if (value == null) return createDefaultSupplier(options);
         try {
@@ -150,14 +150,12 @@ public record SystemArgumentFactory(Map<String, String> arguments,
         return arguments;
     }
 
-    //TODO: add back logging once LogUtil has been refactored
-
     private static void exception(String message, Exception e) {
-        //LogUtil.exception(message, e);
+
     }
 
     private static void warn(String message) {
-        //LogUtil.warn(message);
+
     }
 
 }

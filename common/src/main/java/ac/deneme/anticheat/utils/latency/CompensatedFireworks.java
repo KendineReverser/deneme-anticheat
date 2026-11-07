@@ -10,7 +10,6 @@ import java.util.Set;
 
 public class CompensatedFireworks extends DenemeProcessor implements PostPredictionListener {
 
-    // As this is sync to one player, this does not have to be concurrent
     private final Set<Integer> activeFireworks = new HashSet<>();
     private final Set<Integer> fireworksToRemoveNextTick = new HashSet<>();
 
@@ -20,8 +19,7 @@ public class CompensatedFireworks extends DenemeProcessor implements PostPredict
 
     @Override
     public void onPredictionComplete(final PredictionComplete predictionComplete) {
-        // Remove all the fireworks that were removed in the last tick
-        // Remember to remove with an int not an Integer
+
         activeFireworks.removeAll(fireworksToRemoveNextTick);
         fireworksToRemoveNextTick.clear();
     }

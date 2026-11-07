@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 @UtilityClass
 public class ReachUtils {
-    // Copied from 1.8... I couldn't figure out 1.14+. "Enterprise" java code is unreadable!
+
     @Contract("_, _, _ -> new")
     public static @NotNull Pair<@Nullable Vector3d, @Nullable BlockFace> calculateIntercept(@NotNull SimpleCollisionBox self, @NotNull Vector3d origin, @NotNull Vector3d end) {
         Vector3d minX = getIntermediateWithXValue(origin, end, self.minX);
@@ -144,7 +144,6 @@ public class ReachUtils {
         return vec != null && vec.getX() >= self.minX && vec.getX() <= self.maxX && vec.getY() >= self.minY && vec.getY() <= self.maxY;
     }
 
-    // Look vector accounting for optifine FastMath, and client version differences
     @Contract("_, _, _ -> new")
     public static @NotNull Vector3dm getLook(@NotNull DenemePlayer player, float yaw, float pitch) {
         if (player.getClientVersion().isOlderThanOrEquals(ClientVersion.V_1_12_2)) {

@@ -26,7 +26,6 @@ public class DynamicHitboxPane extends DynamicConnecting implements HitBoxFactor
     public CollisionBox fetch(DenemePlayer player, StateType item, ClientVersion version, WrappedBlockState block, boolean isTargetBlock, int x, int y, int z) {
         boolean east, north, south, west;
 
-        // 1.13+ servers on 1.13+ clients send the full fence data
         if (isModernVersion(version)) {
             east = block.getEast() != East.FALSE;
             north = block.getNorth() != North.FALSE;
@@ -39,7 +38,6 @@ public class DynamicHitboxPane extends DynamicConnecting implements HitBoxFactor
             west = connectsTo(player, version, x, y, z, BlockFace.WEST);
         }
 
-        // On 1.7 and 1.8 clients, and 1.13+ clients on 1.7 and 1.8 servers, the glass pane is + instead of |
         if (shouldUseOldPaneShape(version, north, south, east, west)) {
             north = south = east = west = true;
         }

@@ -4,7 +4,7 @@ import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.Contract;
 
 @UtilityClass
-public class ModernVanillaMath { // 1.21.11+
+public class ModernVanillaMath {
     private static final float[] SIN = new float[65536];
 
     static {

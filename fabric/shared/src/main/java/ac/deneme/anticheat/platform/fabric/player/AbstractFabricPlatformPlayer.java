@@ -60,7 +60,7 @@ public abstract class AbstractFabricPlatformPlayer<T> extends AbstractFabricDene
     @Override
     public void sendMessage(String message) {
         if (CommonDenemeArguments.USE_CHAT_FAST_BYPASS.value() && user != null) {
-            // User.sendMessage(String) selects the serializer for this player's client version.
+
             user.sendMessage(message);
         } else {
             sendMessage(AdventureSerializer.serializer().fromLegacy(message));

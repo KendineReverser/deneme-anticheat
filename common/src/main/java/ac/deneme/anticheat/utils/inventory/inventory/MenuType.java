@@ -17,7 +17,7 @@ public enum MenuType {
     GENERIC_9x5(4),
     GENERIC_9x6(5),
     GENERIC_3x3(6),
-    CRAFTER_3x3(7), // only in versions 1.20.3 & greater
+    CRAFTER_3x3(7),
     ANVIL(8),
     BEACON(9),
     BLAST_FURNACE(10),
@@ -46,11 +46,11 @@ public enum MenuType {
         int menuIdLimit;
 
         if (version.isOlderThan(ServerVersion.V_1_20_3)) {
-            // versions under 1.20.3
+
             menuIdLimit = 23;
         } else {
-            // 1.20.3 & greater
-            menuIdLimit = menuTypes.length - 1; // Don't iterate the UNKNOWN menu type
+
+            menuIdLimit = menuTypes.length - 1;
         }
 
         MENU_BY_ID_ARRAY = new MenuType[menuIdLimit];
@@ -66,8 +66,8 @@ public enum MenuType {
         }
 
         ServerVersion version = PacketEvents.getAPI().getServerManager().getVersion();
-        // versions under 1.20.3
-        if (version.isOlderThan(ServerVersion.V_1_20_3)) { // TODO: Can this be moved to the static block?
+
+        if (version.isOlderThan(ServerVersion.V_1_20_3)) {
             if (id >= 7) {
                 id++;
             }
@@ -98,7 +98,7 @@ public enum MenuType {
             case "minecraft:dispenser", "minecraft:dropper" -> new DispenserMenu(player, inventory);
             case "minecraft:hopper" -> new HopperMenu(player, inventory);
             case "minecraft:shulker_box" -> new BasicInventoryMenu(player, inventory, 3);
-            default -> // Villager menu
+            default ->
                     new NotImplementedMenu(player, inventory);
         };
     }

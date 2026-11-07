@@ -27,7 +27,7 @@ import java.util.List;
 public class RotationPlace extends BlockPlaceCheck implements BlockPlaceListener, PostFlyingBlockPlaceListener {
     private static final Verbose V = Verbose.of("[pre-flying|post-flying]");
 
-    private double flagBuffer = 0; // If the player flags once, force them to play legit, or we will cancel the tick before.
+    private double flagBuffer = 0;
     private boolean ignorePost = false;
 
     public RotationPlace(DenemePlayer player) {
@@ -38,37 +38,34 @@ public class RotationPlace extends BlockPlaceCheck implements BlockPlaceListener
     public void onBlockPlace(final BlockPlace place) {
         if (place.material == StateTypes.SCAFFOLDING) return;
         if (!player.cameraEntity.isSelf())
-            return; // you don't send flying packets when spectating entities
+            return;
         if (player.inVehicle()) return;
         if (flagBuffer > 0 && !didRayTraceHit(place)) {
             ignorePost = true;
-            // If the player hit and has flagged this check recently
+
             if (flag(V.write(verbose()).bool(true)) && shouldModifyPackets() && shouldCancel()) {
-                place.resync();  // Deny the block placement.
+                place.resync();
             }
         }
     }
 
-    // Use post flying because it has the correct rotation, and can't false easily.
     @Override
     public void onPostFlyingBlockPlace(BlockPlace place) {
         if (place.material == StateTypes.SCAFFOLDING) return;
         if (!player.cameraEntity.isSelf())
-            return; // you don't send flying packets when spectating entities
+            return;
         if (player.inVehicle()) return;
 
-        // Don't flag twice
         if (ignorePost) {
             ignorePost = false;
             return;
         }
 
-        // Ray trace to try and hit the target block.
         boolean hit = didRayTraceHit(place);
-        // This can false with rapidly moving yaw in 1.8+ clients
+
         if (!hit) {
             flagBuffer = 1;
-            if (!ignorePost) { // Don't flag twice
+            if (!ignorePost) {
                 flag(V.write(verbose()).bool(false));
             }
         } else {
@@ -90,7 +87,6 @@ public class RotationPlace extends BlockPlaceCheck implements BlockPlaceListener
 
         final double[] possibleEyeHeights = player.getPossibleEyeHeights();
 
-        // Start checking if player is in the block
         double minEyeHeight = Double.MAX_VALUE;
         double maxEyeHeight = Double.MIN_VALUE;
         for (double height : possibleEyeHeights) {
@@ -101,18 +97,14 @@ public class RotationPlace extends BlockPlaceCheck implements BlockPlaceListener
         SimpleCollisionBox eyePositions = new SimpleCollisionBox(player.x, player.y + minEyeHeight, player.z, player.x, player.y + maxEyeHeight, player.z);
         eyePositions.expand(player.getMovementThreshold());
 
-        // If the player is inside a block, then they can ray trace through the block and hit the other side of the block
         if (eyePositions.isIntersected(box)) {
             return true;
         }
-        // End checking if the player is in the block
 
-        // 1.9+ players could be a tick behind because we don't get skipped ticks
         if (player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_9)) {
             possibleLookDirs.add(new Vector3f(player.lastYaw, player.lastPitch, 0));
         }
 
-        // 1.7 players do not have any of these issues! They are always on the latest look vector
         if (player.getClientVersion().isOlderThan(ClientVersion.V_1_8)) {
             possibleLookDirs = Collections.singletonList(new Vector3f(player.yaw, player.pitch, 0));
         }
@@ -120,9 +112,9 @@ public class RotationPlace extends BlockPlaceCheck implements BlockPlaceListener
         final double distance = player.compensatedEntities.self.getAttributeValue(Attributes.BLOCK_INTERACTION_RANGE);
         for (double d : possibleEyeHeights) {
             for (Vector3f lookDir : possibleLookDirs) {
-                // x, y, z are correct for the block placement even after post tick because of code elsewhere
+
                 Vector3d starting = new Vector3d(player.x, player.y + d, player.z);
-                // xRot and yRot are a tick behind
+
                 Ray trace = new Ray(player, starting.getX(), starting.getY(), starting.getZ(), lookDir.getX(), lookDir.getY());
                 Pair<Vector3d, BlockFace> intercept = ReachUtils.calculateIntercept(box, trace.origin(), trace.getPointAtDistance(distance));
 

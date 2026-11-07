@@ -22,7 +22,7 @@ public class BadPacketsG extends Check implements PreViaPacketReceiveListener {
 
     @Override
     public boolean isApplicable() {
-        // input packet determines sneaking state in 1.21.2+
+
         return player.getClientVersion().isOlderThan(ClientVersion.V_1_21_2);
     }
 
@@ -32,7 +32,7 @@ public class BadPacketsG extends Check implements PreViaPacketReceiveListener {
             WrapperPlayClientEntityAction packet = new WrapperPlayClientEntityAction(event);
 
             if (packet.getAction() == WrapperPlayClientEntityAction.Action.START_SNEAKING) {
-                // The player may send two START_SNEAKING packets if they respawned
+
                 if (lastSneaking && !respawn) {
                     boolean state = true;
                     if (flag(V.write(verbose()).bool(state)) && shouldModifyPackets()) {
@@ -59,7 +59,7 @@ public class BadPacketsG extends Check implements PreViaPacketReceiveListener {
     }
 
     public void handleRespawn() {
-        // Clients could potentially not send a STOP_SNEAKING packet when they die, so we need to track it
+
         respawn = true;
     }
 }

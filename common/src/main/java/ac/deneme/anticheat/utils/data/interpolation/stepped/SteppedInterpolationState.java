@@ -71,7 +71,7 @@ public final class SteppedInterpolationState {
     }
 
     public void appendMovement(PositionPath path, Vector3d position, float yaw, float pitch, int interpolationInterval, int transaction) {
-        // All steps use the previous target rotation, so don't update it until we've added them all
+
         if (path instanceof SteppedPositionPath stepped && !position.equals(targetPosition)) {
             int totalTicks = 0;
             for (SteppedPositionPath.Step step : stepped.getSteps()) {
@@ -112,7 +112,6 @@ public final class SteppedInterpolationState {
         discardConsumedSteps();
         steps.add(step);
 
-        // Only the bounds include time for optional steps, since the client may ignore them
         remainingTicks += step.durationTicks();
         availableDuration += step.maximumDurationTicks();
     }
@@ -132,8 +131,6 @@ public final class SteppedInterpolationState {
 
         adjustRotationFromDeltas();
 
-        // Move the entity before advancing the timer, just like the client
-        // Doing this the other way around moves it too far on the first tick
         samplePositionAndRotation();
         advanceClock(interpolationInterval);
         rememberRotation();
@@ -216,9 +213,6 @@ public final class SteppedInterpolationState {
             return;
         }
 
-        // If the rotation changed while interpolating, adjust the queued rotations too
-        // Position changes are handled by reset() or the teleport bounds in SteppedEntityInterpolation
-        // Keep the additions of zero to handle negative zero the same way as vanilla
         targetPosition = targetPosition.add(0, 0, 0);
         targetYaw += yawDelta;
         targetPitch += pitchDelta;

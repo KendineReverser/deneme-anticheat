@@ -20,15 +20,14 @@ public class GroundSpoof extends Check implements PostPredictionListener {
 
     @Override
     public void onPredictionComplete(final PredictionComplete predictionComplete) {
-        // Exemptions
-        // Don't check players in spectator
+
         if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_8) && player.gamemode == GameMode.SPECTATOR)
             return;
-        // And don't check this long list of ground exemptions
+
         if (player.exemptOnGround() || !predictionComplete.isChecked()) return;
-        // Don't check if the player was on a ghost block
+
         if (player.getSetbackTeleportUtil().blockOffsets) return;
-        // Viaversion sends wrong ground status... (doesn't matter but is annoying)
+
         if (player.packetStateData.lastPacketWasTeleport) return;
 
         boolean claimed = player.clientClaimsLastOnGround;

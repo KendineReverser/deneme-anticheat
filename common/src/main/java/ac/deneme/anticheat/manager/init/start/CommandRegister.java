@@ -12,7 +12,7 @@ public record CommandRegister(CommandService service) implements StartableInitab
                 service.registerCommands();
             }
         } catch (RuntimeException t) {
-            // This is the ultimate safety net. If command registration fails, Deneme keeps running.
+
             LogUtil.error("Failed to register commands! Deneme will run without command support.", t);
         }
     }

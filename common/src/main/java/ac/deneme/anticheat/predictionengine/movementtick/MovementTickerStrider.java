@@ -55,12 +55,10 @@ public class MovementTickerStrider extends MovementTickerRideable {
     @Override
     public float getSteeringSpeed() {
         PacketEntityStrider strider = (PacketEntityStrider) player.compensatedEntities.self.getRiding();
-        // Unsure which version the speed changed in
+
         final boolean newSpeed = player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_20);
         final float coldSpeed = newSpeed ? 0.35F : 0.23F;
 
-        // Client desyncs the attribute
-        // Again I don't know when this was changed, or whether it always existed, so I will just put it behind 1.20+
         final ValuedAttribute movementSpeedAttr = strider.getAttribute(Attributes.MOVEMENT_SPEED).orElseThrow();
         float updatedMovementSpeed = (float) movementSpeedAttr.get();
         if (newSpeed) {

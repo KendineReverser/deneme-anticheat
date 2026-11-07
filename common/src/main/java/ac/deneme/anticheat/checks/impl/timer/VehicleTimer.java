@@ -15,19 +15,19 @@ public class VehicleTimer extends Timer {
 
     @Override
     public boolean shouldCountPacketForTimer(PacketTypeCommon packetType) {
-        // Ignore teleports
+
         if (player.packetStateData.lastPacketWasTeleport) return false;
 
         if (packetType == PacketType.Play.Client.VEHICLE_MOVE) {
             isDummy = false;
-            return true; // Client controlling vehicle
+            return true;
         }
 
         if (packetType == PacketType.Play.Client.STEER_VEHICLE) {
-            if (isDummy) { // Server is controlling vehicle
+            if (isDummy) {
                 return true;
             }
-            isDummy = true; // Client is controlling vehicle
+            isDummy = true;
         }
 
         return false;

@@ -141,7 +141,7 @@ class OwnershipReconnectTest {
             SessionTracker recovered = lifecycle.sessionTracker();
             assertSame(originalTracker, recovered);
             assertEquals(0, store.drain(2_000));
-            // Quiet players are restored immediately, before any new flag.
+
             assertEquals(2, sessions.size());
             assertEquals(sessionBeforeOutage, sessions.get(1).sessionId());
             assertEquals("fabric", sessions.get(1).clientBrand());

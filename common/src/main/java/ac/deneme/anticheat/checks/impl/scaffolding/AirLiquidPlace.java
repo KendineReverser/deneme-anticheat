@@ -62,14 +62,11 @@ public class AirLiquidPlace extends BlockPlaceCheck implements BlockPlaceListene
         StateType placeAgainst = player.compensatedWorld.getBlockType(blockPos.getX(), blockPos.getY(), blockPos.getZ());
 
         int currentTick = DenemeAPI.INSTANCE.getTickManager().currentTick;
-        // this is actual more lenient than we need to be, We can check up to 1 ticks for all changes at location sand up to 0 ticks for first change
-        // But for such tiny differences in legitness it's not worth it.
+
         Iterable<BlockModification> blockModifications = player.blockHistory.getRecentModifications((blockModification) -> currentTick - blockModification.tick() < 2
                 && blockPos.equals(blockModification.location())
                 && (blockModification.cause() == BlockModification.Cause.START_DIGGING || blockModification.cause() == BlockModification.Cause.HANDLE_NETTY_SYNC_TRANSACTION));
 
-        // Check if old block from instant breaking in same tick as the current placement was valid
-        // There should only be one block here for legit clients
         for (BlockModification blockModification : blockModifications) {
             StateType stateType = blockModification.oldBlockContents().getType();
             if (!stateType.isAir() && !Materials.isNoPlaceLiquid(stateType)) {
@@ -77,7 +74,7 @@ public class AirLiquidPlace extends BlockPlaceCheck implements BlockPlaceListene
             }
         }
 
-        if (placeAgainst.isAir() || Materials.isNoPlaceLiquid(placeAgainst)) { // fail
+        if (placeAgainst.isAir() || Materials.isNoPlaceLiquid(placeAgainst)) {
             if (flag() && shouldModifyPackets() && shouldCancel()) {
                 place.resync();
             }

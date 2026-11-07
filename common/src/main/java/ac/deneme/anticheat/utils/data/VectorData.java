@@ -19,7 +19,6 @@ public class VectorData {
     @Getter
     private boolean isKnockback, firstBreadKb, isExplosion, firstBreadExplosion, isTrident, isZeroPointZeroThree, isSwimHop, isFlipSneaking, isFlipItem, isJump, isAttackSlow = false;
 
-    // For handling replacing the type of vector it is while keeping data
     public VectorData(Vector3dm vector, VectorData lastVector, VectorType vectorType) {
         this.vector = vector;
         this.lastVector = lastVector;
@@ -104,9 +103,6 @@ public class VectorData {
                 '}';
     }
 
-    // TODO: This is a stupid idea that slows everything down, remove it! There are easier ways to debug deneme.
-    // Would make false positives really easy to fix
-    // But seriously, we could trace the code to find the mistake
     public enum VectorType {
         Normal,
         Swimhop,

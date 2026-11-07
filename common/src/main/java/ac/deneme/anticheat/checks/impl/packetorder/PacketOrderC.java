@@ -17,7 +17,7 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPl
 
 @CheckData(name = "PacketOrderC", stableKey = "deneme.packetorder.interact_order", description = "Sent INTERACT and INTERACT_AT entity packets in the wrong order")
 public class PacketOrderC extends Check implements PreViaPacketReceiveListener {
-    // Shape index == KIND_* constant value.
+
     private static final Verbose V = Verbose
             .of("Skipped Interact-At")
             .or("Skipped Interact")
@@ -40,8 +40,8 @@ public class PacketOrderC extends Check implements PreViaPacketReceiveListener {
 
     @Override
     public boolean isApplicable() {
-        return player.getClientVersion().isNewerThan(ClientVersion.V_1_7_10) // 1.7 players do not send INTERACT_AT
-                && player.getClientVersion().isOlderThan(ClientVersion.V_26_1); // 26.1 players do not send INTERACT
+        return player.getClientVersion().isNewerThan(ClientVersion.V_1_7_10)
+                && player.getClientVersion().isOlderThan(ClientVersion.V_26_1);
     }
 
     private Verbose.Writer writeKind(int kind) {
@@ -55,16 +55,12 @@ public class PacketOrderC extends Check implements PreViaPacketReceiveListener {
 
             final PacketEntity entity = player.compensatedEntities.entityMap.get(packet.getEntityId());
 
-            // For armor stands, vanilla clients send:
-            //  - when renaming the armor stand or in spectator mode: INTERACT_AT + INTERACT
-            //  - in all other cases: only INTERACT
-            // Just exempt armor stands to be safe
             if (entity != null && entity.getType() == EntityTypes.ARMOR_STAND) return;
 
             final boolean sneaking = packet.isSneaking().orElse(false);
 
             switch (packet.getAction()) {
-                // INTERACT_AT then INTERACT
+
                 case INTERACT:
                     if (!sentInteractAt) {
                         if (flag(writeKind(KIND_SKIPPED_INTERACT_AT)) && shouldModifyPackets()) {

@@ -30,7 +30,6 @@ public class DynamicCollisionPane extends DynamicConnecting implements Collision
         boolean south;
         boolean west;
 
-        // 1.13+ servers on 1.13+ clients send the full fence data
         if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_13)
                 && version.isNewerThanOrEquals(ClientVersion.V_1_13)) {
             east = block.getEast() != East.FALSE;
@@ -44,14 +43,13 @@ public class DynamicCollisionPane extends DynamicConnecting implements Collision
             west = connectsTo(player, version, x, y, z, BlockFace.WEST);
         }
 
-        // On 1.7 and 1.8 clients, and 1.13+ clients on 1.7 and 1.8 servers, the glass pane is + instead of |
         if (!north && !south && !east && !west && (version.isOlderThanOrEquals(ClientVersion.V_1_8) || (PacketEvents.getAPI().getServerManager().getVersion().isOlderThanOrEquals(ServerVersion.V_1_8_8) && version.isNewerThanOrEquals(ClientVersion.V_1_13)))) {
             north = south = east = west = true;
         }
 
         if (version.isNewerThanOrEquals(ClientVersion.V_1_9)) {
             return COLLISION_BOXES[getAABBIndex(north, east, south, west)].copy();
-        } else { // 1.8 and below clients have pane bounding boxes one pixel less
+        } else {
             ComplexCollisionBox boxes = new ComplexCollisionBox(2);
             if ((!west || !east) && (west || east || north || south)) {
                 if (west) {

@@ -42,7 +42,6 @@ public record CompiledDiscordTemplate(Segment[] segments) {
         NONE
     }
 
-    // Identical to the existing pattern
     private static final Pattern PLACEHOLDER = Pattern.compile("%([a-zA-Z0-9_]+)%");
 
     private sealed interface Segment permits Literal, Placeholder {}
@@ -51,7 +50,6 @@ public record CompiledDiscordTemplate(Segment[] segments) {
 
     private record Placeholder(String key, EscapeMode mode) implements Segment {}
 
-    // ──────────────────── COMPILE (once per config reload) ────────────────────
     public static CompiledDiscordTemplate compile(String template) {
         List<Segment> parts = new ArrayList<>();
         Matcher m = PLACEHOLDER.matcher(template);
@@ -62,7 +60,6 @@ public record CompiledDiscordTemplate(Segment[] segments) {
             String gap = template.substring(lastEnd, m.start());
             if (!gap.isEmpty()) parts.add(new Literal(gap));
 
-            // Advance the context through all the literal text before this placeholder
             ctx = advanceContext(ctx, gap);
 
             EscapeMode mode = switch (ctx) {
@@ -80,7 +77,6 @@ public record CompiledDiscordTemplate(Segment[] segments) {
         return new CompiledDiscordTemplate(parts.toArray(Segment[]::new));
     }
 
-    // ──────────────────── RENDER (once per alert) ────────────────────
     /**
      * @param player              Deneme player (nullable)
      * @param statics             Static replacements (may include per-alert overrides like %check%)
@@ -96,7 +92,7 @@ public record CompiledDiscordTemplate(Segment[] segments) {
             if (seg instanceof Literal l) {
                 sb.append(l.text);
             } else if (seg instanceof Placeholder p) {
-                // Priority: static → dynamic → external (PAPI)
+
                 String val = statics.get(p.key);
 
                 if (val == null) {
@@ -113,7 +109,7 @@ public record CompiledDiscordTemplate(Segment[] segments) {
                 if (val != null) {
                     sb.append(escape(val, p.mode, backtickReplacement));
                 } else {
-                    sb.append(p.key); // truly unresolved — leave raw
+                    sb.append(p.key);
                 }
             }
         }
@@ -143,41 +139,35 @@ public record CompiledDiscordTemplate(Segment[] segments) {
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
             switch (c) {
-                // Backslash MUST be first — prevents our own escape backslashes
-                // from being re-escaped if the input already contains backslashes.
+
                 case '\\' -> sb.append("\\\\");
-                // Inline code spans (`text`)
+
                 case '`' -> sb.append("\\`");
-                // Bold (**text**) and italic (*text*)
+
                 case '*' -> sb.append("\\*");
-                // Underlined  (__text__) and italic (_text_)
+
                 case '_' -> sb.append("\\_");
-                // Strikethrough (~~text~~)
+
                 case '~' -> sb.append("\\~");
-                // Spoiler tags (||text||)
+
                 case '|' -> sb.append("\\|");
-                // Link [text](url) and image ![alt](url) syntax
+
                 case '[' -> sb.append("\\[");
                 case ']' -> sb.append("\\]");
                 case '(' -> sb.append("\\(");
                 case ')' -> sb.append("\\)");
-                // Auto-linking (https://...) and emoji (:name:)
+
                 case ':' -> sb.append("\\:");
-                // Timestamps (<t:...>), mentions (<@id>), custom emoji (<:n:id>),
-                // embed suppression (<url>)
+
                 case '<' -> sb.append("\\<");
-                // Headers (#, ##, ###), block quotes (>, >>>).
-                // Always escaped — \# and \> render identically to # and >.
+
                 case '#' -> sb.append("\\#");
                 case '>' -> sb.append("\\>");
-                // Unordered lists (- item) and subtext (-# text)
+
                 case '-' -> sb.append("\\-");
-                // Ordered lists (1. item). \. renders identically to .
+
                 case '.' -> sb.append("\\.");
-                // Newlines in injected values would break embed layout and enable
-                // line-start syntax injection (headers, quotes, lists).
-                // Replaced with literal "\n" text. Template newlines are unaffected
-                // (they pass through as Literal segments, not through this method).
+
                 case '\n' -> sb.append("\\n");
                 default -> sb.append(c);
             }
@@ -194,8 +184,6 @@ public record CompiledDiscordTemplate(Segment[] segments) {
         if (s == null || s.isEmpty() || replacement == '`') return s;
         return s.replace('`', replacement);
     }
-
-    // ──────────────────── STATE MACHINE ────────────────────
 
     /**
      * Advances Markdown context through literal template text.
@@ -215,7 +203,7 @@ public record CompiledDiscordTemplate(Segment[] segments) {
             char c = text.charAt(i);
             if (ctx == MarkdownContext.NORMAL) {
                 if (c == '\\' && i + 1 < text.length()) {
-                    i += 2; // skip escaped char entirely
+                    i += 2;
                     continue;
                 }
                 if (c == '`') {
@@ -230,7 +218,7 @@ public record CompiledDiscordTemplate(Segment[] segments) {
                 }
             } else if (ctx == MarkdownContext.INLINE_CODE) {
                 if (c == '`') ctx = MarkdownContext.NORMAL;
-            } else { // CODE_BLOCK
+            } else {
                 if (c == '`'
                         && i + 2 < text.length()
                         && text.charAt(i + 1) == '`'

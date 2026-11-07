@@ -20,7 +20,7 @@ public abstract class CustomChart {
         try {
             JsonObjectBuilder.JsonObject data = getChartData();
             if (data == null) {
-                // If the data is null we don't send the chart.
+
                 return null;
             }
             builder.appendField("data", data);

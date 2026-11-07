@@ -91,7 +91,7 @@ class VerboseTemplateAuditTest {
         for (Map.Entry<Path, List<String>> entry : templatesByFile().entrySet()) {
             Path file = entry.getKey();
             String fileName = file.getFileName().toString();
-            if (entry.getValue().size() != 1) continue; // multiple V constants in one file: not used today
+            if (entry.getValue().size() != 1) continue;
             Verbose verbose = Verbose.of(entry.getValue().get(0));
             String source = Files.readString(file);
 
@@ -113,7 +113,7 @@ class VerboseTemplateAuditTest {
                 for (String method : chain.methods) {
                     List<VerboseSchema.TypeTag> wire = WRITER_METHODS.get(method);
                     if (wire == null) {
-                        resolvable = false; // unknown continuation, e.g. helper call
+                        resolvable = false;
                         break;
                     }
                     actual.addAll(wire);
@@ -125,7 +125,7 @@ class VerboseTemplateAuditTest {
                 auditedChains++;
                 if (!actual.equals(expected)) {
                     if (actual.size() < expected.size() && expected.subList(0, actual.size()).equals(actual)) {
-                        // prefix only: chain probably continues elsewhere
+
                         filesNeedingAllowlist.add(fileName);
                         auditedChains--;
                     } else {
@@ -139,7 +139,6 @@ class VerboseTemplateAuditTest {
         assertTrue(auditedChains > 50, "chain extraction looks broken; audited only " + auditedChains);
         if (!failures.isEmpty()) fail(String.join("\n", failures));
 
-        // Allowlist hygiene: exactly the files that need it, no rot.
         for (String needed : filesNeedingAllowlist) {
             assertTrue(PARTIALLY_AUDITED.containsKey(needed),
                     needed + " has statically unresolvable write chains; audit them manually and add to PARTIALLY_AUDITED");
@@ -152,8 +151,7 @@ class VerboseTemplateAuditTest {
 
     @Test
     void standInTagsMirrorVerboseCodecs() throws IOException {
-        // If VerboseCodecs gains/changes a tag, registerStandInTags() must learn it,
-        // otherwise template parsing here would diverge from runtime.
+
         String source = Files.readString(checksRoot.resolve("impl/verbose/VerboseCodecs.java"));
         Set<String> registered = new HashSet<>();
         Matcher m = Pattern.compile("register(?:Enum|EnumLower)?\\(\\s*\"([a-z_0-9]+)\"").matcher(source);
@@ -164,8 +162,6 @@ class VerboseTemplateAuditTest {
                     "VerboseCodecs registers {" + tag + "} but the audit test doesn't; add it to STAND_IN_TAGS");
         }
     }
-
-    // ---------------------------------------------------------------- helpers
 
     private static final Map<String, List<VerboseSchema.TypeTag>> STAND_IN_TAGS = standInTags();
 
@@ -184,7 +180,7 @@ class VerboseTemplateAuditTest {
     }
 
     private static void registerStandInTags() {
-        // Same names + wire shapes as VerboseCodecs, no PacketEvents needed.
+
         STAND_IN_TAGS.forEach((name, wire) ->
                 VerboseTags.register(name, wire, (in, ctx, out, fmt) -> {
                     for (VerboseSchema.TypeTag tag : wire) in.skip(tag.tag());
@@ -228,7 +224,7 @@ class VerboseTemplateAuditTest {
             int statementEnd = source.indexOf(';', m.end());
             if (statementEnd < 0) break;
             String statement = source.substring(m.start(), statementEnd);
-            // Split shapes on .or( boundaries, then concat the literals in each segment.
+
             String[] segments = statement.split("\\.or\\(");
             StringBuilder template = new StringBuilder();
             for (int i = 0; i < segments.length; i++) {
@@ -260,7 +256,7 @@ class VerboseTemplateAuditTest {
                     case 't' -> out.append('\t');
                     case '\\' -> out.append('\\');
                     case '"' -> out.append('"');
-                    default -> out.append('\\').append(n); // template escapes like \[ stay
+                    default -> out.append('\\').append(n);
                 }
             } else {
                 out.append(c);
@@ -277,7 +273,7 @@ class VerboseTemplateAuditTest {
         Matcher m = Pattern.compile("\\bV\\s*\\.write\\(verbose\\(\\)").matcher(source);
         while (m.find()) {
             int pos = m.end();
-            // optional ", SHAPE" before the closing paren of write(...)
+
             String shapeExpr = null;
             int close = skipToCloseParen(source, pos);
             String writeArgsTail = source.substring(pos, close).trim();

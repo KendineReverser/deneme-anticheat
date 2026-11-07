@@ -113,7 +113,7 @@ public class CompensatedEntities {
 
     public void updateAttributes(int entityID, List<WrapperPlayServerUpdateAttributes.Property> objects) {
         if (entityID == player.entityID) {
-            // Check for sprinting attribute. Note that this value can desync: https://bugs.mojang.com/browse/MC-69459
+
             for (WrapperPlayServerUpdateAttributes.Property snapshotWrapper : objects) {
                 final Attribute attribute = snapshotWrapper.getAttribute();
                 if (attribute != Attributes.MOVEMENT_SPEED) continue;
@@ -128,7 +128,6 @@ public class CompensatedEntities {
                     }
                 }
 
-                // The server can set the player's sprinting attribute
                 hasSprintingAttributeEnabled = found;
                 break;
             }
@@ -140,16 +139,15 @@ public class CompensatedEntities {
         for (WrapperPlayServerUpdateAttributes.Property snapshotWrapper : objects) {
             Attribute attribute = snapshotWrapper.getAttribute();
             if (attribute == null)
-                continue; // TODO: Warn if this happens? Either modded server or bug in packetevents.
+                continue;
 
-            // Rewrite horse.jumpStrength -> modern equivalent
             if (attribute == Attributes.HORSE_JUMP_STRENGTH) {
                 attribute = Attributes.JUMP_STRENGTH;
             }
 
             final Optional<ValuedAttribute> valuedAttribute = entity.getAttribute(attribute);
             if (valuedAttribute.isEmpty()) {
-                // Not an attribute we want to track
+
                 continue;
             }
 
@@ -162,7 +160,6 @@ public class CompensatedEntities {
             return;
         }
 
-        // TODO: is this correct?
         double offset = BoundingBoxSize.getMyRidingOffset(passenger) + BoundingBoxSize.getPassengerRidingOffset(player, riding);
         passenger.setPositionRaw(player, riding.getPossibleLocationBoxes().offset(0, offset, 0));
 
@@ -172,7 +169,7 @@ public class CompensatedEntities {
     }
 
     public PacketEntity addEntity(int entityID, UUID uuid, EntityType entityType, Vector3d position, float xRot, int data) {
-        // Dropped items are all server sided and players can't interact with them (except create them!), save the performance
+
         if (entityType == EntityTypes.ITEM) return null;
 
         PacketEntity packetEntity;
@@ -216,7 +213,7 @@ public class CompensatedEntities {
         } else if (EntityTypes.PAINTING.equals(entityType)) {
             packetEntity = new PacketEntityPainting(player, uuid, position.x, position.y, position.z, Direction.values()[data]);
         } else if (EntityTypes.GUARDIAN.equals(entityType)) {
-            packetEntity = new PacketEntityGuardian(player, uuid, entityType, position.x, position.y, position.z, false); // can still be an Elder Guardian in 1.8-1.10.2 from entity metadata updates
+            packetEntity = new PacketEntityGuardian(player, uuid, entityType, position.x, position.y, position.z, false);
         } else if (EntityTypes.ELDER_GUARDIAN.equals(entityType)) {
             packetEntity = new PacketEntityGuardian(player, uuid, entityType, position.x, position.y, position.z, true);
         } else if (EntityTypes.SKELETON == entityType) {
@@ -243,13 +240,10 @@ public class CompensatedEntities {
         return serverPositionsMap.get(id);
     }
 
-    // TODO optimize into if-else chain instead of individual ifs
     public void updateEntityMetadata(int entityID, List<EntityData<?>> watchableObjects) {
         PacketEntity entity = player.compensatedEntities.getEntity(entityID);
         if (entity == null) return;
 
-        // 26.1 added AGE_LOCKED to AgeableMob after BABY, shifting all descendant field indices +1.
-        // Only affects entities extending AgeableMob (horses, pigs, striders, tamables, etc.)
         final int ageableOffset = PacketEvents.getAPI().getServerManager().getVersion()
                 .isNewerThanOrEquals(ServerVersion.V_26_1) ? 1 : 0;
 
@@ -266,14 +260,13 @@ public class CompensatedEntities {
             } else if (PacketEvents.getAPI().getServerManager().getVersion().isOlderThanOrEquals(ServerVersion.V_1_16_5)) {
                 id = 15;
             } else {
-                id = 16 + (EntityTypes.isTypeInstanceOf(entity.getType(), EntityTypes.ABSTRACT_PIGLIN) ? 1 : 0); // BABY is still at 16 in 26.1 (AGE_LOCKED is 17, after BABY), for some reason, piglins have their own age metadata??
+                id = 16 + (EntityTypes.isTypeInstanceOf(entity.getType(), EntityTypes.ABSTRACT_PIGLIN) ? 1 : 0);
             }
 
-            // 1.14 good
             EntityData<?> ageableObject = WatchableIndexUtil.getIndex(watchableObjects, id);
             if (ageableObject != null) {
                 Object value = ageableObject.getValue();
-                // Required because bukkit Ageable doesn't align with minecraft's ageable
+
                 if (value instanceof Boolean) {
                     entity.isBaby = (boolean) value;
                 } else if (value instanceof Byte) {
@@ -298,7 +291,7 @@ public class CompensatedEntities {
                 id = 16;
             } else {
                 final EntityType type = sizeable.getType();
-                // 26.2 cube mobs have different index (phantoms and others still retain old index)
+
                 final boolean cubeMob = type == EntityTypes.SLIME || type == EntityTypes.MAGMA_CUBE || type == EntityTypes.SULFUR_CUBE;
                 if (cubeMob) {
                     id = 18;
@@ -336,11 +329,10 @@ public class CompensatedEntities {
             EntityData<?> shulkerAttached = WatchableIndexUtil.getIndex(watchableObjects, id);
 
             if (shulkerAttached != null) {
-                // This NMS -> Bukkit conversion is great and works in all 11 versions.
+
                 shulker.facing = BlockFace.valueOf(shulkerAttached.getValue().toString().toUpperCase());
             }
 
-            // ATTACH_POS was removed in 1.17, shifting PEEK from id+2 to id+1
             int peekOffset = PacketEvents.getAPI().getServerManager().getVersion()
                     .isNewerThanOrEquals(ServerVersion.V_1_17) ? 1 : 2;
             EntityData<?> height = WatchableIndexUtil.getIndex(watchableObjects, id + peekOffset);
@@ -371,12 +363,10 @@ public class CompensatedEntities {
             }
 
             if (entity.getType() == EntityTypes.PIG) {
-                // SADDLE removed in 1.21.5, shifting BOOST_TIME from 18→17.
-                // ageableOffset naturally cancels this out in 26.1 (BOOST_TIME back at 18).
+
                 if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_21_5))
                     offset = 1;
 
-                // SADDLE removed in 1.21.5; now handled via equipment
                 if (PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_21_5)) {
                     EntityData<?> pigSaddle = WatchableIndexUtil.getIndex(watchableObjects, 17 - offset + ageableOffset);
                     if (pigSaddle != null) {
@@ -385,7 +375,7 @@ public class CompensatedEntities {
                 }
 
                 EntityData<?> pigBoost = WatchableIndexUtil.getIndex(watchableObjects, 18 - offset + ageableOffset);
-                if (pigBoost != null) { // What does 1.9-1.10 do here? Is this feature even here?
+                if (pigBoost != null) {
                     rideable.boostTimeMax = (int) pigBoost.getValue();
                     rideable.currentBoostTime = 0;
                 }
@@ -401,7 +391,6 @@ public class CompensatedEntities {
                     ((PacketEntityStrider) rideable).isShaking = (boolean) striderShaking.getValue();
                 }
 
-                // SADDLE removed in 1.21.5; now handled via equipment
                 if (PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_21_5)) {
                     EntityData<?> striderSaddle = WatchableIndexUtil.getIndex(watchableObjects, 19 - offset + ageableOffset);
                     if (striderSaddle != null) {
@@ -434,15 +423,12 @@ public class CompensatedEntities {
                     horse.isRearing = (info & 0x20) != 0;
                 }
 
-                // track camel dashing
                 if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_20)) {
                     if (entity instanceof PacketEntityCamel camel) {
                         EntityData<?> entityData = WatchableIndexUtil.getIndex(watchableObjects, 18 + ageableOffset);
                         if (entityData != null) {
                             camel.setDashing((boolean) entityData.getValue());
 
-                            // TODO there is: if (!this.firstTick && DASH.equals(accessor)) {
-                            // !firstTick condition
                             camel.setDashCooldown(camel.getDashCooldown() == 0 ? 55 : camel.getDashCooldown());
                         }
                     }
@@ -453,9 +439,9 @@ public class CompensatedEntities {
                     int info = (int) horseByte.getValue();
 
                     horse.isTame = (info & 0x02) != 0;
-                    // TODO: Check this
+
                     horse.hasSaddle = (info & 0x04) != 0;
-                    // horse.hasSaddle = (info & 0x08) != 0; // 0x08 should be hasChest
+
                     horse.isRearing = (info & 0x40) != 0;
                 }
             }
@@ -466,8 +452,6 @@ public class CompensatedEntities {
             if (entityData != null) {
                 nautilus.setDashing((boolean) entityData.getValue());
 
-                // TODO there is: if (!this.firstTick && DASH.equals(accessor)) {
-                // !firstTick condition
                 nautilus.setDashCooldown(nautilus.getDashCooldown() == 0 ? 40 : nautilus.getDashCooldown());
             }
         }
@@ -479,8 +463,7 @@ public class CompensatedEntities {
                 Object gravityObject = gravity.getValue();
 
                 if (gravityObject instanceof Boolean) {
-                    // Vanilla uses hasNoGravity, which is a bad name IMO
-                    // hasGravity > hasNoGravity
+
                     entity.hasGravity = !((Boolean) gravityObject);
                 }
             }
@@ -497,14 +480,14 @@ public class CompensatedEntities {
             EntityData<?> fireworkWatchableObject = WatchableIndexUtil.getIndex(watchableObjects, 9 - offset);
             if (fireworkWatchableObject == null) return;
 
-            if (fireworkWatchableObject.getValue() instanceof Integer) { // Pre 1.14
+            if (fireworkWatchableObject.getValue() instanceof Integer) {
                 int attachedEntityID = (Integer) fireworkWatchableObject.getValue();
                 if (attachedEntityID == player.entityID) {
                     player.fireworks.addNewFirework(entityID);
                 }
             } else if (fireworkWatchableObject.getValue() instanceof Optional<?> optional
                     && optional.isPresent() && optional.get() instanceof Integer attachedEntityID
-                    && attachedEntityID.equals(player.entityID)) { // 1.14+
+                    && attachedEntityID.equals(player.entityID)) {
                 player.fireworks.addNewFirework(entityID);
             }
         }
@@ -525,7 +508,7 @@ public class CompensatedEntities {
             if (hookWatchableObject == null) return;
 
             Integer attachedEntityID = (Integer) hookWatchableObject.getValue();
-            hook.attached = attachedEntityID - 1; // the server adds 1 to the ID
+            hook.attached = attachedEntityID - 1;
         }
 
         if (entity instanceof PacketEntityArmorStand) {
@@ -546,7 +529,7 @@ public class CompensatedEntities {
             if (armorStandByte != null) {
                 byte info = (Byte) armorStandByte.getValue();
 
-                entity.isBaby = (info & 0x01) != 0; // technically this is IsSmall which is a different tag, but it has the same effect for us
+                entity.isBaby = (info & 0x01) != 0;
                 ((PacketEntityArmorStand) entity).isMarker = (info & 0x10) != 0;
             }
         }
@@ -556,7 +539,7 @@ public class CompensatedEntities {
             int isElderlyBitMask;
             if (PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_9)) {
                 index = 16;
-                isElderlyBitMask = 0x04; // the wiki is wrong 0x02 is not "Is Elderly"
+                isElderlyBitMask = 0x04;
             } else if (PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_10)) {
                 index = 11;
                 isElderlyBitMask = 0x04;
@@ -567,7 +550,7 @@ public class CompensatedEntities {
 
             EntityData<?> guardianByte = WatchableIndexUtil.getIndex(watchableObjects, index);
             if (guardianByte != null) {
-                int info = (Integer) guardianByte.getValue(); // wiki says this is a byte but testing on 1.8 shows it's an integer
+                int info = (Integer) guardianByte.getValue();
                 ((PacketEntityGuardian) entity).isElder = (info & isElderlyBitMask) != 0;
             }
         }

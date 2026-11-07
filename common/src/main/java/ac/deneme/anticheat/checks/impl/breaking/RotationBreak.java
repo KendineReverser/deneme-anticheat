@@ -28,7 +28,7 @@ import java.util.List;
 public class RotationBreak extends Check implements BlockBreakListener, PostFlyingBlockBreakListener {
     private static final Verbose V = Verbose.of("[pre-flying|post-flying], action={digging}");
 
-    private double flagBuffer = 0; // If the player flags once, force them to play legit, or we will cancel the tick before.
+    private double flagBuffer = 0;
     private boolean ignorePost = false;
 
     public RotationBreak(DenemePlayer player) {
@@ -38,13 +38,13 @@ public class RotationBreak extends Check implements BlockBreakListener, PostFlyi
     @Override
     public void onBlockBreak(BlockBreak blockBreak) {
         if (!player.cameraEntity.isSelf())
-            return; // you don't send flying packets when spectating entities
-        if (player.inVehicle()) return; // falses
-        if (blockBreak.action == DiggingAction.CANCELLED_DIGGING) return; // falses
+            return;
+        if (player.inVehicle()) return;
+        if (blockBreak.action == DiggingAction.CANCELLED_DIGGING) return;
 
         if (flagBuffer > 0 && !didRayTraceHit(blockBreak)) {
             ignorePost = true;
-            // If the player hit and has flagged this check recently
+
             if (flag(V.write(verbose()).bool(true)
                     .uint(VerboseCodecs.enumId(blockBreak.action))) && shouldModifyPackets()) {
                 blockBreak.cancel();
@@ -55,15 +55,15 @@ public class RotationBreak extends Check implements BlockBreakListener, PostFlyi
     @Override
     public void onPostFlyingBlockBreak(BlockBreak blockBreak) {
         if (!player.cameraEntity.isSelf())
-            return; // you don't send flying packets when spectating entities
-        if (player.inVehicle()) return; // falses
-        if (blockBreak.action == DiggingAction.CANCELLED_DIGGING) return; // falses
+            return;
+        if (player.inVehicle()) return;
+        if (blockBreak.action == DiggingAction.CANCELLED_DIGGING) return;
 
         if (didRayTraceHit(blockBreak)) {
             flagBuffer = Math.max(0, flagBuffer - 0.1);
         } else {
             flagBuffer = 1;
-            if (!ignorePost) { // Don't flag twice
+            if (!ignorePost) {
                 flag(V.write(verbose()).bool(false)
                         .uint(VerboseCodecs.enumId(blockBreak.action)));
             }
@@ -79,7 +79,6 @@ public class RotationBreak extends Check implements BlockBreakListener, PostFlyi
 
         final double[] possibleEyeHeights = player.getPossibleEyeHeights();
 
-        // Start checking if player is in the block
         double minEyeHeight = Double.MAX_VALUE;
         double maxEyeHeight = Double.MIN_VALUE;
         for (double height : possibleEyeHeights) {
@@ -90,23 +89,19 @@ public class RotationBreak extends Check implements BlockBreakListener, PostFlyi
         SimpleCollisionBox eyePositions = new SimpleCollisionBox(player.x, player.y + minEyeHeight, player.z, player.x, player.y + maxEyeHeight, player.z);
         eyePositions.expand(player.getMovementThreshold());
 
-        // If the player is inside a block, then they can ray trace through the block and hit the other side of the block
         if (eyePositions.isIntersected(box)) {
             return true;
         }
-        // End checking if the player is in the block
 
         List<Vector3f> possibleLookDirs = new ArrayList<>(Arrays.asList(
                 new Vector3f(player.lastYaw, player.pitch, 0),
                 new Vector3f(player.yaw, player.pitch, 0)
         ));
 
-        // 1.9+ players could be a tick behind because we don't get skipped ticks
         if (player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_9)) {
             possibleLookDirs.add(new Vector3f(player.lastYaw, player.lastPitch, 0));
         }
 
-        // 1.7 players do not have any of these issues! They are always on the latest look vector
         if (player.getClientVersion().isOlderThan(ClientVersion.V_1_8)) {
             possibleLookDirs = Collections.singletonList(new Vector3f(player.yaw, player.pitch, 0));
         }

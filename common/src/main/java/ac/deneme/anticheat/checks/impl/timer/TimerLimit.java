@@ -6,11 +6,9 @@ import ac.deneme.anticheat.player.DenemePlayer;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import org.jetbrains.annotations.NotNull;
 
-// This works around 1.3 timer, to prevent too high abuse - maybe there's a better solution?
 @CheckData(name = "TimerLimit", stableKey = "deneme.timer.limit", description = "The player has sent too many packets after high latency", setback = 10)
 public class TimerLimit extends Timer {
 
-    // At what ping should we start to limit the balance advantage? (nanos)
     private long limitAbuseOverPing;
 
     public TimerLimit(DenemePlayer player) {
@@ -19,16 +17,15 @@ public class TimerLimit extends Timer {
 
     @Override
     public void doCheck(final PacketReceiveEvent event) {
-        // 1:1 with Timer minus cancelling the packet
+
         if (timerBalanceRealTime > System.nanoTime()) {
-            // If timer check already flagged, don't flag.
+
             if (!event.isCancelled()) {
                 if (flag() && shouldSetback()) {
                     player.getSetbackTeleportUtil().executeNonSimulatingSetback();
                 }
             }
 
-            // Reset the violation by 1 movement
             timerBalanceRealTime -= 50e6;
         }
 
@@ -37,7 +34,7 @@ public class TimerLimit extends Timer {
 
     @Override
     protected void limitFallBehind() {
-        // Limit using transaction ping if over 1000ms (default)
+
         long playerClock = lastMovementPlayerClock;
         if (limitAbuseOverPing != -1 && System.nanoTime() - playerClock > limitAbuseOverPing) {
             playerClock = System.nanoTime() - limitAbuseOverPing;

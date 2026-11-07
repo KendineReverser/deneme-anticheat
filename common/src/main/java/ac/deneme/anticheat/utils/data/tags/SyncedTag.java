@@ -39,7 +39,6 @@ public final class SyncedTag<T> {
     public void readTagValues(WrapperPlayServerTags.Tag tag) {
         if (!supported) return;
 
-        // Server is sending tag replacement, clear default values.
         values.clear();
         for (int id : tag.getValues()) {
             values.addAll(remapper.apply(id));

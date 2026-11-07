@@ -43,17 +43,13 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class CorrectingPlayerInventoryStorage extends InventoryStorage {
 
-    // TODO: How the hell does creative mode work?
     private static final Set<String> SUPPORTED_INVENTORIES = new HashSet<>(
             Arrays.asList("CHEST", "DISPENSER", "DROPPER", "PLAYER", "ENDER_CHEST", "SHULKER_BOX", "BARREL", "CRAFTING", "CREATIVE")
     );
     private final DenemePlayer player;
-    // The key for this map is the inventory slot ID
-    // The value for this map is the transaction that we care about
-    // Returns -1 if the entry is null
+
     private final Map<Integer, Integer> serverIsCurrentlyProcessingThesePredictions = new ConcurrentHashMap<>();
-    // A list of predictions the client has made for inventory changes
-    // Remove if the server rejects these changes
+
     private final Map<Integer, Integer> pendingFinalizedSlot = new ConcurrentHashMap<>();
 
     public CorrectingPlayerInventoryStorage(DenemePlayer player, int size) {
@@ -61,8 +57,6 @@ public class CorrectingPlayerInventoryStorage extends InventoryStorage {
         this.player = player;
     }
 
-    // 1.17+ clients send what slots they have changed.  This makes our jobs much easier.
-    // Required as server now only sends changes if client disagrees with them.
     public void handleClientClaimedSlotSet(int slotID) {
         if (slotID >= 0 && slotID <= Inventory.ITEMS_END) {
             pendingFinalizedSlot.put(slotID, DenemeAPI.INSTANCE.getTickManager().currentTick + 5);
@@ -75,17 +69,13 @@ public class CorrectingPlayerInventoryStorage extends InventoryStorage {
         }
     }
 
-    // This is more meant for pre-1.17 clients, but mojang fucked up netcode AGAIN in 1.17, so
-    // we must use this for 1.17 clients as well... at least you tried Mojang.
     @Override
     public void setItem(int item, ItemStack stack) {
-        // If there is a more recent change to this one, don't override it
+
         int finalTransaction = serverIsCurrentlyProcessingThesePredictions.getOrDefault(item, -1);
 
-        // If the server is currently sending a packet to the player AND it is the final change to the slot
-        // OR, the client was in control of setting this slot
         if (finalTransaction == -1 || player.lastTransactionReceived.get() >= finalTransaction) {
-            // This is the last change for this slot, try to resync this slot if possible
+
             pendingFinalizedSlot.put(item, DenemeAPI.INSTANCE.getTickManager().currentTick + 5);
             serverIsCurrentlyProcessingThesePredictions.remove(item);
         }
@@ -102,13 +92,12 @@ public class CorrectingPlayerInventoryStorage extends InventoryStorage {
      * @param slot the slot to check
      */
     private void checkThatBukkitIsSynced(int slot) {
-        // The player isn't fully logged in yet, don't bother checking
+
         if (player.platformPlayer == null) return;
-        // We aren't tracking the player's inventory, so don't bother
+
         if (!player.inventory.isPacketInventoryActive) return;
 
-        // Bukkit uses different slot ID's to vanilla
-        int bukkitSlot = getBukkitSlot(slot); // 8 -> 39, should be 36
+        int bukkitSlot = getBukkitSlot(slot);
 
         if (bukkitSlot != -1) {
             ItemStack existing = getItem(slot);
@@ -122,27 +111,26 @@ public class CorrectingPlayerInventoryStorage extends InventoryStorage {
         }
     }
 
-    // Taken from https://www.spigotmc.org/threads/mapping-protocol-to-bukkit-slots.577724/
     public static int getBukkitSlot(int packetSlot) {
-        // 0 -> 5 are crafting slots, don't exist in bukkit
+
         if (packetSlot <= 4) {
             return -1;
         }
-        // 5 -> 8 are armor slots in protocol, ordered helmets to boots
+
         if (packetSlot <= 8) {
-            // 36 -> 39 are armor slots in bukkit, ordered boots to helmet. tbh I got this from trial and error.
+
             return (7 - packetSlot) + 36;
         }
-        // By a coincidence, non-hotbar inventory slots match.
+
         if (packetSlot <= 35) {
             return packetSlot;
         }
-        // 36 -> 44 are hotbar slots in protocol
+
         if (packetSlot <= 44) {
-            // 0 -> 9 are hotbar slots in bukkit
+
             return packetSlot - 36;
         }
-        // 45 is offhand in packet, it is 40 in bukkit
+
         if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_9) && packetSlot == 45) {
             return 40;
         }
@@ -152,22 +140,19 @@ public class CorrectingPlayerInventoryStorage extends InventoryStorage {
     public void tickWithBukkit() {
         if (player.platformPlayer == null) return;
 
-        // Loop all slot changes the client has predicted and check that the server has accepted them
         int tickID = DenemeAPI.INSTANCE.getTickManager().currentTick;
         for (Iterator<Map.Entry<Integer, Integer>> it = pendingFinalizedSlot.entrySet().iterator(); it.hasNext(); ) {
             Map.Entry<Integer, Integer> entry = it.next();
-            // If x ticks have passed, check the slot is equal to the server slot and remove
+
             if (entry.getValue() <= tickID) {
                 checkThatBukkitIsSynced(entry.getKey());
                 it.remove();
             }
         }
 
-        // If the player's inventory needs to be resent so that Deneme can enable the player's packet inventory again
-        // Then resend once the player has a supported inventory to activate that.
         if (player.inventory.needResend) {
             DenemeAPI.INSTANCE.getScheduler().getEntityScheduler().execute(player.platformPlayer, DenemeAPI.INSTANCE.getDenemePlugin(), () -> {
-                // Potential race condition doing this multiple times
+
                 if (!player.inventory.needResend) return;
 
                 if (SUPPORTED_INVENTORIES.contains(player.platformPlayer.getInventory().getOpenInventoryKey().toUpperCase(Locale.ROOT))) {
@@ -177,13 +162,9 @@ public class CorrectingPlayerInventoryStorage extends InventoryStorage {
             }, null, 0);
         }
 
-        // Every five ticks, we pull a new item for the player
-        // This means no desync will last longer than 10 seconds
-        // (Required as mojang has screwed up some things with inventories that we can't easily fix)
-        // Don't spam this as it could cause lag (I was getting 0.3 ms to query this, this is done async though)
         if (tickID % 5 == 0) {
             int slotToCheck = (tickID / 5) % getSize();
-            // If both these things are true, there is nothing that should be broken.
+
             if (!pendingFinalizedSlot.containsKey(slotToCheck) && !serverIsCurrentlyProcessingThesePredictions.containsKey(slotToCheck)) {
                 checkThatBukkitIsSynced(slotToCheck);
             }

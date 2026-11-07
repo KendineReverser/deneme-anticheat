@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-// 1.21.10 ONLY - 1.21.9 is impossible to implement due to Mojang awesomeness
 public class BlockEffectsResolverV1_21_10 implements BlockEffectsResolver {
 
     public static final BlockEffectsResolver INSTANCE = new BlockEffectsResolverV1_21_10();

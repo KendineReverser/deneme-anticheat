@@ -45,7 +45,7 @@ public final class SessionTrackerImpl implements SessionTracker {
         while (true) {
             Connection connection = connections.get(player);
             if (connection == null) {
-                // UUID generation and state construction stay outside map bin locks.
+
                 Connection fresh = new Connection(player, now, meta);
                 Connection existing = connections.putIfAbsent(player, fresh);
                 connection = existing == null ? fresh : existing;
@@ -72,7 +72,7 @@ public final class SessionTrackerImpl implements SessionTracker {
         State current = connection.state.get();
         if (current.closedAt != SessionRecord.OPEN || now - current.lastRequested < heartbeatIntervalMs) return;
         State next = new State(Math.max(current.lastActivity, now), now, SessionRecord.OPEN, current.meta);
-        // A competing update already observed activity or closed the connection.
+
         if (connection.state.compareAndSet(current, next)) publishLatest(connection);
     }
 
@@ -111,8 +111,7 @@ public final class SessionTrackerImpl implements SessionTracker {
             known.add(nextStartup);
             Set<Connection> pending = new HashSet<>(current.pendingConnections);
             pending.addAll(active);
-            // Retain before the first handoff. A failed attempt may have moved
-            // rows already, and a concurrent quit removes them from the active map.
+
             return new Ownership(nextStartup, Set.copyOf(known), Set.copyOf(pending));
         });
         for (Connection connection : next.pendingConnections) {
@@ -126,9 +125,7 @@ public final class SessionTrackerImpl implements SessionTracker {
     private void finishResume(Ownership expected) {
         if (ownership.get() != expected) return;
         if (!writesAllowed.getAsBoolean()) throw new IllegalStateException("session recovery completion is paused");
-        // Include terminal states retained by every failed attempt, as well as
-        // joins after the current handoff snapshot. Clear only after completion;
-        // an older callback must not discard a newer attempt's retained states.
+
         Set<Connection> flush = new HashSet<>(expected.pendingConnections);
         flush.addAll(connections.values());
         for (Connection connection : flush) publishLatest(connection);
@@ -150,8 +147,7 @@ public final class SessionTrackerImpl implements SessionTracker {
                 if (writesAllowed.getAsBoolean()) {
                     store.submit(Categories.SESSION, event -> {
                         State snapshot = connection.state.get();
-                        // A producer can be descheduled before claiming its ring
-                        // slot. Resolve ownership when that slot is actually filled.
+
                         event.sessionId(connection.sessionId).playerUuid(connection.player)
                                 .startedEpochMs(connection.started).lastActivityEpochMs(snapshot.lastActivity)
                                 .closedAtEpochMs(snapshot.closedAt).clientBrand(snapshot.meta.clientBrand())
@@ -161,8 +157,7 @@ public final class SessionTrackerImpl implements SessionTracker {
                 pending = connection.publications.addAndGet(-pending);
             } while (pending != 0);
         } catch (RuntimeException | Error failure) {
-            // A failed submission must not leave future publication requests
-            // behind a permanently busy publisher. The current state is retained.
+
             connection.publications.set(0);
             throw failure;
         }

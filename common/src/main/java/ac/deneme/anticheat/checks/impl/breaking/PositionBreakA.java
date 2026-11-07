@@ -41,20 +41,17 @@ public class PositionBreakA extends Check implements BlockBreakListener {
             eyePositions.expand(player.getMovementThreshold());
         }
 
-        // If the player is inside a block, then they can ray trace through the block and hit the other side of the block
         if (eyePositions.isIntersected(combined)) {
             return;
         }
 
-        // So now we have the player's possible eye positions
-        // So then look at the face that the player has clicked
         boolean flag = switch (blockBreak.face) {
-            case NORTH -> eyePositions.minZ > combined.minZ; // Z- face
-            case SOUTH -> eyePositions.maxZ < combined.maxZ; // Z+ face
-            case EAST -> eyePositions.maxX < combined.maxX; // X+ face
-            case WEST -> eyePositions.minX > combined.minX; // X- face
-            case UP -> eyePositions.maxY < combined.maxY; // Y+ face
-            case DOWN -> eyePositions.minY > combined.minY; // Y- face
+            case NORTH -> eyePositions.minZ > combined.minZ;
+            case SOUTH -> eyePositions.maxZ < combined.maxZ;
+            case EAST -> eyePositions.maxX < combined.maxX;
+            case WEST -> eyePositions.minX > combined.minX;
+            case UP -> eyePositions.maxY < combined.maxY;
+            case DOWN -> eyePositions.minY > combined.minY;
             default -> false;
         };
 

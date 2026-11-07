@@ -31,12 +31,8 @@ public interface PlatformLoader {
 
     PlatformServer getPlatformServer();
 
-    // Intended for use for platform specific service/API bringup
-    // Method will be called when InitManager.load() is called
     void registerAPIService();
 
-    // Used to replace text placeholders in messages
-    // Currently only supports PlaceHolderAPI on Bukkit
     @NotNull
     MessagePlaceHolderManager getMessagePlaceHolderManager();
 

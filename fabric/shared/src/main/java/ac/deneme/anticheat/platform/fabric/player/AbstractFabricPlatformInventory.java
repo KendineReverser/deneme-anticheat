@@ -79,7 +79,7 @@ public abstract class AbstractFabricPlatformInventory implements PlatformInvento
         if (!FabricItemContextHook.ACTIVE) {
             return readContents();
         }
-        // Bind the context once for the whole inventory sweep rather than per slot.
+
         return FabricItemContextHook.supply(fabricPlatformPlayer.getNative(), this::readContents);
     }
 

@@ -7,7 +7,7 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class EnchantmentHelper {
-    // Some enchants work on any armor piece but only the maximum level counts
+
     public static int getMaximumEnchantLevel(CompensatedInventory inventory, EnchantmentType enchantmentType) {
         int maxEnchantLevel = 0;
 

@@ -43,7 +43,7 @@ public class BlockPlace {
     private static final BlockFace[] BY_3D = { BlockFace.DOWN, BlockFace.UP, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.WEST, BlockFace.EAST };
     public static final BlockFace[] BY_2D = { BlockFace.SOUTH, BlockFace.WEST, BlockFace.NORTH, BlockFace.EAST };
     public final boolean isBlock;
-    // Allocated once instead of in functions to reduce new[] calls that need to be made. Since per-instance BlockPlace is always dealt with on the same thread we can use 1 buffer array
+
     private final SimpleCollisionBox[] collisions = new SimpleCollisionBox[ComplexCollisionBox.DEFAULT_MAX_COLLISION_BOX_SIZE];
     public Vector3i position;
     public final InteractionHand hand;
@@ -114,17 +114,10 @@ public class BlockPlace {
     private boolean canBeReplaced(StateType heldItem, WrappedBlockState state, BlockFace face) {
         StateType currentType = state.getType();
 
-        // Checks are ordered by approximate frequency (Slabs/Snow/Vines first)
-        // to minimize comparisons for common blocks.
-
         if (BlockTags.SLABS.contains(currentType)) {
             Type typeData = state.getTypeData();
             if (typeData == Type.DOUBLE || currentType != heldItem) return false;
 
-            // Here vanilla refers from
-            // Set check can replace -> get block -> call block canBeReplaced -> check can replace boolean (default true)
-            // uh... what?  I'm unsure what Mojang is doing here.  I think they just made a stupid mistake.
-            // as this code is quite old.
             boolean isHighClick = getClickedLocation().getY() > 0.5D;
 
             if (typeData == Type.BOTTOM) {
@@ -135,10 +128,10 @@ public class BlockPlace {
         }
         else if (currentType == StateTypes.SNOW) {
             int layers = state.getLayers();
-            if (heldItem == currentType && layers < 8) { // We index at 1 (less than 8 layers)
+            if (heldItem == currentType && layers < 8) {
                 return face == BlockFace.UP;
             }
-            return layers == 1; // index at 1, (1 layer)
+            return layers == 1;
         }
         else if (currentType == StateTypes.VINE) {
             boolean baseReplaceable = currentType != heldItem && currentType.isReplaceable();
@@ -160,8 +153,7 @@ public class BlockPlace {
             }
             return currentType != heldItem && currentType.isReplaceable();
         }
-        // Glow lichen can be replaced if it has an open face, or the player is placing something
-        // Sculk Vein shares the exact same placement logic
+
         else if (currentType == StateTypes.GLOW_LICHEN || currentType == StateTypes.SCULK_VEIN) {
             return heldItem != currentType ||
                     !state.isUp() ||
@@ -183,7 +175,7 @@ public class BlockPlace {
         else if (currentType == StateTypes.TURTLE_EGG) {
             return heldItem == currentType && state.getEggs() < 4 && !isSecondaryUse();
         }
-        // Cave vines and weeping vines have a special case... that always returns false (just like the base case for it!)
+
         else {
             return currentType != heldItem && currentType.isReplaceable();
         }
@@ -252,7 +244,7 @@ public class BlockPlace {
         StateType blockMaterial = state.getType();
 
         if (BlockTags.LEAVES.contains(blockMaterial)) {
-            // Leaves can't support blocks
+
             return false;
         } else if (blockMaterial == StateTypes.SNOW) {
             return state.getLayers() == 8 || face == BlockFace.DOWN;
@@ -265,17 +257,17 @@ public class BlockPlace {
             }
 
             return state.getFacing() == bukkitFace;
-        } else if (blockMaterial == StateTypes.COMPOSTER) { // Composters have solid faces except for on the top
+        } else if (blockMaterial == StateTypes.COMPOSTER) {
             return face != BlockFace.UP;
-        } else if (blockMaterial == StateTypes.SOUL_SAND) { // Soul sand is considered to be a full block when placing things
+        } else if (blockMaterial == StateTypes.SOUL_SAND) {
             return true;
-        } else if (blockMaterial == StateTypes.LADDER) { // Yes, although it breaks immediately, you can place blocks on ladders
+        } else if (blockMaterial == StateTypes.LADDER) {
             return state.getFacing().getOppositeFace() == bukkitFace;
-        } else if (BlockTags.TRAPDOORS.contains(blockMaterial)) { // You can place blocks that need solid faces on trapdoors
+        } else if (BlockTags.TRAPDOORS.contains(blockMaterial)) {
             return (state.getFacing().getOppositeFace() == bukkitFace && state.isOpen()) ||
                     (state.getHalf() == Half.TOP && !state.isOpen() && bukkitFace == BlockFace.UP) ||
                     (state.getHalf() == Half.BOTTOM && !state.isOpen() && bukkitFace == BlockFace.DOWN);
-        } else if (BlockTags.DOORS.contains(blockMaterial)) { // You can place blocks that need solid faces on doors
+        } else if (BlockTags.DOORS.contains(blockMaterial)) {
             CollisionData data = CollisionData.getData(blockMaterial);
 
             if (data.dynamic instanceof DoorHandler doorHandler) {
@@ -293,14 +285,13 @@ public class BlockPlace {
             if (axis.modify(simpleBox).isFullBlockNoCache()) return true;
         }
 
-        // Not an explicit edge case and is complicated, so isn't a full face
         return false;
     }
 
     public boolean isBlockFaceOpen(BlockFace facing) {
         Vector3i pos = getPlacedBlockPos();
         pos = pos.add(facing.getModX(), facing.getModY(), facing.getModZ());
-        // You can't build above height limit.
+
         if (pos.getY() >= player.compensatedWorld.getMaxHeight()) return false;
 
         return player.compensatedWorld.getBlock(pos).getType().isReplaceable();
@@ -321,7 +312,7 @@ public class BlockPlace {
         for (int i = 0; i < size; i++) {
             SimpleCollisionBox simpleBox = collisions[i];
             simpleBox = axis.modify(simpleBox);
-            // If all sides to the box have width, there is collision.
+
             switch (facing) {
                 case NORTH:
                     if (simpleBox.minZ == 0) return false;
@@ -353,7 +344,6 @@ public class BlockPlace {
         return player.compensatedWorld.getBlock(pos).getType() == StateTypes.LAVA;
     }
 
-    // I believe this is correct, although I'm using a method here just in case it's a tick off... I don't trust Mojang
     public boolean isSecondaryUse() {
         return player.isSneaking;
     }
@@ -382,29 +372,21 @@ public class BlockPlace {
         return isOn(StateTypes.DIRT, StateTypes.GRASS_BLOCK, StateTypes.PODZOL, StateTypes.COARSE_DIRT, StateTypes.MYCELIUM, StateTypes.ROOTED_DIRT, StateTypes.MOSS_BLOCK);
     }
 
-    // I have to be the first anticheat to actually account for this... wish me luck
-    // It's interested that redstone code is actually really simple, but has so many quirks
-    // we don't need to account for these quirks though as they are more related to block updates.
     public boolean isBlockPlacedPowered() {
         Vector3i placed = getPlacedBlockPos();
 
         for (BlockFace face : BY_3D) {
             Vector3i modified = placed.add(face.getModX(), face.getModY(), face.getModZ());
 
-            // A block next to the player is providing power. Therefore the block is powered
             if (player.compensatedWorld.getRawPowerAtState(face, modified.getX(), modified.getY(), modified.getZ()) > 0) {
                 return true;
             }
 
-            // Check if a block can even provide power... bukkit doesn't have a method for this?
             WrappedBlockState state = player.compensatedWorld.getBlock(modified);
 
             boolean isByDefaultConductive = !Materials.isSolidBlockingBlacklist(state.getType(), player.getClientVersion()) &&
                     CollisionData.getData(state.getType()).getMovementCollisionBox(player, player.getClientVersion(), state).isFullBlock();
 
-            // Soul sand is exempt from this check.
-            // Glass, moving pistons, beacons, redstone blocks (for some reason) and observers are not conductive
-            // Otherwise, if something is solid blocking and a full block, then it is conductive
             if (state.getType() != StateTypes.SOUL_SAND &&
                     BlockTags.GLASS_BLOCKS.contains(state.getType()) || state.getType() == StateTypes.MOVING_PISTON
                     || state.getType() == StateTypes.BEACON || state.getType() ==
@@ -412,12 +394,9 @@ public class BlockPlace {
                 continue;
             }
 
-            // There's a better way to do this, but this is "good enough"
-            // Mojang probably does it in a worse way than this.
             for (BlockFace recursive : BY_3D) {
                 Vector3i poweredRecursive = placed.add(recursive.getModX(), recursive.getModY(), recursive.getModZ());
 
-                // A block next to the player is directly powered.  Therefore, the block is powered
                 if (player.compensatedWorld.getDirectSignalAtState(recursive, poweredRecursive.getX(), poweredRecursive.getY(), poweredRecursive.getZ()) > 0) {
                     return true;
                 }
@@ -480,14 +459,12 @@ public class BlockPlace {
         return player.pitch < 0.0F ? BlockFace.UP : BlockFace.DOWN;
     }
 
-    // Copied from vanilla nms
     public List<BlockFace> getNearestPlacingDirections() {
         BlockFace[] faces = getNearestLookingDirections().toArray(new BlockFace[0]);
 
         if (!replaceClicked) {
             BlockFace direction = getFace();
 
-            // Blame mojang for this code, not me
             int i = 0;
             while (i < faces.length && faces[i] != direction.getOppositeFace()) i++;
 
@@ -544,25 +521,15 @@ public class BlockPlace {
     }
 
     public void set(Vector3i position, WrappedBlockState state) {
-        // Hack for scaffolding to be the correct bounding box
+
         CollisionBox box = CollisionData.getData(state.getType()).getMovementCollisionBox(player, player.getClientVersion(), state, position.getX(), position.getY(), position.getZ());
 
-
-        // Note scaffolding is a special case because it can never intersect with the player's bounding box,
-        // and we fetch it with lastY instead of y which is wrong, so it is easier to just ignore scaffolding here
         if (state.getType() != StateTypes.SCAFFOLDING) {
-            // A player cannot place a block in themselves.
-            // 0.03 can desync quite easily
-            // 0.002 desync must be done with teleports, it is very difficult to do with slightly moving.
+
             if (box.isIntersected(player.boundingBox)) {
                 return;
             }
 
-            // Other entities can also block block-placing
-            // This sucks and desyncs constantly, but what can you do?
-            //
-            // 1.9+ introduced the mechanic where both the client and server must agree upon a block place
-            // 1.8 clients will simply not send the place when it fails, thanks mojang.
             if (player.getClientVersion().isNewerThan(ClientVersion.V_1_8)) {
                 for (PacketEntity entity : player.compensatedEntities.entityMap.values()) {
                     if (!entity.canHit()) continue;
@@ -574,35 +541,29 @@ public class BlockPlace {
                     double interpWidth = Math.max(interpBox.maxX - interpBox.minX, interpBox.maxZ - interpBox.minZ);
                     double interpHeight = interpBox.maxY - interpBox.minY;
 
-                    // If not accurate, fall back to desync pos
-                    // This happens due to the lack of an idle packet on 1.9+ clients
-                    // On 1.8 clients this should practically never happen
                     if (interpWidth - width > 0.05 || interpHeight - height > 0.05) {
                         Vector3d entityPos = entity.trackedServerPosition.getPos();
                         interpBox = GetBoundingBox.getPacketEntityBoundingBox(player, entityPos.getX(), entityPos.getY(), entityPos.getZ(), entity);
                     }
 
                     if (box.isIntersected(interpBox)) {
-                        return; // Blocking the block placement
+                        return;
                     }
                 }
             }
         }
 
-        // If a block already exists here, then we can't override it.
         WrappedBlockState existingState = player.compensatedWorld.getBlock(position);
         if (!replaceClicked && !canBeReplaced(material, existingState, face)) {
             return;
         }
 
-        // Check for min and max bounds of world
         if (player.compensatedWorld.getMaxHeight() <= position.getY() || position.getY() < player.compensatedWorld.getMinHeight()) {
             return;
         }
 
-        // Check for waterlogged
         if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_13)) {
-            if (state.hasProperty(StateValue.WATERLOGGED)) { // waterloggable
+            if (state.hasProperty(StateValue.WATERLOGGED)) {
                 state.setWaterlogged(existingState.getType() == StateTypes.WATER && existingState.getLevel() == 0);
             }
         }
@@ -616,7 +577,6 @@ public class BlockPlace {
         return face == BlockFace.NORTH || face == BlockFace.SOUTH;
     }
 
-    // We need to now run block
     public void tryCascadeBlockUpdates(Vector3i pos) {
         if (player.getClientVersion().isOlderThanOrEquals(ClientVersion.V_1_12_2)) return;
 
@@ -633,17 +593,6 @@ public class BlockPlace {
         isCancelled = true;
     }
 
-    // All method with rants about mojang must go below this line
-
-    // MOJANG??? Why did you remove this from the damn packet.  YOU DON'T DO BLOCK PLACING RIGHT!
-    // You use last tick vector on the server and current tick on the client...
-    // You also have 0.03 for FIVE YEARS which will mess this up.  nice one mojang
-    // * 0.0004 as of 2/24/2022
-    // Fix your damn netcode
-    //
-    // You also have the desync caused by eye height as apparently tracking the player's ticks wasn't important to you
-    // No mojang, you really do need to track client ticks to get their accurate eye height.
-    // another damn desync added... maybe next decade it will get fixed and double the amount of issues.
     public Vector3dm getClickedLocation() {
         SimpleCollisionBox box = new SimpleCollisionBox(position);
         Vector3dm look = ReachUtils.getLook(player, player.yaw, player.pitch);
@@ -653,11 +602,8 @@ public class BlockPlace {
         Vector3d endReachPos = eyePos.add(look.getX() * distance, look.getY() * distance, look.getZ() * distance);
         Vector3d intercept = ReachUtils.calculateIntercept(box, eyePos, endReachPos).first();
 
-        // Bring this back to relative to the block
-        // The player didn't even click the block... (we should force resync BEFORE we get here!)
         if (intercept == null) return new Vector3dm();
 
-        // reuse look vector object
         look.setX(intercept.getX() - box.minX);
         look.setY(intercept.getY() - box.minY);
         look.setZ(intercept.getZ() - box.minZ);
@@ -665,7 +611,6 @@ public class BlockPlace {
         return look;
     }
 
-    // Remember to use the next tick's look, which we handle elsewhere
     public BlockFace getPlayerFacing() {
         return BY_2D[DenemeMath.floor(player.yaw / 90.0D + 0.5D) & 3];
     }

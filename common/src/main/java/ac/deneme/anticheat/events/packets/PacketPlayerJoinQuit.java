@@ -20,12 +20,9 @@ public class PacketPlayerJoinQuit extends PacketListenerAbstract {
     public void onPacketSend(PacketSendEvent event) {
         if (event.getPacketType() != PacketType.Login.Server.LOGIN_SUCCESS) return;
 
-        // Do this after send to avoid sending packets before the PLAY state
         event.getTasksAfterSend().add(() -> {
             DenemeAPI.INSTANCE.getPlayerDataManager().addUser(event.getUser());
-            // Prefetch the player's persisted alerts/verbose/brands toggles so onUserLogin can apply them immediately instead of falling back to the permission-default when the read hasn't completed in time.
-            //
-            // Runs on the backend's reader executor: never blocks this Netty thread. By the time onUserLogin fires (after chunk load / resource pack / motd) the prefetch has typically settled, and onUserLogin reads from the in-memory cache. A slow DB or a brand-new player with no row yet falls through to the permission-default.
+
             UUID uuid = event.getUser().getUUID();
             if (uuid != null) {
                 DenemeAPI.INSTANCE.getDataStoreLifecycle().playerToggleStore().prefetch(uuid);
@@ -35,8 +32,7 @@ public class PacketPlayerJoinQuit extends PacketListenerAbstract {
 
     @Override
     public void onUserConnect(UserConnectEvent event) {
-        // Player connected too soon, perhaps late bind is off
-        // Don't kick everyone on reload
+
         if (event.getUser().getConnectionState() == ConnectionState.PLAY && !DenemeAPI.INSTANCE.getPlayerDataManager().isExemptUser(event.getUser())) {
             event.setCancelled(true);
         }
@@ -44,13 +40,11 @@ public class PacketPlayerJoinQuit extends PacketListenerAbstract {
 
     @Override
     public void onUserLogin(UserLoginEvent event) {
-        // fake channel (NPC / spoofer / EmbeddedChannel) — no PacketUser, nothing to track
+
         if (event.getUser() == null) return;
 
         Object nativePlayerObject = Objects.requireNonNull(event.getPlayer(), "nativePlayerObject");
 
-        // This will never throw a NPE because code is run in OnUserConnect -> onPacketSend -> OnUserLogin order
-        // And the user will be added to the map before the getPlayer() method call
         @NotNull PlatformPlayer platformPlayer = DenemeAPI.INSTANCE.getPlatformPlayerFactory().getFromNativePlayerType(nativePlayerObject);
 
         if (DenemeAPI.INSTANCE.getConfigManager().getConfig().getBooleanElse("debug-pipeline-on-join", false)) {
@@ -110,35 +104,25 @@ public class PacketPlayerJoinQuit extends PacketListenerAbstract {
         Boolean persisted = toggles.current(uuid, key);
 
         if (persisted != null) {
-            // Prefetch already settled — apply silently so reconnects don't
-            // print the toggle message every time. enable-on-join.silent is
-            // ignored on this path; persisted state already represents the
-            // staff member's last explicit choice.
+
             applySilent.accept(platformPlayer, persisted);
             return;
         }
 
-        // No persisted state visible yet (no row for this player, OR the
-        // prefetch hasn't completed). Fall back to the permission-default
-        // policy and persist the choice so it sticks. NOOP store treats both
-        // applyPermissionDefault calls as silent no-ops.
         boolean enableOnJoin = platformPlayer.hasPermission(permEnableOnJoin);
         boolean silent = platformPlayer.hasPermission(permSilentJoin);
         if (enableOnJoin) {
             toggle.accept(platformPlayer, silent);
             toggles.applyPermissionDefault(uuid, key, true);
         } else {
-            // Persist the negative decision too — without this, an admin who
-            // grants enable-on-join later would silently flip the toggle on
-            // for staff who'd already implicitly chosen "off" on prior joins.
+
             toggles.applyPermissionDefault(uuid, key, false);
         }
     }
 
     @Override
     public void onUserDisconnect(UserDisconnectEvent event) {
-        // Session close + toggle eviction now live in PlayerDataManager.onDisconnect
-        // so the ClientVersionSetter defensive path also closes sessions.
+
         DenemeAPI.INSTANCE.getPlayerDataManager().onDisconnect(event.getUser());
     }
 }

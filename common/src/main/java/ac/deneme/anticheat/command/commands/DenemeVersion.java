@@ -42,7 +42,7 @@ public class DenemeVersion implements BuildableCommand {
                 .append(Component.text("Deneme Version: ").color(NamedTextColor.GRAY))
                 .append(Component.text(current).color(NamedTextColor.AQUA))
                 .build());
-        // use cached message if last check was less than 1 minute ago
+
         final long now = System.currentTimeMillis();
         if (now - lastCheck < 60000) {
             Component message = updateMessage.get();
@@ -53,11 +53,10 @@ public class DenemeVersion implements BuildableCommand {
         DenemeAPI.INSTANCE.getScheduler().getAsyncScheduler().runNow(DenemeAPI.INSTANCE.getDenemePlugin(), () -> checkForUpdates(sender));
     }
 
-    // Using UserAgent format recommended by https://docs.modrinth.com/api/
     @SuppressWarnings("deprecation")
     private static void checkForUpdates(Sender sender) {
         try {
-            //
+
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(CommonDenemeArguments.API_URL.value() + "updates"))
                     .GET()
@@ -80,19 +79,19 @@ public class DenemeVersion implements BuildableCommand {
                         .build()));
                 return;
             }
-            // Using old JsonParser method, as old versions of Gson don't include the static one
+
             JsonObject object = new JsonParser().parse(response.body()).getAsJsonObject();
             String downloadPage = getJsonString(object, "download_page", "Unknown");
             String latest = getJsonString(object, "latest_version", "Unknown");
             @Nullable String warning = getJsonString(object, "warning", null);
-            // allow status to be overridden if provided
+
             Status status;
             if (object.has("status")) {
                 status = Status.getStatus(object.get("status").getAsString());
             } else {
                 status = Status.SemVer.getVersionStatus(DenemeAPI.INSTANCE.getExternalAPI().getDenemeVersion(), latest);
             }
-            //
+
             Component msg = switch (status) {
                 case AHEAD ->
                         Component.text("You are using a development version of DenemeAC").color(NamedTextColor.LIGHT_PURPLE);
@@ -109,7 +108,7 @@ public class DenemeVersion implements BuildableCommand {
                 case UNKNOWN ->
                         Component.text("You are using an unknown DenemeAC version.").color(NamedTextColor.RED);
             };
-            // in case of a critical exploit that requires attention, allow us to provide a warning
+
             if (warning != null && !warning.isBlank()) {
                 msg = msg.append(Component.text().append(Component.text(warning).color(NamedTextColor.RED)).build());
             }
@@ -126,16 +125,16 @@ public class DenemeVersion implements BuildableCommand {
     }
 
     private static NamedTextColor getColorForStatusCode(int code) {
-        if (code >= 500) { // Server Errors (e.g., 500, 503)
+        if (code >= 500) {
             return NamedTextColor.RED;
-        } else if (code >= 400) { // Client Errors (e.g., 403, 404)
+        } else if (code >= 400) {
             return NamedTextColor.RED;
-        } else if (code >= 300) { // Redirection (e.g., 301, 302)
+        } else if (code >= 300) {
             return NamedTextColor.YELLOW;
-        } else if (code >= 200) { // Success (e.g., 200, 201)
+        } else if (code >= 200) {
             return NamedTextColor.GREEN;
         }
-        return NamedTextColor.GRAY; // Default for 1xx codes or others
+        return NamedTextColor.GRAY;
     }
 
     @Override
@@ -152,7 +151,6 @@ public class DenemeVersion implements BuildableCommand {
         Sender sender = context.sender();
         checkForUpdatesAsync(sender);
     }
-
 
     @AllArgsConstructor
     private enum Status {

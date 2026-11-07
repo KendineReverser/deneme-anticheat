@@ -71,26 +71,8 @@ public class PacketEntityReplication extends DenemeProcessor implements PacketRe
 
     private final AtomicBoolean hasSentPreWavePacket = new AtomicBoolean(true);
 
-    // Let's imagine the player is on a boat.
-    // The player breaks this boat
-    // If we were to despawn the boat without an extra transaction, then the boat would disappear before
-    // it disappeared on the client side, creating a ghost boat to flag checks with
-    //
-    // If we were to despawn the tick after, spawning must occur the transaction before to stop the same exact
-    // problem with ghost boats in reverse.
-    //
-    // Therefore, we despawn the transaction after, and spawn the tick before.
-    //
-    // If we despawn then spawn an entity in the same transaction, then this solution would despawn the new entity
-    // instead of the old entity, so we wouldn't see the boat at all
-    //
-    // Therefore, if the server sends a despawn and then a spawn in the same transaction for the same entity,
-    // We should simply add a transaction (which will clear this list!)
-    //
-    // Another valid solution is to simply spam more transactions, but let's not waste bandwidth.
     private final List<Integer> despawnedEntitiesThisTransaction = new ArrayList<>();
 
-    // Maximum ping when a firework boost is removed from the player.
     private int maxFireworkBoostPing = 1000;
 
     public PacketEntityReplication(DenemePlayer player) {
@@ -99,7 +81,7 @@ public class PacketEntityReplication extends DenemeProcessor implements PacketRe
 
     @Override
     public void onPacketReceive(@NotNull PacketReceiveEvent event) {
-        // Teleports don't interpolate, duplicate 1.17 packets don't interpolate
+
         if (!isTickPacket(event.getPacketType())) return;
         player.compensatedEntities.entitiesRemovedThisTick.clear();
         boolean isTickingReliably = player.isTickingReliablyFor(3);
@@ -107,8 +89,7 @@ public class PacketEntityReplication extends DenemeProcessor implements PacketRe
         PacketEntity playerVehicle = player.compensatedEntities.self.getRiding();
         for (PacketEntity entity : player.compensatedEntities.entityMap.values()) {
             if (entity == playerVehicle && !player.vehicleData.lastDummy) {
-                // The player has this as their vehicle, so they aren't interpolating it.
-                // And it isn't a dummy position
+
                 entity.setPositionRaw(player, entity.getPossibleLocationBoxes());
             } else {
                 entity.onMovement(isTickingReliably);
@@ -117,14 +98,14 @@ public class PacketEntityReplication extends DenemeProcessor implements PacketRe
 
         if (player.vehicleData.camelSprintingState == SprintingState.STOPPING) {
             player.vehicleData.camelSprintingState = SprintingState.STOPPED;
-        } else if (player.vehicleData.camelSprintingState == SprintingState.STOPPED && player.isSprinting) { // For sprint desyncs
+        } else if (player.vehicleData.camelSprintingState == SprintingState.STOPPED && player.isSprinting) {
             player.vehicleData.camelSprintingState = SprintingState.STARTED;
         }
     }
 
     @Override
     public void onPacketSend(@NotNull PacketSendEvent event) {
-        // ensure deneme is the one that sent the transaction
+
         if ((event.getPacketType() == PacketType.Play.Server.PING || event.getPacketType() == PacketType.Play.Server.WINDOW_CONFIRMATION) && player.packetStateData.lastServerTransWasValid) {
             despawnedEntitiesThisTransaction.clear();
         } else if (event.getPacketType() == PacketType.Play.Server.SPAWN_LIVING_ENTITY) {
@@ -180,7 +161,7 @@ public class PacketEntityReplication extends DenemeProcessor implements PacketRe
             LinearPositionPath path = player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_26_3) ? new LinearPositionPath(pos) : null;
             handleMoveEntity(event, move.getEntityId(), pos.getX(), pos.getY(), pos.getZ(), move.getYaw(), move.getPitch(), false, true, null, path);
         } else if (event.getPacketType() == PacketType.Play.Server.ENTITY_POSITION_SYNC) {
-            // ENTITY_TELEPORT but without relative flags
+
             WrapperPlayServerEntityPositionSync move = new WrapperPlayServerEntityPositionSync(event);
             final Vector3d pos;
             PositionPath path = null;
@@ -193,10 +174,8 @@ public class PacketEntityReplication extends DenemeProcessor implements PacketRe
                 pos = move.getValues().getPosition();
             }
 
-            // TODO this isn't technically correct
-            // If the position sync is to a pos > 4096 from the entity pos, client does some special stuff without interpolation
             handleMoveEntity(event, move.getId(), pos.getX(), pos.getY(), pos.getZ(), move.getYRot(), move.getXRot(), false, true, null, path);
-        } else if (event.getPacketType() == PacketType.Play.Server.ENTITY_ROTATION) { // Affects interpolation
+        } else if (event.getPacketType() == PacketType.Play.Server.ENTITY_ROTATION) {
             WrapperPlayServerEntityRotation move = new WrapperPlayServerEntityRotation(event);
             float rotationScale = player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_26_3) ? 1F : 0.7111111F;
             handleMoveEntity(event, move.getEntityId(), 0, 0, 0, move.getYaw() * rotationScale, move.getPitch() * rotationScale, true, false, null, null);
@@ -209,7 +188,6 @@ public class PacketEntityReplication extends DenemeProcessor implements PacketRe
             player.latencyUtils.addRealTimeTask(player.lastTransactionSent.get(), () -> player.compensatedEntities.updateEntityEquipment(equipment.getEntityId(), equipment.getEquipment()));
         }
 
-        // 1.19.3+
         else if (event.getPacketType() == PacketType.Play.Server.PLAYER_INFO_UPDATE) {
             WrapperPlayServerPlayerInfoUpdate info = new WrapperPlayServerPlayerInfoUpdate(event);
             if (info.getActions().contains(WrapperPlayServerPlayerInfoUpdate.Action.ADD_PLAYER)) {
@@ -242,18 +220,11 @@ public class PacketEntityReplication extends DenemeProcessor implements PacketRe
 
             PotionType type = effect.getPotionType();
 
-            // ViaVersion tries faking levitation effects and fails badly lol, flagging the anticheat
-            // Block other effects just in case ViaVersion gets any ideas
-            //
-            // Set to 24 so ViaVersion blocks it
-            // 24 is the levitation effect
             if (player.getClientVersion().isOlderThan(ClientVersion.V_1_9) && ViaVersionUtil.isAvailable && type.getId(player.getClientVersion()) > 23) {
                 event.setCancelled(true);
                 return;
             }
 
-            // ViaVersion dolphin's grace also messes us up, set it to a potion effect that doesn't exist on 1.12
-            // Effect 31 is bad omen
             if (player.getClientVersion().isOlderThan(ClientVersion.V_1_13) && ViaVersionUtil.isAvailable && type.getId(player.getClientVersion()) == 30) {
                 event.setCancelled(true);
                 return;
@@ -283,15 +254,13 @@ public class PacketEntityReplication extends DenemeProcessor implements PacketRe
 
             int entityID = attributes.getEntityId();
 
-            // The attributes for this entity is active, currently
             if (isDirectlyAffectingPlayer(player, entityID)) player.sendTransaction();
 
             player.latencyUtils.addRealTimeTask(player.lastTransactionSent.get(),
                     () -> player.compensatedEntities.updateAttributes(entityID, attributes.getProperties()));
         } else if (event.getPacketType() == PacketType.Play.Server.ENTITY_STATUS) {
             WrapperPlayServerEntityStatus status = new WrapperPlayServerEntityStatus(event);
-            // This hasn't changed from 1.7.2 to 1.17
-            // Needed to exempt players on dead vehicles, as dead entities have strange physics.
+
             if (status.getStatus() == 3) {
                 PacketEntity entity = player.compensatedEntities.getEntity(status.getEntityId());
 
@@ -312,7 +281,7 @@ public class PacketEntityReplication extends DenemeProcessor implements PacketRe
 
                 if (hookEntity.attached == player.entityID) {
                     player.sendTransaction();
-                    // We don't transaction sandwich this, it's too rare to be a real problem.
+
                     player.latencyUtils.addRealTimeTask(player.lastTransactionSent.get(), () -> player.uncertaintyHandler.fishingRodPulls.add(hookEntity.owner));
                 }
             }
@@ -345,7 +314,7 @@ public class PacketEntityReplication extends DenemeProcessor implements PacketRe
         } else if (event.getPacketType() == PacketType.Play.Server.WINDOW_ITEMS) {
             WrapperPlayServerWindowItems items = new WrapperPlayServerWindowItems(event);
 
-            if (items.getWindowId() == 0) { // Player inventory
+            if (items.getWindowId() == 0) {
                 Runnable task = () -> {
                     if (player.getClientVersion().isOlderThanOrEquals(ClientVersion.V_1_8)) {
                         player.packetStateData.setSlowedByUsingItem(false);
@@ -380,7 +349,6 @@ public class PacketEntityReplication extends DenemeProcessor implements PacketRe
             }
         }
 
-        // 1.8 clients fail to send the RELEASE_USE_ITEM packet when a window is opened client sided while using an item
         else if (event.getPacketType() == PacketType.Play.Server.OPEN_WINDOW) {
             player.latencyUtils.addRealTimeTask(player.lastTransactionSent.get(), () -> player.packetStateData.setSlowedByUsingItem(false));
             player.latencyUtils.addRealTimeTask(player.lastTransactionSent.get() + 1, () -> player.packetStateData.setSlowedByUsingItem(false));
@@ -397,29 +365,26 @@ public class PacketEntityReplication extends DenemeProcessor implements PacketRe
         } else if (event.getPacketType() == PacketType.Play.Server.ATTACH_ENTITY) {
             WrapperPlayServerAttachEntity attach = new WrapperPlayServerAttachEntity(event);
 
-            // This packet was replaced by the mount packet on 1.9+ servers - to support multiple passengers on one vehicle
             if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_9))
                 return;
 
-            // If this is mounting rather than leashing
             if (!attach.isLeash()) {
-                // Alright, let's convert this to the 1.9+ format to make it easier for deneme
+
                 int vehicleID = attach.getHoldingId();
                 int attachID = attach.getAttachedId();
                 TrackerData trackerData = player.compensatedEntities.getTrackedEntity(attachID);
 
                 if (trackerData != null) {
-                    // 1.8 sends a vehicle ID of -1 to dismount the entity from its vehicle
-                    // This is opposite of the 1.9+ format, which sends the vehicle ID and then an empty array.
-                    if (vehicleID == -1) { // Dismounting
+
+                    if (vehicleID == -1) {
                         vehicleID = trackerData.getLegacyPointEightMountedUpon();
-                        handleMountVehicle(event, vehicleID, new int[]{}); // The vehicle is empty
-                    } else { // Mounting
+                        handleMountVehicle(event, vehicleID, new int[]{});
+                    } else {
                         trackerData.setLegacyPointEightMountedUpon(vehicleID);
                         handleMountVehicle(event, vehicleID, new int[]{attachID});
                     }
                 } else {
-                    // I don't think we can recover from this... warn and move on as this shouldn't happen.
+
                     LogUtil.warn("Server sent an invalid attach entity packet for entity " + attach.getHoldingId() + " with passenger " + attach.getAttachedId() + "! The client ignores this.");
                 }
             }
@@ -431,7 +396,7 @@ public class PacketEntityReplication extends DenemeProcessor implements PacketRe
             for (int entityID : destroyEntityIds) {
                 despawnedEntitiesThisTransaction.add(entityID);
                 player.compensatedEntities.serverPositionsMap.remove(entityID);
-                // Remove the tracked vehicle (handling tracking knockback) if despawned
+
                 if (player.compensatedEntities.serverPlayerVehicle != null && player.compensatedEntities.serverPlayerVehicle == entityID) {
                     player.compensatedEntities.serverPlayerVehicle = null;
                 }
@@ -447,13 +412,11 @@ public class PacketEntityReplication extends DenemeProcessor implements PacketRe
                 }
             });
 
-            // Don't let the player freeze transactions to keep the firework boost velocity + uncertainty
-            // Also generally prevents people with high ping gaining too high an advantage in firework use
             if (maxFireworkBoostPing > 0) {
                 player.runNettyTaskInMs(() -> {
                     if (player.lastTransactionReceived.get() >= destroyTransaction) return;
                     for (int entityID : destroyEntityIds) {
-                        // If the player has a firework boosting them, setback
+
                         if (player.fireworks.hasFirework(entityID)) {
                             player.getSetbackTeleportUtil().executeViolationSetback();
                             break;
@@ -482,22 +445,19 @@ public class PacketEntityReplication extends DenemeProcessor implements PacketRe
         if (!inThisVehicle && wasInVehicle) {
             player.handleDismountVehicle(event);
         }
-        // Better lag compensation if we were affected by this
+
         if (wasInVehicle || inThisVehicle) {
             player.sendTransaction();
         }
         player.latencyUtils.addRealTimeTask(player.lastTransactionSent.get(), () -> {
             PacketEntity vehicle = player.compensatedEntities.getEntity(vehicleID);
 
-            // Vanilla likes sending null vehicles, so we must ignore those like the client ignores them
             if (vehicle == null) return;
 
-            // Eject existing passengers for this vehicle
             for (PacketEntity passenger : new ArrayList<>(vehicle.passengers)) {
                 passenger.eject();
             }
 
-            // Add the entities as vehicles
             for (int entityID : passengers) {
                 PacketEntity passenger = player.compensatedEntities.getEntity(entityID);
                 if (passenger == null) continue;
@@ -518,23 +478,14 @@ public class PacketEntityReplication extends DenemeProcessor implements PacketRe
         }
 
         if (isRelative) {
-            // There is a bug where vehicles may start flying due to mojang setting packet position on the client
-            // (Works at 0 ping but causes funny bugs at any higher ping)
-            // As we don't want vehicles to fly, we need to replace it with a teleport if it is player vehicle
-            //
-            // Don't bother with client controlled vehicles though
+
             boolean vanillaVehicleFlight = player.compensatedEntities.serverPlayerVehicle != null
                     && player.compensatedEntities.serverPlayerVehicle == entityId
                     && player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_9)
-                    // TODO: https://discord.com/channels/721686193061888071/721686193515003966/1310659538831020123
-                    // Why does the server now send an entity rel move packet matching the player's vehicle movement every time?
+
                     && PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_21_2)
                     && PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_9);
 
-            // ViaVersion sends two relative packets when moving more than 4 blocks
-            // This is broken and causes the client to interpolate like (0, 4) and (1, 3) instead of (1, 7)
-            // This causes impossible hits, so deneme must replace this with a teleport entity packet
-            // Not ideal, but neither is 1.8 players on a 1.9+ server.
             if (vanillaVehicleFlight ||
                     ((Math.abs(deltaX) >= 3.9375 || Math.abs(deltaY) >= 3.9375 || Math.abs(deltaZ) >= 3.9375) && player.getClientVersion().isOlderThan(ClientVersion.V_1_9) && PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_9))) {
                 Vector3d targetPosition = path != null ? path.getEndPosition() : new Vector3d(data.getX() + deltaX, data.getY() + deltaY, data.getZ() + deltaZ);
@@ -563,7 +514,6 @@ public class PacketEntityReplication extends DenemeProcessor implements PacketRe
             data.setYRot(pitch);
         }
 
-        // We can't hang two relative moves on one transaction
         if (data.getLastTransactionHung() == player.lastTransactionSent.get()) {
             player.sendTransaction();
         }
@@ -621,8 +571,7 @@ public class PacketEntityReplication extends DenemeProcessor implements PacketRe
         if (entity != null) {
             shouldTrackPoseTransition = EntityMetadataPoseUtil.usesPoseMetadata(entity);
         } else {
-            // If the client didn't respond to the spawn packet yet, we need to check if we should track the pose transition based on the entity type
-            // is there a better way to do this?
+
             TrackerData trackedEntity = player.compensatedEntities.getTrackedEntity(entityId);
             if (trackedEntity != null) {
                 shouldTrackPoseTransition = EntityMetadataPoseUtil.usesPoseMetadata(trackedEntity.getEntityType());
@@ -656,13 +605,13 @@ public class PacketEntityReplication extends DenemeProcessor implements PacketRe
 
     @Contract(pure = true)
     private boolean isDirectlyAffectingPlayer(@NotNull DenemePlayer player, int entityID) {
-        // The attributes for this entity is active, currently
+
         return (player.compensatedEntities.serverPlayerVehicle == null && entityID == player.entityID) ||
                 (player.compensatedEntities.serverPlayerVehicle != null && entityID == player.compensatedEntities.serverPlayerVehicle);
     }
 
     public void onEndOfTickEvent(boolean async, boolean flush) {
-        // Only send a transaction at the end of the tick if we are tracking players
+
         player.sendTransaction(async);
         if (flush) player.user.flushPackets();
     }

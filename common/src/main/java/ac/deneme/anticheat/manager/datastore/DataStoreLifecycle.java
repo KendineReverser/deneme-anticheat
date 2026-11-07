@@ -783,7 +783,7 @@ public final class DataStoreLifecycle implements StartableInitable, StoppableIni
             t.setDaemon(true);
             return t;
         });
-        // Boot never repairs; the first sweep runs one stale TTL plus jitter later, on this thread pool only.
+
         scheduleRecoverySweep(config.ownership().staleStartupTtlMs());
     }
 
@@ -811,7 +811,7 @@ public final class DataStoreLifecycle implements StartableInitable, StoppableIni
                 logger.log(Level.WARNING, "[deneme-datastore] recovery sweep failed", e);
             }
         }
-        // Fresh jitter on every tick keeps servers that booted together from sweeping in lockstep.
+
         scheduleRecoverySweep(current.ownership().recoverySweepIntervalMs());
     }
 
@@ -1122,7 +1122,7 @@ public final class DataStoreLifecycle implements StartableInitable, StoppableIni
             logger.warning("[deneme-datastore] skipping startup/session shutdown writes because DB ownership is no longer held");
             return;
         }
-        // Session events still queued in the ring must land before the set-based close, or they reopen the row.
+
         int queued = dataStore.drain(config.writePath().shutdownDrainTimeoutMs());
         if (queued > 0) logger.warning("[deneme-datastore] " + queued + " queued write(s) did not land before the session close");
         long now = dbNowBestEffort();
@@ -1187,8 +1187,7 @@ public final class DataStoreLifecycle implements StartableInitable, StoppableIni
         if (current.isPresent() && !nextStartup.equals(current.get().startupId())) {
             throw new IllegalStateException("session is owned by a different storage startup: " + session);
         }
-        // Missing rows are recreated by the final flush, including connections
-        // that joined while the database was unavailable.
+
     }
 
     void restorePersistenceAfterLeaseExpiry(ServerOwnershipGate expectedGate, OwnershipClaimResult claim) {
@@ -1207,8 +1206,7 @@ public final class DataStoreLifecycle implements StartableInitable, StoppableIni
             currentInstance = instanceId;
             stopRecoverySweep();
         }
-        // No lifecycle or player lock is held across DB I/O. Shutdown can stop
-        // the worker and close the old datastore while a recovery call is stuck.
+
         int queued = currentStore.drain(Math.max(1L, currentConfig.writePath().shutdownDrainTimeoutMs()));
         if (queued > 0) throw new IllegalStateException("waiting for " + queued + " old storage writes to drain");
         Runnable completed = () -> {};

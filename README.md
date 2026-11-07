@@ -5,21 +5,37 @@ re-implementation of the vanilla client tick, combat is verified against the ent
 positions the client was actually looking at, and rotations are checked statistically
 instead of against fixed thresholds.
 
-Target: Minecraft 1.21.11, Fabric loader 0.16+, Java 21.
+Target: Minecraft 1.21.11, Fabric loader 0.16+, Java 21 runtime.
 
 ## Build
 
+Fabric Loom 1.19 requires a Java 25 runtime for the build itself, the compiled classes
+target Java 17 and the toolchain is pinned to Java 21.
+
 ```
-./gradlew :fabric:build
+JAVA_HOME=/path/to/jdk-25 ./gradlew :fabric:build
 ```
 
 Artifact: `fabric/build/libs/deneme-anticheat-fabric-<version>.jar`
 
-PacketEvents is bundled inside the jar and relocated, so the server needs no extra
-plugin, mod or dependency. Only the jar goes into `mods/`.
+PacketEvents is nested inside the jar (see `libs/maven`), so the server needs nothing
+else installed. Only the jar goes into `mods/`.
 
-Building with `-PshadePE=false` produces a `lite` build that expects PacketEvents to be
-provided by the platform instead.
+## Detections
+
+Movement and knockback come from the simulation engine. On top of it this build adds
+statistical combat analysis, all of it severity based rather than single-event based:
+
+- `AimSensitivity` - every rotation is checked against the mouse sensitivity step the
+  client claims to use. Rotations that no sensitivity can produce are flagged.
+- `AimSnap` - a large rotation immediately followed by an attack, with a calm baseline
+  before it, repeated over several hits.
+- `ClickTiming` - attack intervals with machine level variance.
+- `SprintTamper` - sprint state rewritten inside the knockback tick, the classic
+  knockback reduction trick.
+
+The last three ship experimental and require `experimental-checks` to be enabled in the
+config. Nothing in this build punishes on a single event.
 
 ## Commands
 

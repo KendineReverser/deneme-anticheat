@@ -17,7 +17,6 @@ import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import java.util.List;
 import java.util.Set;
 
-// 1.21.4
 public class BlockEffectsResolverV1_21_4 implements BlockEffectsResolver {
 
     public static final BlockEffectsResolver INSTANCE = new BlockEffectsResolverV1_21_4();

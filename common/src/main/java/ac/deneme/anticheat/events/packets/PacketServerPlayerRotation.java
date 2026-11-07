@@ -31,7 +31,6 @@ public class PacketServerPlayerRotation extends PacketListenerAbstract {
 
         WrapperPlayServerPlayerRotation packet = new WrapperPlayServerPlayerRotation(event);
 
-        // I don't want to deal with this, so we'll prevent it
         if (!Float.isFinite(packet.getPitch())) {
             packet.setPitch(0);
             event.markForReEncode(true);

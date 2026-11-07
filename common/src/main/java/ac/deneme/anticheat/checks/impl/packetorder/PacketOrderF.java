@@ -77,7 +77,7 @@ public class PacketOrderF extends Check implements PacketReceiveListener, PostPr
                 if (flag(V.write(verbose()).str(actionName(action)).bool(sprinting).bool(sneaking)) && shouldModifyPackets()) {
                     if (event.getPacketType() == PacketType.Play.Client.PLAYER_DIGGING
                             && !canCancel(new WrapperPlayClientPlayerDigging(event).getAction())
-                    ) return; // don't cause a noslow
+                    ) return;
 
                     event.setCancelled(true);
                     player.onPacketCancel();

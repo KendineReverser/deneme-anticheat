@@ -56,7 +56,7 @@ public class BadPacketsH extends BlockPlaceCheck implements PacketReceiveListene
                     blockBreak.cancel();
                 }
             }
-            case CANCELLED_DIGGING -> { // other actions will be checked by BadPacketsL
+            case CANCELLED_DIGGING -> {
                 if (blockBreak.sequence != 0 && flagSequence(0, blockBreak.sequence) && shouldModifyPackets()) {
                     blockBreak.cancel();
                 }

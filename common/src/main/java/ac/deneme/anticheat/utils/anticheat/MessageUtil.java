@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 public class MessageUtil {
     private static final Pattern STRIP_COLOR_PATTERN = Pattern.compile("(?i)" + '§' + "[0-9A-FK-ORX]");
     private final Pattern HEX_PATTERN = Pattern.compile("([&§]#[A-Fa-f0-9]{6})|([&§]x([&§][A-Fa-f0-9]){6})");
-    private final char PLACEHOLDER_ESCAPE_CHAR = '\uFFFF'; // this specific character holds no significance
+    private final char PLACEHOLDER_ESCAPE_CHAR = '\uFFFF';
 
     public @NotNull String toUnlabledString(@Nullable Vector3d vec) {
         return vec == null ? "null" : vec.x + ", " + vec.y + ", " + vec.z;
@@ -67,83 +67,63 @@ public class MessageUtil {
     private @Nullable String replacePlaceholders(@Nullable DenemePlayer denemePlayer, @Nullable PlatformPlayer platformPlayer, @Nullable String string, boolean removeFormatting) {
         if (string == null) return null;
 
-        // --- PHASE 1: FAST PATH ---
-        // JVM Intrinsic: Scanning for a char is significantly faster than initializing a Regex Matcher.
-        // If there is no '%', we can skip all allocation.
         if (string.indexOf('%') == -1) {
-            // Since there are no % signs we can skip calling papi or our own replacement code
+
             return string;
         }
 
         final Matcher matcher = UNIFIED_PLACEHOLDER_PATTERN.matcher(string);
 
-        // If '%' exists but doesn't form a valid simple placeholder, skip to the PAPI/Legacy handler.
-        // This avoids allocating the StringBuilder below.
         if (!matcher.find()) {
             return DenemeAPI.INSTANCE.getMessagePlaceHolderManager().replacePlaceholders(platformPlayer, string);
         }
 
-        // Get references to the maps once, outside the loop.
         final Map<String, String> staticReplacements = DenemeAPI.INSTANCE.getExternalAPI().getStaticReplacements();
         final Map<String, Function<DenemeUser, String>> variableReplacements = DenemeAPI.INSTANCE.getExternalAPI().getVariableReplacements();
-        // 32 is a heuristic buffer. It roughly covers the expansion cost of one UUID (36 chars) vs one placeholder (6 chars).
+
         final StringBuilder sb = new StringBuilder(string.length() + 32);
 
-        // --- PHASE 2: THE REPLACEMENT LOOP ---
-        // Used do-while because the first `matcher.find()` was already called above.
         do {
-            // The full placeholder, e.g., "%tps%" or "%prefix%"
+
             final String keyWithPercent = matcher.group(0);
             String value = null;
 
-            // optimization: We check the static map first. This is a single, O(1) hash map lookup.
             String staticValue = staticReplacements.get(keyWithPercent);
 
             if (staticValue != null) {
                 value = staticValue;
             } else if (denemePlayer != null) {
-                // If it's not a static placeholder, check if it's a dynamic one.
-                // This is a second, O(1) hash map lookup.
+
                 final Function<DenemeUser, String> func = variableReplacements.get(keyWithPercent);
                 if (func != null) {
-                    // LAZY EVALUATION: We only call the expensive function (like getTPS)
-                    // if we actually found its placeholder in the string.
+
                     value = func.apply(denemePlayer);
                 }
             }
 
-            // If we found no replacement, `value` will be null.
-            // In that case, we treat the placeholder as literal text by appending the original key.
             if (value == null) {
                 value = keyWithPercent;
-            // yes the check for `removeFormatting` is inside the loop, but it's a simple boolean
-            // check and the cost is negligible compared to the string operations.
-            // Do NOT escape - this is probably a PAPI key that must remain intact
+
             } else if (removeFormatting) {
-                // Note: This assumes `escapeMarkdown` is reasonably fast.
-                // If it's slow, there are further micro-optimizations, but this is the right place for it.
+
                 value = CompiledDiscordTemplate.escapeMarkdown(value);
             }
 
-            // `appendReplacement` efficiently appends the text between matches and our replacement value.
-            // `Matcher.quoteReplacement` should handle any '$' or '\' in the replacement value.
             matcher.appendReplacement(sb, Matcher.quoteReplacement(value));
 
         } while (matcher.find());
 
-        // Append the final part of the string after the last found placeholder.
         matcher.appendTail(sb);
 
-        // Create the final string from our builder.
         String denemeReplaced = sb.toString();
 
         return DenemeAPI.INSTANCE.getMessagePlaceHolderManager().replacePlaceholders(platformPlayer, denemeReplaced).replace(PLACEHOLDER_ESCAPE_CHAR, '%');
     }
 
     public @NotNull Component replacePlaceholders(@NotNull DenemePlayer player, @NotNull Component component) {
-        // Replacement config that forces any placeholder replacement to be pure text
+
         final TextReplacementConfig safeReplacement = TextReplacementConfig.builder()
-                .match("%[a-zA-Z0-9_]+%") // Match placeholders
+                .match("%[a-zA-Z0-9_]+%")
                 .replacement(placeholder -> Component.text(replacePlaceholders(player, placeholder.content())))
                 .build();
         return component.replaceText(safeReplacement);
@@ -156,7 +136,6 @@ public class MessageUtil {
     public @NotNull Component miniMessage(@NotNull String string, TagResolver... resolvers) {
         string = string.replace("%prefix%", DenemeAPI.INSTANCE.getConfigManager().getConfig().getStringElse("prefix", "&bDeneme &8»"));
 
-        // hex codes
         Matcher matcher = HEX_PATTERN.matcher(string);
         StringBuilder sb = new StringBuilder(string.length());
 
@@ -166,7 +145,6 @@ public class MessageUtil {
 
         string = matcher.appendTail(sb).toString();
 
-        // MiniMessage doesn't like legacy formatting codes
         string = translateAlternateColorCodes('&', string)
                 .replace("§0", "<!b><!i><!u><!st><!obf><black>")
                 .replace("§1", "<!b><!i><!u><!st><!obf><dark_blue>")

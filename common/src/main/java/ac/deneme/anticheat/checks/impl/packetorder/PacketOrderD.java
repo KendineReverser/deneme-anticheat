@@ -43,7 +43,7 @@ public class PacketOrderD extends Check implements PreViaPacketReceiveListener {
                     if (action == InteractAction.INTERACT || player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_26_1)) {
                         if (!sentMainhand) {
                             if (flag(V.write(verbose())
-                                    .bool(true) // skipped mainhand
+                                    .bool(true)
                                     .sint(0)
                                     .sint(0)
                                     .bool(false)
@@ -58,7 +58,7 @@ public class PacketOrderD extends Check implements PreViaPacketReceiveListener {
                     if (action == InteractAction.INTERACT_AT) {
                         if (sneaking != requiredSneaking || entity != requiredEntity) {
                             if (flag(V.write(verbose())
-                                    .bool(false) // mismatch
+                                    .bool(false)
                                     .sint(requiredEntity)
                                     .sint(entity)
                                     .bool(requiredSneaking)

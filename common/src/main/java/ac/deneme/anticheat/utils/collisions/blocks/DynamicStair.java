@@ -91,7 +91,7 @@ public class DynamicStair implements CollisionFactory {
     }
 
     private static CollisionBox makeStairShape(int p_199781_0_, SimpleCollisionBox p_199781_1_, SimpleCollisionBox p_199781_2_, SimpleCollisionBox p_199781_3_, SimpleCollisionBox p_199781_4_, SimpleCollisionBox p_199781_5_) {
-        ComplexCollisionBox voxelshape = new ComplexCollisionBox(5, p_199781_1_); // can we do better than 5?
+        ComplexCollisionBox voxelshape = new ComplexCollisionBox(5, p_199781_1_);
         if ((p_199781_0_ & 1) != 0) {
             voxelshape.add(p_199781_2_);
         }
@@ -114,7 +114,7 @@ public class DynamicStair implements CollisionFactory {
     @Override
     public CollisionBox fetch(DenemePlayer player, ClientVersion version, WrappedBlockState block, int x, int y, int z) {
         int shapeOrdinal;
-        // If server is 1.13+ and client is also 1.13+, we can read the block's data directly
+
         if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_13)
                 && version.isNewerThanOrEquals(ClientVersion.V_1_13)) {
             shapeOrdinal = toEnumShape(block.getShape()).ordinal();

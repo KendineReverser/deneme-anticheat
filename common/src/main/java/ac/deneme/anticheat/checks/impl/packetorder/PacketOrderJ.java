@@ -20,7 +20,7 @@ public class PacketOrderJ extends Check implements PacketReceiveListener, PostPr
     @Override
     public void onPacketReceive(PacketReceiveEvent event) {
         if (event.getPacketType() == PacketType.Play.Client.PLAYER_BLOCK_PLACEMENT || event.getPacketType() == PacketType.Play.Client.USE_ITEM) {
-            // we don't check stabbing here because you don't need to target an entity to stab
+
             if (player.packetOrderProcessor.isAttacking() && !player.packetOrderProcessor.isInteracting()) {
                 if (!player.canSkipTicks()) {
                     if (flag() && shouldModifyPackets()) {

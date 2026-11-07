@@ -9,7 +9,7 @@ public class JavaVersion implements StartableInitable {
 
     @Override
     public void start() {
-        // Stolen from Via, stolen from Paper
+
         String javaVersion = System.getProperty("java.version");
         Matcher matcher = Pattern.compile("(?:1\\.)?(\\d+)").matcher(javaVersion);
         if (!matcher.find()) {

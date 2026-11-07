@@ -24,9 +24,9 @@ public class BadPacketsD extends Check implements PacketReceiveListener {
         if (event.getPacketType() == PacketType.Play.Client.PLAYER_ROTATION || event.getPacketType() == PacketType.Play.Client.PLAYER_POSITION_AND_ROTATION) {
             final float pitch = new WrapperPlayClientPlayerFlying(event).getLocation().getPitch();
             if (pitch > 90 || pitch < -90) {
-                // Ban.
+
                 if (flag(V.write(verbose()).f32(pitch)) && shouldModifyPackets()) {
-                    // prevent other checks from using an invalid pitch
+
                     if (player.pitch > 90) player.pitch = 90;
                     if (player.pitch < -90) player.pitch = -90;
 

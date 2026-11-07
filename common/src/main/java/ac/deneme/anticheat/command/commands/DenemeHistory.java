@@ -92,9 +92,6 @@ public class DenemeHistory implements BuildableCommand {
                         .handler(this::handleRepairCheckIds)
         );
 
-        // Bare + 'player'-prefixed forms; the prefix is the escape hatch
-        // for players whose name collides with a sibling literal at the
-        // same tree depth (today: 'repair', 'player').
         registerHistoryViewBranches(commandManager, false,
                 targetSuggestions, listPageNumberSuggestions,
                 sessionOrdinalSuggestions, violationPageSuggestions);
@@ -111,41 +108,35 @@ public class DenemeHistory implements BuildableCommand {
             SuggestionProvider<Sender> listPageNumberSuggestions,
             SuggestionProvider<Sender> sessionOrdinalSuggestions,
             SuggestionProvider<Sender> violationPageSuggestions) {
-        // Fresh builder per branch — reusing one cross-pollinates siblings.
+
         java.util.function.Supplier<Command.Builder<Sender>> base = () -> {
             Command.Builder<Sender> b = commandManager.commandBuilder("denemeac", "dac")
                     .literal("history", "hist")
                     .permission("deneme.history");
             if (withPlayerLiteral) b = b.literal("player");
-            // Brigadier's word parser rejects valid offline-mode names such as "*_Easy".
-            // QUOTED keeps ordinary names unchanged while allowing those names to be entered
-            // as quoted single arguments.
+
             return b.required("target", StringParser.quotedStringParser(), targetSuggestions);
         };
 
-        // handleSessionHelp echoes whichever prefix was used.
         final boolean viaPlayer = withPlayerLiteral;
 
-        // List, page 1
         commandManager.command(
                 applyFilterFlags(commandManager, base.get())
                         .handler(this::handleListPage1)
         );
-        // List, page N
+
         commandManager.command(
                 applyFilterFlags(commandManager, base.get()
                         .literal("page")
                         .required("page_number", IntegerParser.integerParser(1), listPageNumberSuggestions))
                         .handler(this::handleListPageN)
         );
-        // Help branch on bare 'session' — Cloud would otherwise reject with
-        // a parse error that reads like a syntax mistake, not a hint.
+
         commandManager.command(
                 base.get().literal("session")
                         .handler(ctx -> handleSessionHelp(ctx, viaPlayer))
         );
-        // 'session' literal at the same tree slot as 'page'; session-ordinal is
-        // String so it accepts 'latest' / 'last' / 'l' alongside integers.
+
         commandManager.command(
                 applyFilterFlags(commandManager, base.get()
                         .literal("session")
@@ -156,7 +147,7 @@ public class DenemeHistory implements BuildableCommand {
                                 .withDescription(Description.of("Include the raw verbose text inline on each line (also always available on hover)."))))
                         .handler(this::handleDetailDefaultPage)
         );
-        // Detail, violation page N
+
         commandManager.command(
                 applyFilterFlags(commandManager, base.get()
                         .literal("session")
@@ -251,10 +242,7 @@ public class DenemeHistory implements BuildableCommand {
     private void handleSessionHelp(CommandContext<Sender> ctx, boolean viaPlayer) {
         Sender sender = ctx.sender();
         String target = ctx.get("target");
-        // Echo the exact prefix the operator used so the printed examples
-        // dispatch on the same branch — a target that needed the 'player'
-        // escape hatch (e.g. someone named 'repair') would route through
-        // the wrong literal if the help printed the bare form.
+
         String addressPrefix = "/deneme history " + (viaPlayer ? "player " : "");
         sender.sendMessage(Component.text()
                 .append(Component.text(addressPrefix, NamedTextColor.GRAY))
@@ -373,9 +361,7 @@ public class DenemeHistory implements BuildableCommand {
 
     private void runWithPrelude(Sender sender, String target, HistoryAction action) {
         DataStoreLifecycle lifecycle = DenemeAPI.INSTANCE.getDataStoreLifecycle();
-        // enabled=false when database.yml turns the feature off; loaded=false
-        // when start() caught an init failure. Distinguish in the message so
-        // the operator knows whether to flip config or check the log.
+
         if (lifecycle == null || !lifecycle.isEnabled()) {
             sender.sendMessage(message("deneme-history-disabled",
                     "%prefix% &cHistory subsystem is disabled!", Map.of()));
@@ -410,8 +396,7 @@ public class DenemeHistory implements BuildableCommand {
             }
             sendHistoryMessages(sender, action.run(targetUuid, target, lifecycle, history));
         } catch (Exception e) {
-            // Some exception types carry a null message; fall back to the
-            // class name so operators still see *something* useful.
+
             sendHistoryMessage(sender, message("deneme-history-failed",
                     "%prefix% &cFailed to load history: &7%error%",
                     Map.of("error", e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage())));
@@ -431,10 +416,6 @@ public class DenemeHistory implements BuildableCommand {
                 .listSessions(uuid, cursor, entriesPerPage)
                 .toCompletableFuture().get(10, TimeUnit.SECONDS);
 
-        // Filter active: keep only sessions with at least one matching
-        // violation. Costs N+1 detail fetches per visible page — acceptable
-        // at the page-size limit. Unfiltered path keeps the original single
-        // listSessions query.
         if (filter != null) result = filterSessionsByDetail(history, uuid, result, filter);
 
         UUID ongoingSessionId = ongoingSessionIdFor(lifecycle, uuid);
@@ -453,8 +434,7 @@ public class DenemeHistory implements BuildableCommand {
                 if (d == null) continue;
                 if (d.violations().stream().anyMatch(filter)) kept.add(s);
             } catch (Exception ignored) {
-                // Skip sessions whose detail fetch fails — under-show beats
-                // blocking the whole page on one slow row.
+
             }
         }
         return new Page<>(kept, result.nextCursor());
@@ -675,8 +655,6 @@ public class DenemeHistory implements BuildableCommand {
         return lifecycle.sessionTracker().currentSessionId(player);
     }
 
-    // ---- suggestion providers ----
-
     /**
      * Online players + offline name-prefix matches from the datastore
      * (sorted by {@code last_seen} desc). Empty prefix skips the offline
@@ -729,7 +707,7 @@ public class DenemeHistory implements BuildableCommand {
                     }
                 }
             } catch (Exception e) {
-                // Datastore unavailable or timed out — online-only fallback already populated.
+
             }
             return out;
         });
@@ -801,9 +779,7 @@ public class DenemeHistory implements BuildableCommand {
                         .toCompletableFuture().get(1, TimeUnit.SECONDS);
                 if (detail == null) return List.of();
                 int entriesPerPage = dsl.config().history().entriesPerPage();
-                // Page unit depends on --detailed; without that info here, suggest
-                // the larger of the two so we never under-offer. Detailed mode
-                // paginates violations (larger count); grouped paginates buckets.
+
                 int rows = Math.max(detail.violations().size(), detail.buckets().size());
                 int maxPages = Math.max(1, (rows + entriesPerPage - 1) / Math.max(1, entriesPerPage));
                 return rangeSuggestions(1, Math.min(maxPages, MAX_SUGGESTIONS));

@@ -113,6 +113,7 @@ Punishments:
     remove-violations-after: 300
     checks:
       - "Autoclicker"
+      - "ClickTiming"
     commands:
       - "20:40 [alert]"
       - "1:1 [log]"

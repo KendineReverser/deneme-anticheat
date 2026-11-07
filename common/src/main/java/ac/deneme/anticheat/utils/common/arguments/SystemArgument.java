@@ -14,8 +14,7 @@ public record SystemArgument<T>(String key, Class<T> clazz, T value, boolean set
         try {
             return value == null ? otherwise : mapper.apply(value);
         } catch (Exception e) {
-            //TODO: add back logging once LogUtil has been refactored
-            //LogUtil.exception("Failed to map value for argument " + key, e);
+
         }
         return otherwise;
     }
@@ -33,9 +32,9 @@ public record SystemArgument<T>(String key, Class<T> clazz, T value, boolean set
     }
 
     public enum Visibility {
-        VISIBLE, // visible from commands
-        HIDDEN, // only visible in console
-        SECRET // only visible in console if set
+        VISIBLE,
+        HIDDEN,
+        SECRET
     }
 
 }

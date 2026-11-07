@@ -63,7 +63,7 @@ public final class PistonBlockEvent {
 
         ClientVersion version = player.getClientVersion();
         boolean modern = version.isNewerThanOrEquals(ClientVersion.V_1_13);
-        // Without our world changes the push is still given, which is all the old event listeners did
+
         boolean changeWorld = !GeyserUtil.isBedrockPlayer(player.user.getUUID()) && (action != DROP || modern);
 
         BlockFace facing = piston.getFacing();
@@ -78,23 +78,22 @@ public final class PistonBlockEvent {
                 push.add(structure, structure.toPush, facing);
                 if (changeWorld) {
                     moveBlocks(world, structure, head, facing, true);
-                    // The base is extended from here, so its face no longer fills the block
+
                     WrappedBlockState extended = piston.clone();
                     extended.setExtended(true);
                     world.updateBlock(x, y, z, extended.getGlobalId());
                 }
             } else {
-                // The client won't move anything, as its world doesn't let it, yet the server moved something: it will
-                // send that next tick. Allow the straight line it could have been.
+
                 push.add(structure, straightLine(structure, head, facing), facing);
             }
-            // The head, coming out of the base
+
             push.boxes.add(box(head));
             return push.toData(base, facing, lastTransactionSent, true);
         }
 
         BlockFace pull = facing.getOppositeFace();
-        // The head goes back into the base, wherever the client takes it away
+
         push.boxes.add(box(head));
         if (changeWorld) {
             world.updateBlock(base.x(), base.y(), base.z(), movingPiston(facing).getGlobalId());
@@ -113,7 +112,7 @@ public final class PistonBlockEvent {
                 && structure.isPushable(pulled, front, pull, false, facing)
                 && (structure.reaction(pulled.getType()) == Reaction.NORMAL || PistonStructure.isPiston(pulled.getType()));
         if (pulls) {
-            // moveBlocks takes the head away first, then may still find the blocks won't come
+
             if (changeWorld) setAir(world, head);
             if (structure.resolve()) {
                 push.add(structure, structure.toPush, pull);

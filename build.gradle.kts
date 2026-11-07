@@ -25,6 +25,12 @@ tasks.register("printVersion") {
     }
 }
 
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+
 subprojects {
     tasks.withType<JavaCompile>().configureEach {
         options.isIncremental = true

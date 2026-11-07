@@ -21,7 +21,7 @@ public final class PacketOrderProcessor extends DenemeProcessor implements Packe
         super(player);
     }
 
-    private boolean openingInventory; // only pre 1.12 clients on pre 1.12 servers
+    private boolean openingInventory;
     private boolean swapping;
     private boolean dropping;
     private boolean interacting;

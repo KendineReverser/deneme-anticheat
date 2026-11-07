@@ -34,9 +34,8 @@ public class PacketServerTeleport extends PacketListenerAbstract {
 
             Vector3d pos = new Vector3d(teleport.getX(), teleport.getY(), teleport.getZ());
 
-            // This is the first packet sent to the client which we need to track
             if (player.getSetbackTeleportUtil().getRequiredSetBack() == null) {
-                // Player teleport event gets called AFTER player join event
+
                 player.x = teleport.getX();
                 player.y = teleport.getY();
                 player.z = teleport.getZ();
@@ -52,12 +51,6 @@ public class PacketServerTeleport extends PacketListenerAbstract {
                 player.pollData();
             }
 
-            // Convert relative teleports to normal teleports
-            // We have to do this because 1.8 players on 1.9+ get teleports changed by ViaVersion
-            // Additionally, velocity is kept after relative teleports making predictions difficult
-            // The added complexity isn't worth a feature that I have never seen used
-            //
-            // If you do actually need this make an issue on GitHub with an explanation for why
             if (player.getClientVersion().isOlderThanOrEquals(ClientVersion.V_1_8) || player.inVehicle()) {
                 boolean relativeX = teleport.isRelativeFlag(RelativeFlag.X),
                         relativeY = teleport.isRelativeFlag(RelativeFlag.Y),
@@ -110,7 +103,6 @@ public class PacketServerTeleport extends PacketListenerAbstract {
                 }
             }
 
-            // 1.21.2+ client ignore teleports if player is inside vehicle, ABSOLUTE CINEMA MOJANG
             if (player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_21_2) && player.compensatedEntities.serverPlayerVehicle != null) {
                 pos = player.getSetbackTeleportUtil().lastKnownGoodPosition.getPos();
             }
@@ -120,11 +112,10 @@ public class PacketServerTeleport extends PacketListenerAbstract {
             event.getTasksAfterSend().add(player::sendTransaction);
 
             if (teleport.isDismountVehicle()) {
-                // Remove player from vehicle
+
                 event.getTasksAfterSend().add(() -> player.compensatedEntities.self.eject());
             }
 
-            // For some reason, teleports on 1.7 are offset by 1.62?
             if (event.getServerVersion().isOlderThan(ServerVersion.V_1_8))
                 pos = pos.withY(pos.getY() - 1.62);
 

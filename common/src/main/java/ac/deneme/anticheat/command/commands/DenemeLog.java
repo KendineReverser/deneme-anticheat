@@ -48,7 +48,7 @@ public class DenemeLog implements BuildableCommand {
             urlConn.setConnectTimeout(CommonDenemeArguments.URL_TIMEOUT.value());
             urlConn.setReadTimeout(CommonDenemeArguments.URL_TIMEOUT.value());
             urlConn.addRequestProperty("User-Agent", "DenemeAC/" + DenemeAPI.INSTANCE.getExternalAPI().getDenemeVersion());
-            urlConn.addRequestProperty("Content-Type", type); // Not really yaml, but looks nicer than plaintext
+            urlConn.addRequestProperty("Content-Type", type);
             urlConn.setRequestProperty("Content-Length", Integer.toString(log.length()));
             try (OutputStream stream = urlConn.getOutputStream()) {
                 stream.write(log.getBytes(StandardCharsets.UTF_8));

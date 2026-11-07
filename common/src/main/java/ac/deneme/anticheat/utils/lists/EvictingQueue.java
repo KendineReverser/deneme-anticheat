@@ -2,8 +2,6 @@ package ac.deneme.anticheat.utils.lists;
 
 import java.util.ArrayList;
 
-// https://stackoverflow.com/a/21047889
-// License: Originally CC By-SA 4.0 licensed as GPL
 public class EvictingQueue<K> extends ArrayList<K> {
     private final int maxSize;
 

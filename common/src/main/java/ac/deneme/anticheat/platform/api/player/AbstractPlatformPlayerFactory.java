@@ -14,19 +14,17 @@ public abstract class AbstractPlatformPlayerFactory<T> implements PlatformPlayer
 
     @Override
     public final @Nullable PlatformPlayer getFromUUID(@NotNull UUID uuid) {
-        // Check cache first
+
         PlatformPlayer cachedPlayer = cache.getPlayer(uuid);
         if (cachedPlayer != null) {
             return cachedPlayer;
         }
 
-        // If not in cache, get the native player
         T nativePlayer = getNativePlayer(uuid);
         if (nativePlayer == null) {
             return null;
         }
 
-        // Create new PlatformPlayer and cache it
         PlatformPlayer platformPlayer = createPlatformPlayer(nativePlayer);
         return cache.addOrGetPlayer(uuid, platformPlayer);
     }
@@ -38,7 +36,6 @@ public abstract class AbstractPlatformPlayerFactory<T> implements PlatformPlayer
             return null;
         }
 
-        // Create new PlatformPlayer and cache it
         PlatformPlayer platformPlayer = createPlatformPlayer(nativePlayer);
         return cache.addOrGetPlayer(platformPlayer.getUniqueId(), platformPlayer);
     }
@@ -49,13 +46,11 @@ public abstract class AbstractPlatformPlayerFactory<T> implements PlatformPlayer
         T nativePlayer = (T) Objects.requireNonNull(playerObject, "playerObject");
         UUID uuid = getPlayerUUID(nativePlayer);
 
-        // Check cache first
         PlatformPlayer cachedPlayer = cache.getPlayer(uuid);
         if (cachedPlayer != null) {
             return cachedPlayer;
         }
 
-        // Create new PlatformPlayer and cache it
         PlatformPlayer platformPlayer = createPlatformPlayer(nativePlayer);
         return cache.addOrGetPlayer(uuid, platformPlayer);
     }
@@ -69,7 +64,6 @@ public abstract class AbstractPlatformPlayerFactory<T> implements PlatformPlayer
     public Collection<PlatformPlayer> getOnlinePlayers() {
         Collection<T> nativePlayers = getNativeOnlinePlayers();
 
-        // Pre-allocate the list with the expected size to avoid resizing
         List<PlatformPlayer> platformPlayers = new ArrayList<>(nativePlayers.size());
 
         for (T nativePlayer : nativePlayers) {
@@ -113,7 +107,6 @@ public abstract class AbstractPlatformPlayerFactory<T> implements PlatformPlayer
      * @return a collection of native player objects
      */
     protected abstract Collection<T> getNativeOnlinePlayers();
-
 
     @Override
     public abstract OfflinePlatformPlayer getOfflineFromUUID(@NotNull UUID uuid);

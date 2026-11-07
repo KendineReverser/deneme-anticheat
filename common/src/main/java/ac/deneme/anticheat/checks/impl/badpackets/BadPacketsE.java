@@ -35,7 +35,7 @@ public class BadPacketsE extends Check implements PacketReceiveListener {
             }
         } else if (event.getPacketType() == PacketType.Play.Client.STEER_VEHICLE
                 || (isViaPleaseStopUsingProtocolHacksOnYourServer && player.inVehicle())) {
-            noReminderTicks = 0; // Exempt vehicles
+            noReminderTicks = 0;
         }
     }
 

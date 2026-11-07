@@ -23,7 +23,7 @@ public class Riptide {
         } else if (off.getType() == ItemTypes.TRIDENT) {
             riptideLevel = off.getEnchantmentLevel(EnchantmentTypes.RIPTIDE);
         } else {
-            return new Vector3dm(); // Can't riptide
+            return new Vector3dm();
         }
 
         float yaw = DenemeMath.radians(player.yaw);
@@ -34,8 +34,6 @@ public class Riptide {
         float z = player.trigHandler.cos(yaw) * pitchCos;
         float multiplier = (3f * ((1f + riptideLevel) / 4f)) / ((float) Math.sqrt(x * x + y * y + z * z));
 
-        // If the player collided vertically with the 1.199999F pushing movement, then the Y additional movement was added
-        // (We switched the order around as our prediction engine isn't designed for the proper implementation)
         return new Vector3dm(x * multiplier, player.verticalCollision ? 0 : y * multiplier, z * multiplier);
     }
 }

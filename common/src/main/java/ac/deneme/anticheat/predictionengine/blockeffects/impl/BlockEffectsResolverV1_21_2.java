@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-// 1.21.2-1.21.3
 public class BlockEffectsResolverV1_21_2 implements BlockEffectsResolver {
 
     public static final BlockEffectsResolver INSTANCE = new BlockEffectsResolverV1_21_2();

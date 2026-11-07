@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 public final class SuperDebug extends DenemeProcessor implements PostPredictionListener {
-    private static final StringBuilder[] flags = new StringBuilder[256]; //  17 MB of logs in memory
+    private static final StringBuilder[] flags = new StringBuilder[256];
 
     private final Object2IntMap<StringBuilder> continuedDebug = new Object2IntOpenHashMap<>();
 
@@ -74,7 +74,7 @@ public final class SuperDebug extends DenemeProcessor implements PostPredictionL
         firstBreadExplosion.add(player.firstBreadExplosion == null ? null : player.firstBreadExplosion.vector.clone());
         likelyExplosions.add(player.likelyExplosions == null ? null : player.likelyExplosions.vector.clone());
 
-        if (predictionComplete.getIdentifier() == 0) return; // 1 - 256 are valid possible values
+        if (predictionComplete.getIdentifier() == 0) return;
 
         StringBuilder sb = new StringBuilder();
         sb.append("Deneme Version: ").append(DenemeAPI.INSTANCE.getExternalAPI().getDenemeVersion());
@@ -160,7 +160,6 @@ public final class SuperDebug extends DenemeProcessor implements PostPredictionL
         int maxLength = 0;
         int maxPosLength = 0;
 
-        // We can use Math.log10() to calculate the length of the number without string concatenation
         for (int y = DenemeMath.floor(player.boundingBox.minY) - 2; y <= DenemeMath.ceil(player.boundingBox.maxY) + 2; y++) {
             for (int z = DenemeMath.floor(player.boundingBox.minZ) - 2; z <= DenemeMath.ceil(player.boundingBox.maxZ) + 2; z++) {
                 maxPosLength = (int) Math.max(maxPosLength, Math.ceil(Math.log10(Math.abs(z))));
@@ -172,8 +171,8 @@ public final class SuperDebug extends DenemeProcessor implements PostPredictionL
             }
         }
 
-        maxPosLength += 4; // To handle "x: [num] "
-        maxLength++; // Add a space between blocks
+        maxPosLength += 4;
+        maxLength++;
 
         for (int y = DenemeMath.ceil(player.boundingBox.maxY) + 2; y >= DenemeMath.floor(player.boundingBox.minY) - 2; y--) {
             sb.append("y: ");
@@ -235,7 +234,6 @@ public final class SuperDebug extends DenemeProcessor implements PostPredictionL
             sb.append("Jump\n");
         }
 
-        // Apply 0.003/0.005 to make numbers more accurate
         Set<VectorData> set = new HashSet<>(Collections.singletonList(new VectorData(startTick.clone(), VectorData.VectorType.BestVelPicked)));
         new PredictionEngine().applyMovementThreshold(player, set);
         Vector3dm trueStartVel = ((VectorData) set.toArray()[0]).vector;
@@ -276,7 +274,6 @@ public final class SuperDebug extends DenemeProcessor implements PostPredictionL
         sb.append(simulatedMovement);
         sb.append(" length: ");
         sb.append(simulatedMovement.length());
-
 
         sb.append("\n\n");
     }

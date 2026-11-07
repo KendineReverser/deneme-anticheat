@@ -27,8 +27,6 @@ final class YamlMapImpl implements YamlMap {
         this.writeLog = writeLog;
     }
 
-    // ----- reads -----
-
     @Override
     public @Nullable Object get(@NotNull String dottedPath) {
         return walkRead(root, dottedPath);
@@ -100,8 +98,6 @@ final class YamlMapImpl implements YamlMap {
         return walkRead(root, dottedPath) != null;
     }
 
-    // ----- writes -----
-
     @Override
     public @NotNull YamlMap put(@NotNull String dottedPath, @NotNull Object value) {
         walkWrite(root, dottedPath, value);
@@ -125,11 +121,9 @@ final class YamlMapImpl implements YamlMap {
         return this;
     }
 
-    // ----- internals -----
-
     @SuppressWarnings("unchecked")
     private static @Nullable Object walkRead(Map<String, Object> root, String dottedPath) {
-        if (dottedPath.isEmpty()) return root; // empty path = root map view
+        if (dottedPath.isEmpty()) return root;
         String[] parts = dottedPath.split("\\.");
         Object cursor = root;
         for (String part : parts) {

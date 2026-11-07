@@ -24,36 +24,30 @@ public class LegacyItem extends ItemBehaviour {
     public boolean canUse(ItemStack item, CompensatedWorld world, DenemePlayer player, InteractionHand hand) {
         final ItemType material = item.getType();
 
-        // Check for data component stuff on 1.21.2+
         final ItemConsumable consumable = item.getComponentOr(ComponentTypes.CONSUMABLE, null);
         final FoodProperties foodComponent = item.getComponentOr(ComponentTypes.FOOD, null);
 
-        // The food component can override the consumable component, as it provides conditions for using the item
         if (player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_21_2) && consumable != null && foodComponent == null) {
             return true;
         }
 
-        // Check for data component stuff on 1.20.5+
         if (player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_20_5) && foodComponent != null) {
             if (foodComponent.isCanAlwaysEat() || player.food < 20 || player.gamemode == GameMode.CREATIVE) {
                 return true;
             }
         }
 
-        // 1.14 and below players cannot eat in creative, exceptions are potions or milk
         if (material.hasAttribute(ItemTypes.ItemAttribute.EDIBLE) &&
                 (player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_15) || player.gamemode != GameMode.CREATIVE)
                 || material == ItemTypes.POTION || material == ItemTypes.MILK_BUCKET) {
 
-            // Pls have this mapped correctly retrooper
             if (material == ItemTypes.SPLASH_POTION)
                 return false;
-            // 1.8 splash potion
+
             if (PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_9) && item.getLegacyData() > 16384) {
                 return false;
             }
 
-            // Eatable items that don't require any hunger to eat
             if (material == ItemTypes.POTION || material == ItemTypes.MILK_BUCKET
                     || material == ItemTypes.GOLDEN_APPLE || material == ItemTypes.ENCHANTED_GOLDEN_APPLE
                     || material == ItemTypes.HONEY_BOTTLE || material == ItemTypes.SUSPICIOUS_STEW ||
@@ -61,7 +55,6 @@ public class LegacyItem extends ItemBehaviour {
                 return true;
             }
 
-            // The other items that do require it
             if (material.hasAttribute(ItemTypes.ItemAttribute.EDIBLE) && ((player.platformPlayer != null && player.food < 20) || player.gamemode == GameMode.CREATIVE)) {
                 return true;
             }
@@ -71,28 +64,20 @@ public class LegacyItem extends ItemBehaviour {
             return true;
         }
 
-        // Avoid releasing crossbow as being seen as slowing player
-        final NBTCompound nbt = item.getNBT(); // How can this be null?
+        final NBTCompound nbt = item.getNBT();
         if (material == ItemTypes.CROSSBOW && nbt != null && nbt.getBoolean("Charged")) {
-            return false; // TODO: Fix this
+            return false;
         }
 
-        // The client and server don't agree on trident status because mojang is incompetent at netcode.
         if (material == ItemTypes.TRIDENT
-                && item.getDamageValue() < item.getMaxDamage() - 1 // Player can't use item if it's "about to break"
+                && item.getDamageValue() < item.getMaxDamage() - 1
                 && (player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_13_2)
                 || player.getClientVersion().isOlderThanOrEquals(ClientVersion.V_1_8))) {
             return item.getEnchantmentLevel(EnchantmentTypes.RIPTIDE) <= 0;
         }
 
-        // Players in survival can't use a bow without an arrow
-        // Crossbow charge checked previously
         if (material == ItemTypes.BOW || material == ItemTypes.CROSSBOW) {
-            // TODO: How do we lag compensate arrows? Mojang removed idle packet.
-            // I think we may have to cancel the bukkit event if the player isn't slowed
-            // On 1.8, it wouldn't be too bad to handle bows correctly
-            // But on 1.9+, no idle packet and clients/servers don't agree on bow status
-            // Mojang pls fix
+
             return false;
         }
 
@@ -104,11 +89,10 @@ public class LegacyItem extends ItemBehaviour {
             return true;
         }
 
-        // Only 1.8 and below players can block with swords
         if (material.hasAttribute(ItemTypes.ItemAttribute.SWORD)) {
             if (player.getClientVersion().isOlderThanOrEquals(ClientVersion.V_1_8)) {
                 return true;
-            } else if (PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_9)) { // ViaVersion stuff
+            } else if (PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_9)) {
                 return player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_21_4);
             }
         }

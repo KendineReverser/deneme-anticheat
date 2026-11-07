@@ -11,7 +11,7 @@ public record RotationData(
 
     public static RotationData fromServer(ClientVersion version, float yaw, float pitch, boolean relativeYaw, boolean relativePitch, int transaction) {
         if (!relativePitch) {
-            // since 1.21.9, PLAYER_ROTATION clamps in calculateAbsolute before setXRot
+
             if (version.isOlderThan(ClientVersion.V_1_21_9)) pitch %= 360.0F;
             pitch = DenemeMath.clamp(pitch, -90.0F, 90.0F);
         }
@@ -21,7 +21,7 @@ public record RotationData(
 
     @Contract(pure = true)
     public boolean allowRotation(float yaw, float pitch) {
-        // TODO: pitch bounds?
+
         return (this.relativeYaw || this.yaw == yaw) && (this.relativePitch || this.pitch == pitch);
     }
 }

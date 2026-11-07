@@ -21,8 +21,6 @@ public class BadPacketsM extends Check implements PreViaPacketReceiveListener, P
         super(player);
     }
 
-    // not a boolean because the server could send packets that cause
-    // the client to send a respawn packet before it receives the first
     private int exempt;
     private boolean menu;
 
@@ -39,10 +37,9 @@ public class BadPacketsM extends Check implements PreViaPacketReceiveListener, P
         }
 
         if (!player.compensatedEntities.self.isDead && !menu) {
-            flag(); // don't cancel in case of a false positive
+            flag();
         }
 
-        // the client closes the menu and reopens it if dead
         menu = player.compensatedEntities.self.isDead && player.packetStateData.showsDeathScreen;
     }
 
@@ -57,13 +54,12 @@ public class BadPacketsM extends Check implements PreViaPacketReceiveListener, P
             if (packet.getReason() != WrapperPlayServerChangeGameState.Reason.WIN_GAME) return;
 
             if (packet.getValue() != 0 && packet.getValue() != 1) {
-                return; // client ignores this
+                return;
             }
 
             player.sendTransaction();
             player.addRealTimeTaskNow(() -> {
-                // we COULD get a DEATH_COMBAT_EVENT/COMBAT_EVENT while the credits are rolling, (IF packet.getValue == 1)
-                // but this can only cause at most one false negative (for each of this packet sent)
+
                 exempt++;
                 menu = false;
             });
@@ -93,10 +89,9 @@ public class BadPacketsM extends Check implements PreViaPacketReceiveListener, P
     }
 
     public void onRespawn() {
-        menu = false; // the client closes any open screens on respawn
+        menu = false;
     }
 
-    // the menu is actually kept when the player's health is set to >0
     public void onDeath() {
         if (player.packetStateData.showsDeathScreen) {
             menu = true;

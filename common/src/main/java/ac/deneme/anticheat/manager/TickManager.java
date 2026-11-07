@@ -10,7 +10,7 @@ import com.google.common.collect.ClassToInstanceMap;
 import com.google.common.collect.ImmutableClassToInstanceMap;
 
 public class TickManager {
-    // Overflows after 4 years of uptime
+
     public int currentTick;
     private final ClassToInstanceMap<Tickable> syncTick;
     private final ClassToInstanceMap<Tickable> asyncTick;
@@ -21,9 +21,9 @@ public class TickManager {
                 .build();
 
         asyncTick = new ImmutableClassToInstanceMap.Builder<Tickable>()
-                .put(ClientVersionSetter.class, new ClientVersionSetter()) // Async because permission lookups might take a while, depending on the plugin
+                .put(ClientVersionSetter.class, new ClientVersionSetter())
                 .put(TickPermissions.class, new TickPermissions())
-                .put(TickInventory.class, new TickInventory()) // Async because I've never gotten an exception from this.  It's probably safe.
+                .put(TickInventory.class, new TickInventory())
                 .put(ClearRecentlyUpdatedBlocks.class, new ClearRecentlyUpdatedBlocks())
                 .build();
     }

@@ -32,7 +32,7 @@ public class BedStateTracker extends PacketListenerAbstract {
             if (player.entityID != bed.getEntityId()) return;
 
             Vector3i bedPos = bed.getPosition();
-            // Split so packet received after transaction
+
             player.latencyUtils.addRealTimeTask(player.lastTransactionSent.get(), () -> {
                 player.isInBed = true;
                 player.bedPosition = new Vector3d(bedPos.getX() + 0.5, bedPos.getY(), bedPos.getZ() + 0.5);
@@ -43,7 +43,7 @@ public class BedStateTracker extends PacketListenerAbstract {
 
             WrapperPlayServerEntityAnimation animation = new WrapperPlayServerEntityAnimation(event);
             if (player.entityID == animation.getEntityId() && animation.getType() == WrapperPlayServerEntityAnimation.EntityAnimationType.WAKE_UP) {
-                // Split so packet received before transaction
+
                 player.latencyUtils.addRealTimeTask(player.lastTransactionSent.get() + 1, () -> player.isInBed = false);
                 event.getTasksAfterSend().add(player::sendTransaction);
             }

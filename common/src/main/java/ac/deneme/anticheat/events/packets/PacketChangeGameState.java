@@ -31,7 +31,6 @@ public class PacketChangeGameState extends DenemeProcessor implements PacketSend
                     GameMode previous = player.gamemode;
                     int gamemode = (int) packet.getValue();
 
-                    // Some plugins send invalid values such as -1, this is what the client does
                     if (gamemode < 0 || gamemode >= GameMode.values().length) {
                         player.gamemode = GameMode.SURVIVAL;
                     } else {

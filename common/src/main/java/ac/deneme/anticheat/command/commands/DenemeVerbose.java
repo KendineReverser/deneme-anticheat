@@ -33,10 +33,7 @@ public class DenemeVerbose implements BuildableCommand {
             am.setVerboseEnabled(player, newState, false);
             PlayerToggleStore toggles = DenemeAPI.INSTANCE.getDataStoreLifecycle().playerToggleStore();
             toggles.applyUserToggle(player.getUniqueId(), PlayerToggleStore.KEY_VERBOSE, newState);
-            // setVerboseEnabled(true) cascades to setAlertsEnabled(true) in AlertManager
-            // — mirror that into the toggle store so the persisted alerts row tracks the
-            // implied state, otherwise a verbose-on staff member would re-toggle alerts
-            // off on next reconnect when persisted alerts is still false.
+
             if (newState) toggles.applyUserToggle(player.getUniqueId(), PlayerToggleStore.KEY_ALERTS, true);
         } else if (sender.isConsole()) {
             DenemeAPI.INSTANCE.getAlertManager().toggleConsoleVerbose();

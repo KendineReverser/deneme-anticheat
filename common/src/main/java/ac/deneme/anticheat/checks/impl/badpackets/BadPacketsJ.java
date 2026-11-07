@@ -56,7 +56,7 @@ public class BadPacketsJ extends Check implements PacketReceiveListener {
 
         if (this.rotations > 0 && isTickPacket(event.getPacketType())) {
             if (this.yaw != player.yaw || this.pitch != player.pitch) {
-                // due to tick skipping, the rotations sent could be last tick's
+
                 boolean allowLast = player.canSkipTicks()
                         && (event.getPacketType() == PacketType.Play.Client.PLAYER_POSITION_AND_ROTATION
                         || event.getPacketType() == PacketType.Play.Client.PLAYER_ROTATION);

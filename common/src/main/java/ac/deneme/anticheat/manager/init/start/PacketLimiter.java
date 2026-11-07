@@ -8,7 +8,7 @@ public class PacketLimiter implements StartableInitable {
     public void start() {
         DenemeAPI.INSTANCE.getScheduler().getAsyncScheduler().runAtFixedRate(DenemeAPI.INSTANCE.getDenemePlugin(), () -> {
             for (DenemePlayer player : DenemeAPI.INSTANCE.getPlayerDataManager().getEntries()) {
-                // Avoid concurrent reading on an integer as it's results are unknown
+
                 player.cancelledPackets.set(0);
             }
         }, 1, 20);

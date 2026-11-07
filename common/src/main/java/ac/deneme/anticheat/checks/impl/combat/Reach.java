@@ -1,18 +1,4 @@
-// This file was designed and is an original check for DenemeAC
-// Copyright (C) 2021 DefineOutside
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 package ac.deneme.anticheat.checks.impl.combat;
 
 import ac.deneme.anticheat.api.config.ConfigManager;
@@ -54,7 +40,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-// You may not copy the check unless you are licensed under GPL
 @CheckData(name = "Reach", stableKey = "deneme.combat.reach", description = "Attacked an entity from too far away")
 public class Reach extends Check implements PacketReceiveListener {
     private static final Verbose V = Verbose.of("{f64:%.5f} blocks, type={entity}");
@@ -64,12 +49,11 @@ public class Reach extends Check implements PacketReceiveListener {
             EntityTypes.CHEST_BOAT,
             EntityTypes.SHULKER);
     private static final CheckResult NONE = new CheckResult(ResultType.NONE, 0, 0, false);
-    // Only one flag per reach attack, per entity, per tick.
-    // We store position because lastX isn't reliable on teleports.
+
     private final Int2ObjectMap<InteractionData> playerAttackQueue = new Int2ObjectOpenHashMap<>();
     private boolean cancelImpossibleHits;
     private double threshold;
-    private double cancelBuffer; // For the next 4 hits after using reach, we aggressively cancel reach
+    private double cancelBuffer;
 
     public Reach(DenemePlayer player) {
         super(player);
@@ -87,14 +71,13 @@ public class Reach extends Check implements PacketReceiveListener {
             onInteract(event, packet.getEntityId(), packet.getAction() == WrapperPlayClientInteractEntity.InteractAction.ATTACK ? InteractionHand.MAIN_HAND : packet.getHand());
         }
 
-        // If the player set their look, or we know they have a new tick
         if (isUpdate(event.getPacketType())) {
             tickBetterReachCheckWithAngle();
         }
     }
 
     private void onInteract(PacketReceiveEvent event, int entityId, InteractionHand hand) {
-        // Don't let the player teleport to bypass reach
+
         if (player.getSetbackTeleportUtil().shouldBlockMovement()) {
             event.setCancelled(true);
             player.onPacketCancel();
@@ -102,11 +85,9 @@ public class Reach extends Check implements PacketReceiveListener {
         }
 
         PacketEntity entity = player.compensatedEntities.entityMap.get(entityId);
-        // Stop people from freezing transactions before an entity spawns to bypass reach
-        // TODO: implement dragon parts?
+
         if (entity == null || entity instanceof PacketEntityEnderDragonPart) {
-            // Only cancel if and only if we are tracking this entity
-            // This is because we don't track paintings.
+
             if (shouldModifyPackets() && player.compensatedEntities.serverPositionsMap.containsKey(entityId)) {
                 event.setCancelled(true);
                 player.onPacketCancel();
@@ -114,13 +95,11 @@ public class Reach extends Check implements PacketReceiveListener {
             return;
         }
 
-        // Dead entities cause false flags (https://github.com/DenemeAnticheat/Deneme/issues/546)
         if (entity.isDead) return;
 
-        // TODO: Remove when in front of via
         if (entity.getType() == EntityTypes.ARMOR_STAND && player.getClientVersion().isOlderThan(ClientVersion.V_1_8))
             return;
-        // Prevents Happy Ghast Reach false on 1.21.6+ servers with ViaBackwards set up
+
         if (entity.getType() == EntityTypes.HAPPY_GHAST && player.getClientVersion().isOlderThan(ClientVersion.V_1_21_6))
             return;
         if (player.gamemode == GameMode.CREATIVE || player.gamemode == GameMode.SPECTATOR)
@@ -159,21 +138,17 @@ public class Reach extends Check implements PacketReceiveListener {
                 }
             }
 
-            // If the start stack has no range component, the client defaults to vanilla reach behavior,
-            // regardless of what the current stack is (No Range -> X = No Range used).
             if (startRange != null) {
                 hasRange = true;
                 if (currentRange == null) {
-                    // Range (Start) -> No Range (Current)
-                    // Client logic uses Start Range, including the attack_range movement projection.
+
                     if (!clientAndViaVersion) {
                         attackRangeMovement = player.clientVelocity.clone();
                     }
                     maxReach = startRange.getMaxRange();
                     hitboxMargin = startRange.getHitboxMargin();
                 } else {
-                    // Range (Start) -> Range (Current)
-                    // Client logic requires satisfying BOTH constraints
+
                     maxReach = Math.min(startRange.getMaxRange(), currentRange.getMaxRange());
                     hitboxMargin = Math.min(startRange.getHitboxMargin(), currentRange.getHitboxMargin());
                 }
@@ -185,7 +160,7 @@ public class Reach extends Check implements PacketReceiveListener {
             playerAttackQueue.put(entityId, new InteractionData(
                     player.x, player.y, player.z,
                     hasRange, maxReach, hitboxMargin, attackRangeMovement
-            )); // Queue for next tick for very precise check
+            ));
         }
 
         boolean knownInvalid = attackRangeMovement == null && isKnownInvalid(entity, hasRange, maxReach, hitboxMargin);
@@ -196,24 +171,15 @@ public class Reach extends Check implements PacketReceiveListener {
         }
     }
 
-    // This method finds the most optimal point at which the user should be aiming at
-    // and then measures the distance between the player's eyes and this target point
-    //
-    // It will not cancel every invalid attack but should cancel 3.05+ or so in real-time
-    // Let the post look check measure the distance, as it will always return equal or higher
-    // than this method.  If this method flags, the other method WILL flag.
-    //
-    // Meaning that the other check should be the only one that flags.
     private boolean isKnownInvalid(PacketEntity reachEntity, boolean hasAttackRange, float itemMaxReach, float itemHitboxMargin) {
-        // If the entity doesn't exist, or if it is exempt, or if it is dead
+
         if ((blacklisted.contains(reachEntity.getType()) || !reachEntity.isLivingEntity) && reachEntity.getType() != EntityTypes.END_CRYSTAL)
-            return false; // exempt
+            return false;
 
         if (player.gamemode == GameMode.CREATIVE || player.gamemode == GameMode.SPECTATOR)
             return false;
         if (player.inVehicle()) return false;
 
-        // Filter out what we assume to be cheats
         if (cancelBuffer != 0) {
             CheckResult result = checkReach(reachEntity, player.x, player.y, player.z, hasAttackRange, itemMaxReach, itemHitboxMargin, null, true);
             return result.isFlag();
@@ -263,23 +229,19 @@ public class Reach extends Check implements PacketReceiveListener {
         double maxReach = applyReachModifiers(targetBox, hasAttackRange, itemMaxReach, itemHitboxMargin, !player.packetStateData.didLastLastMovementIncludePosition) + movementAllowance;
         double minDistance = Double.MAX_VALUE;
 
-        // https://bugs.mojang.com/browse/MC-67665
         List<Vector3dm> possibleLookDirs = new ArrayList<>(Collections.singletonList(ReachUtils.getLook(player, player.yaw, player.pitch)));
 
-        // If we are a tick behind, we don't know their next look so don't bother doing this
         if (!isPrediction) {
-            // 1.7 players do not have any of these issues! They are always on the latest look vector
+
             if (player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_8)) {
                 possibleLookDirs.add(ReachUtils.getLook(player, player.lastYaw, player.pitch));
 
-                // 1.9+ players could be a tick behind because we don't get skipped ticks
                 if (player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_9)) {
                     possibleLookDirs.add(ReachUtils.getLook(player, player.lastYaw, player.lastPitch));
                 }
             }
         }
 
-        // +3 would be 3 + 3 = 6, which is the pre-1.20.5 behaviour, preventing "Missed Hitbox"
         final double distance = maxReach + 3;
 
         final double[] possibleEyeHeights = player.getPossibleEyeHeights();
@@ -303,7 +265,6 @@ public class Reach extends Check implements PacketReceiveListener {
             }
         }
 
-        // if the entity is not exempt and the entity is alive
         if ((!blacklisted.contains(reachEntity.getType()) && reachEntity.isLivingEntity) || reachEntity.getType() == EntityTypes.END_CRYSTAL) {
             if (minDistance == Double.MAX_VALUE) {
                 cancelBuffer = 1;
@@ -320,7 +281,7 @@ public class Reach extends Check implements PacketReceiveListener {
     }
 
     private SimpleCollisionBox getTargetBox(PacketEntity reachEntity) {
-        if (reachEntity.getType() == EntityTypes.END_CRYSTAL) { // Hardcode end crystal box
+        if (reachEntity.getType() == EntityTypes.END_CRYSTAL) {
             return new SimpleCollisionBox(reachEntity.trackedServerPosition.getPos().subtract(1, 0, 1), reachEntity.trackedServerPosition.getPos().add(1, 2, 1));
         }
         return reachEntity.getPossibleCollisionBoxes();
@@ -350,18 +311,12 @@ public class Reach extends Check implements PacketReceiveListener {
             hitboxMargin += itemHitboxMargin;
         } else {
             maxReach = player.compensatedEntities.self.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE);
-            // 1.7 and 1.8 players get a bit of extra hitbox (this is why you should use 1.8 on cross version servers)
-            // Yes, this is vanilla and not uncertainty.  All reach checks have this or they are wrong.
+
             if (player.getClientVersion().isOlderThan(ClientVersion.V_1_9)) {
                 hitboxMargin += 0.1f;
             }
         }
 
-        // This is better than adding to the reach, as 0.03 can cause a player to miss their target
-        // Adds some more than 0.03 uncertainty in some cases, but a good trade off for simplicity
-        //
-        // Just give the uncertainty on 1.9+ clients as we have no way of knowing whether they had 0.03 movement
-        // However, on 1.21.2+ we do know if they had 0.03 movement
         if (giveMovementThreshold || player.canSkipTicks()) {
             hitboxMargin += player.getMovementThreshold();
         }

@@ -31,7 +31,6 @@ public class VectorUtils {
         return new Vector3dm(vector3d.getX(), vector3d.getY(), vector3d.getZ());
     }
 
-    // Clamping stops the player from causing an integer overflow and crashing the netty thread
     @Contract("_ -> new")
     public static @NotNull Vector3d clampVector(@NotNull Vector3d toClamp) {
         double x = DenemeMath.clamp(toClamp.getX(), -3.0E7D, 3.0E7D);

@@ -26,7 +26,6 @@ public class ChatC extends Check implements PreViaPacketReceiveListener {
         super(player);
     }
 
-    // optionally allow cheats like autogg
     private @Nullable Predicate<String> exemptRegex;
 
     @Override

@@ -4,13 +4,18 @@ import versioning.BuildConfig
 val minecraft_version: String by project
 
 plugins {
-    maven-publish
+    `maven-publish`
     alias(libs.plugins.fabric.loom.unobfuscated)
     deneme.`base-conventions`
     deneme.`jij-conventions`
 }
 
 repositories {
+    maven {
+        name = "bundled"
+        url = uri(rootProject.file("libs/maven"))
+    }
+
     exclusive("https://maven.fabricmc.net/") {
         includeGroup("net.fabricmc")
         includeGroup("net.fabricmc.fabric-api")
@@ -23,7 +28,7 @@ dependencies {
 
     include(project(":fabric:shared"))
     include(project(":fabric:intermediary"))
-    include(files(rootProject.file("libs/packetevents-fabric.jar")))
+    include("ac.deneme:packetevents-fabric:2.14.1")
 }
 
 publishing.publications.create<MavenPublication>("maven") {

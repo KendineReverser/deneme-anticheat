@@ -23,21 +23,18 @@ public class DenemeDebug implements BuildableCommand {
     public void register(CommandManager<Sender> commandManager, CloudPlatformCommandArguments arguments) {
         Command.Builder<Sender> denemeCommand = commandManager.commandBuilder("denemeac", "dac");
 
-        // Register "debug" subcommand
         Command.Builder<Sender> debugCommand = denemeCommand
                 .literal("debug", Description.of("Toggle debug output for a player"))
                 .permission("deneme.debug")
                 .optional("target", arguments.singlePlayerSelectorParser())
                 .handler(this::handleDebug);
 
-        // Register "consoledebug" subcommand
         Command.Builder<Sender> consoleDebugCommand = denemeCommand
                 .literal("consoledebug", Description.of("Toggle console debug output for a player"))
                 .permission("deneme.consoledebug")
                 .required("target", arguments.singlePlayerSelectorParser())
                 .handler(this::handleConsoleDebug);
 
-        // Register command
         commandManager.command(debugCommand);
         commandManager.command(consoleDebugCommand);
     }
@@ -77,7 +74,7 @@ public class DenemeDebug implements BuildableCommand {
         if (denemePlayer == null) return;
 
         boolean isOutput = denemePlayer.checkManager.getDebugHandler().toggleConsoleOutput();
-        String playerName = denemePlayer.user.getProfile().getName(); // Use user profile for name
+        String playerName = denemePlayer.user.getProfile().getName();
 
         Component message = Component.text()
                 .append(Component.text("Console output for ", NamedTextColor.GRAY))

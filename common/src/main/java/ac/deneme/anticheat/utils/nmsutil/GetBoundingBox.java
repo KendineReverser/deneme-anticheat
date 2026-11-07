@@ -24,10 +24,6 @@ public class GetBoundingBox {
         return getBoundingBoxFromPosAndSize(entity, centerX, minY, centerZ, width, height);
     }
 
-    // Size regular: 0.6 width 1.8 height
-    // Size shifting on 1.14+ (19w12a): 0.6 width 1.5 height
-    // Size while gliding/swimming: 0.6 width 0.6 height
-    // Size while sleeping: 0.2 width 0.2 height
     public static @NotNull SimpleCollisionBox getPlayerBoundingBox(@NotNull DenemePlayer player, double centerX, double minY, double centerZ) {
         float width = player.pose.width;
         float height = player.pose.height;
@@ -51,8 +47,6 @@ public class GetBoundingBox {
         double minZ = centerZ - (width / 2f);
         double maxZ = centerZ + (width / 2f);
 
-        // it's possible for width and/or height to be negative,
-        // correct the order of min and max
         return new SimpleCollisionBox(
                 Math.min(minX, maxX),
                 Math.min(minY, maxY),
@@ -78,14 +72,12 @@ public class GetBoundingBox {
         double halfDepth = dimensions[2] / 2.0;
 
         double minX = box.minX - halfWidth;
-        double minY = box.minY; // No downward expansion
+        double minY = box.minY;
         double minZ = box.minZ - halfDepth;
         double maxX = box.maxX + halfWidth;
         double maxY = box.maxY + height;
         double maxZ = box.maxZ + halfDepth;
 
-        // it's possible for width and/or height to be negative,
-        // correct the order of min and max
         box.minX = Math.min(minX, maxX);
         box.minY = Math.min(minY, maxY);
         box.minZ = Math.min(minZ, maxZ);

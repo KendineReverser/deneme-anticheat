@@ -24,10 +24,8 @@ public final class PredictionEngineRideableUtils {
         if (!(player.compensatedEntities.self.getRiding() instanceof JumpableEntity jumpable))
             return possibleVectors;
 
-        // TODO: onGround can desync if it's first riding tick
         jumpable.executeJump(player, possibleVectors);
 
-        // More jumping stuff
         boolean legacyJumpingMechanics = player.getClientVersion().isOlderThanOrEquals(ClientVersion.V_1_19_3);
         boolean onGround = legacyJumpingMechanics
                 ? player.clientControlledVerticalCollision
@@ -52,8 +50,6 @@ public final class PredictionEngineRideableUtils {
             result.input = new Vector3dm(player.vehicleData.vehicleForward, 0, player.vehicleData.vehicleHorizontal);
             addStuckSpeedResults(player, returnVectors, result);
 
-            // This is the laziest way to reduce false positives such as horse rearing
-            // No bypasses can ever be derived from this, so why not?
             result = new VectorData(possibleLastTickOutput.vector.clone(), possibleLastTickOutput, VectorData.VectorType.InputResult);
             result.input = new Vector3dm(player.vehicleData.vehicleForward, 0, player.vehicleData.vehicleHorizontal);
             addStuckSpeedResults(player, returnVectors, result);
@@ -64,7 +60,7 @@ public final class PredictionEngineRideableUtils {
 
     private static void addStuckSpeedResults(DenemePlayer player, List<VectorData> returnVectors, VectorData result) {
         if (player.uncertaintyHandler.shouldSimulateStuckSpeed) {
-            // only simulate no stuck speed if player is leaving
+
             if (player.uncertaintyHandler.stuckSpeedMultiplierMask == 0 || !player.isForceStuckSpeed())
                 addStuckSpeedResult(player, returnVectors, result, null);
             addStuckSpeedResult(player, returnVectors, result, player.stuckSpeedMultiplier);

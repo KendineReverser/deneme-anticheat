@@ -32,20 +32,19 @@ public class Inventory extends AbstractContainerMenu {
         this.setPlayerInventory(this);
         this.inventoryStorage = inventoryStorage;
 
-        // Result slot
         addSlot(new ResultSlot(inventoryStorage, 0));
-        // Crafting slots
+
         for (int i = 0; i < 4; i++) {
             addSlot(new Slot(inventoryStorage, i));
         }
         for (int i = 0; i < 4; i++) {
             addSlot(new EquipmentSlot(EquipmentType.byArmorID(i), inventoryStorage, i + 4));
         }
-        // Inventory slots
+
         for (int i = 0; i < 9 * 4; i++) {
             addSlot(new Slot(inventoryStorage, i + 9));
         }
-        // Offhand
+
         addSlot(new Slot(inventoryStorage, 45));
     }
 
@@ -79,7 +78,7 @@ public class Inventory extends AbstractContainerMenu {
     }
 
     public ItemStack getHotbar(@Range(from = 0, to = 8) int slot) {
-        //noinspection ConstantValue
+
         if (slot > 8 || slot < 0) throw new IllegalArgumentException("slot must be from 0 to 8, got " + slot);
         return inventoryStorage.getItem(slot + HOTBAR_OFFSET);
     }
@@ -254,7 +253,7 @@ public class Inventory extends AbstractContainerMenu {
 
     @Override
     public boolean canTakeItemForPickAll(ItemStack p_38908_, Slot p_38909_) {
-        return p_38909_.inventoryStorageSlot != 0; // Result slot
+        return p_38909_.inventoryStorageSlot != 0;
     }
 
     public void setSelected(int selected) {

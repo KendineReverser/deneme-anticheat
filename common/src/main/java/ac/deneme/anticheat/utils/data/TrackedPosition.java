@@ -15,7 +15,7 @@ public final class TrackedPosition {
     private Vector3d pos = new Vector3d();
 
     public TrackedPosition() {
-//        this.scale = player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_9) ? MODERN_COORDINATE_SCALE : LEGACY_COORDINATE_SCALE;
+
         this.scale = MODERN_COORDINATE_SCALE;
     }
 
@@ -35,7 +35,6 @@ public final class TrackedPosition {
         return value / scale;
     }
 
-    // Method since 1.16.
     public Vector3d withDelta(long x, long y, long z) {
         if (x == 0L && y == 0L && z == 0L) {
             return this.pos;
@@ -47,7 +46,6 @@ public final class TrackedPosition {
         return new Vector3d(d, e, f);
     }
 
-    // In 1.16-, this was different.
     public Vector3d withDeltaLegacy(double x, double y, double z) {
         double d = unpackLegacy(packLegacy(this.pos.x, scale) + x);
         double e = unpackLegacy(packLegacy(this.pos.y, scale) + y);

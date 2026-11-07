@@ -14,7 +14,7 @@ public class BadPacketsF extends Check implements PreViaPacketReceiveListener {
     private static final Verbose V = Verbose.of("state={bool}");
 
     public boolean lastSprinting;
-    public boolean exemptNext = true; // Support 1.14+ clients starting on either true or false sprinting, we don't know
+    public boolean exemptNext = true;
 
     public BadPacketsF(DenemePlayer player) {
         super(player);

@@ -25,7 +25,7 @@ public class InvalidBreak extends Check implements BlockBreakListener {
         }
 
         if (blockBreak.faceId < 0 || blockBreak.faceId > 5) {
-            // ban
+
             if (flag(V.write(verbose())
                     .sint(blockBreak.faceId)
                     .uint(VerboseCodecs.enumId(blockBreak.action))) && shouldModifyPackets()) {

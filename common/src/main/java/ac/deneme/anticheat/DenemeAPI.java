@@ -69,7 +69,6 @@ public final class DenemeAPI {
         this.externalAPI = new DenemeExternalAPI(this);
     }
 
-    // the order matters
     private static Platform detectPlatform() {
         Platform override = CommonDenemeArguments.PLATFORM_OVERRIDE.value();
         if (override != null) return override;

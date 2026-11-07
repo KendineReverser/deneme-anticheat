@@ -21,14 +21,13 @@ import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 
 public class DynamicHitboxFence extends DynamicConnecting implements HitBoxFactory {
     private static final CollisionBox[] MODERN_HITBOXES = makeShapes(2.0F, 2.0F, 24.0F, 0.0F, 24.0F, true, 1);
-    // no ComplexCollisionBox produced by makeShapes is every larger than 5 SimpleCollisionBoxes
+
     private static final int MAX_MODERN_HITBOX_COMPLEX_COLLISION_BOX_SIZE = 5;
     public static final SimpleCollisionBox[] LEGACY_HITBOXES = new SimpleCollisionBox[]{new SimpleCollisionBox(0.375D, 0.0D, 0.375D, 0.625D, 1.0D, 0.625D), new SimpleCollisionBox(0.375D, 0.0D, 0.375D, 0.625D, 1.0D, 1.0D), new SimpleCollisionBox(0.0D, 0.0D, 0.375D, 0.625D, 1.0D, 0.625D), new SimpleCollisionBox(0.0D, 0.0D, 0.375D, 0.625D, 1.0D, 1.0D), new SimpleCollisionBox(0.375D, 0.0D, 0.0D, 0.625D, 1.0D, 0.625D), new SimpleCollisionBox(0.375D, 0.0D, 0.0D, 0.625D, 1.0D, 1.0D), new SimpleCollisionBox(0.0D, 0.0D, 0.0D, 0.625D, 1.0D, 0.625D), new SimpleCollisionBox(0.0D, 0.0D, 0.0D, 0.625D, 1.0D, 1.0D), new SimpleCollisionBox(0.375D, 0.0D, 0.375D, 1.0D, 1.0D, 0.625D), new SimpleCollisionBox(0.375D, 0.0D, 0.375D, 1.0D, 1.0D, 1.0D), new SimpleCollisionBox(0.0D, 0.0D, 0.375D, 1.0D, 1.0D, 0.625D), new SimpleCollisionBox(0.0D, 0.0D, 0.375D, 1.0D, 1.0D, 1.0D), new SimpleCollisionBox(0.375D, 0.0D, 0.0D, 1.0D, 1.0D, 0.625D), new SimpleCollisionBox(0.375D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D), new SimpleCollisionBox(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 0.625D), new SimpleCollisionBox(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D)};
 
     static {
         SimpleCollisionBox[] boxes = new SimpleCollisionBox[MAX_MODERN_HITBOX_COMPLEX_COLLISION_BOX_SIZE];
 
-        // we start from one because MODERN_HITBOXES[0] is a NoCollisionBox
         for (int i = 1; i < MODERN_HITBOXES.length; i++) {
             CollisionBox collisionBox = MODERN_HITBOXES[i];
             int size = collisionBox.downCast(boxes);
@@ -50,7 +49,6 @@ public class DynamicHitboxFence extends DynamicConnecting implements HitBoxFacto
         boolean south;
         boolean west;
 
-        // 1.13+ servers on 1.13+ clients send the full fence data
         if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_13)
                 && version.isNewerThanOrEquals(ClientVersion.V_1_13)) {
             east = block.getEast() != East.FALSE;
@@ -67,7 +65,6 @@ public class DynamicHitboxFence extends DynamicConnecting implements HitBoxFacto
         return version.isNewerThanOrEquals(ClientVersion.V_1_12_2)
                 ? getModernCollisionBox(north, east, south, west)
                 : getLegacyCollisionBox(north, east, south, west);
-
 
     }
 

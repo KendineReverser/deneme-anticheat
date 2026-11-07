@@ -16,7 +16,6 @@ import java.util.Objects;
 
 import static com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying.isFlying;
 
-// Not everything has to be a check for it to process packets & be configurable
 public class DenemeProcessor implements AbstractProcessor, ConfigReloadable, ConfigReloadObserver {
 
     protected final @NotNull DenemePlayer player;
@@ -63,8 +62,7 @@ public class DenemeProcessor implements AbstractProcessor, ConfigReloadable, Con
 
     public final boolean isUpdate(PacketTypeCommon packetType) {
         return isFlying(packetType)
-                // ViaBackwards emulates this packet for clients older than 1.21.2, and it can arrive
-                // before the movement packet of the same client tick, so it tells us nothing about them
+
                 || packetType == PacketType.Play.Client.CLIENT_TICK_END && player.supportsEndTickPreVia()
                 || isTransaction(packetType);
     }
@@ -84,8 +82,7 @@ public class DenemeProcessor implements AbstractProcessor, ConfigReloadable, Con
     }
 
     public final boolean isTickPacketIncludingNonMovement(PacketTypeCommon packetType) {
-        // On 1.21.2+ fall back to the TICK_END packet IF the player did not send a movement packet for their tick
-        // TickTimer checks to see if player did not send a tick end packet before new flying packet is sent
+
         if (player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_21_2)
                 && !player.packetStateData.didSendMovementBeforeTickEnd) {
             if (packetType == PacketType.Play.Client.CLIENT_TICK_END) {
@@ -96,10 +93,9 @@ public class DenemeProcessor implements AbstractProcessor, ConfigReloadable, Con
         return isFlying(packetType);
     }
 
-    // prevent causing exploits with packet cancelling (ie NoSlow)
     public final boolean canCancel(DiggingAction action) {
         return action != DiggingAction.RELEASE_USE_ITEM
-                // we check client version here because 1.8- doesn't predict dropping items, so we can cancel them. (see CompensatedInventory)
+
                 && (action != DiggingAction.DROP_ITEM && action != DiggingAction.DROP_ITEM_STACK || player.getClientVersion().isOlderThanOrEquals(ClientVersion.V_1_8));
     }
 }

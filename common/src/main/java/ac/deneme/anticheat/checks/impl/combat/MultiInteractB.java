@@ -33,7 +33,7 @@ public class MultiInteractB extends Check implements PacketReceiveListener, Post
             if (packet.getAction() != WrapperPlayClientInteractEntity.InteractAction.INTERACT_AT) return;
 
             Vector3d pos = packet.getLocation();
-            if (pos == null) return; // shouldn't ever happen, but whatever
+            if (pos == null) return;
 
             if (hasInteracted && !pos.equals(lastPos)) {
                 if (!player.canSkipTicks()) {

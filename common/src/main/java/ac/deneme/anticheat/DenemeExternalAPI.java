@@ -27,12 +27,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-// This is used for deneme's external API. It has its own class just for organization.
 public class DenemeExternalAPI implements DenemeAbstractAPI, ConfigReloadObserver, StartableInitable {
 
-    // Holder class — DenemeExternalAPI is constructed inside DenemeAPI's ctor,
-    // so a plain static-final would see a null DenemeAPI.INSTANCE. Holder
-    // init runs on first fire, after DenemeAPI is fully built.
     private static final class Channels {
         static final DenemeReloadEvent.Channel RELOAD = DenemeAPI.INSTANCE.getEventBus().get(DenemeReloadEvent.class);
     }
@@ -153,13 +149,11 @@ public class DenemeExternalAPI implements DenemeAbstractAPI, ConfigReloadObserve
         return api.getBackendRegistry();
     }
 
-    // on load, load the config & register the service
     public void load() {
         reload(configManagerFile);
         api.getLoader().registerAPIService();
     }
 
-    // handles any config loading that's needed to be done after load
     @Override
     public void start() {
         started = true;
@@ -218,19 +212,19 @@ public class DenemeExternalAPI implements DenemeAbstractAPI, ConfigReloadObserve
         } else {
             configManager = newConfig;
         }
-        // Update variables
+
         updateVariables();
-        // Restart
+
         DenemeAPI.INSTANCE.getAlertManager().reload(configManager);
         DenemeAPI.INSTANCE.getDiscordManager().reload();
         DenemeAPI.INSTANCE.getSpectateManager().reload();
-        // First-load guard: load() calls reload() before start() runs, so this fires once with started=false before the datastore exists. Subsequent /deneme reload calls see started=true and proceed (including disabled→enabled flips — DataStoreLifecycle.reload() re-evaluates builder.enabled() each time).
+
         if (!started) return;
-        // Hot-reload picks up backend swaps + routing + connection-pool edits without a server restart. Drains in-flight writes for shutdown-drain-timeout-ms then drops; brief mid-reload unavailability is the tradeoff.
+
         if (DenemeAPI.INSTANCE.getDataStoreLifecycle() != null) {
             DenemeAPI.INSTANCE.getDataStoreLifecycle().reload();
         }
-        // Reload checks for all players
+
         for (DenemePlayer player : DenemeAPI.INSTANCE.getPlayerDataManager().getEntries()) {
             player.runSafely(() -> player.reload(configManager));
         }
@@ -246,7 +240,7 @@ public class DenemeExternalAPI implements DenemeAbstractAPI, ConfigReloadObserve
         variableReplacements.putIfAbsent("%fast_math%", user -> !user.isVanillaMath() + "");
         variableReplacements.putIfAbsent("%tps%", user -> String.format("%.2f", DenemeAPI.INSTANCE.getPlatformServer().getTPS()));
         variableReplacements.putIfAbsent("%version%", DenemeUser::getVersionName);
-        // static variables
+
         staticReplacements.put("%prefix%", MessageUtil.translateAlternateColorCodes('&', DenemeAPI.INSTANCE.getConfigManager().getPrefix()));
         staticReplacements.putIfAbsent("%deneme_version%", getDenemeVersion());
     }

@@ -112,11 +112,12 @@ Punishments:
     commands:
       - "20:40 [alert]"
       - "1:1 [log]"
-  # As of 2.2.10, there are no AutoClicker checks and this is a placeholder. Deneme will include AutoClicker checks in the future.
+  # Click interval analysis and any future click based checks.
   Autoclicker:
     remove-violations-after: 300
     checks:
       - "Autoclicker"
+      - "ClickTiming"
     commands:
       - "20:40 [alert]"
       - "1:1 [log]"

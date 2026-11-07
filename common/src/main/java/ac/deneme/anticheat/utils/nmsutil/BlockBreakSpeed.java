@@ -32,7 +32,7 @@ import java.util.Set;
 
 @UtilityClass
 public class BlockBreakSpeed {
-    // temporary hardcode to workaround PE bug https://github.com/retrooper/packetevents/issues/1217; see https://github.com/DenemeAnticheat/Deneme/issues/2117
+
     private static final Set<StateType> HARVESTABLE_TYPES_1_21_4 = Sets.newHashSet(
             StateTypes.BELL,
             StateTypes.LANTERN,
@@ -54,7 +54,6 @@ public class BlockBreakSpeed {
             StateTypes.ENDER_CHEST
     );
 
-    // another temporary hardcode for the same reasons as above; see https://github.com/DenemeAnticheat/Deneme/issues/2574
     private static final Set<StateType> HARVESTABLE_TYPES_1_21 = Sets.newHashSet(
             StateTypes.VAULT
     );
@@ -78,8 +77,7 @@ public class BlockBreakSpeed {
     }
 
     public static double getBlockDamage(DenemePlayer player, ItemStack tool, StateType block) {
-        // GET destroy speed
-        // Starts with itemstack get destroy speed
+
         ItemType toolType = tool.getType();
 
         if (player.gamemode == GameMode.CREATIVE) {
@@ -99,12 +97,11 @@ public class BlockBreakSpeed {
 
         float blockHardness = block.getHardness();
 
-        // 1.15.2 and below need this hack
         if ((block == StateTypes.PISTON || block == StateTypes.PISTON_HEAD || block == StateTypes.STICKY_PISTON) && player.getClientVersion().isOlderThanOrEquals(ClientVersion.V_1_15_2)) {
             blockHardness = 0.5f;
         }
 
-        if (blockHardness == -1) return 0; // Unbreakable block
+        if (blockHardness == -1) return 0;
 
         final ToolSpeedData toolSpeedData;
         if (SERVER_USES_COMPONENTS_AND_RULES && player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_20_5)) {
@@ -116,9 +113,9 @@ public class BlockBreakSpeed {
         final float speedMultiplier = getSpeedMultiplierFromToolData(player, tool, toolSpeedData);
 
         final boolean canHarvest = !block.isRequiresCorrectTool() || toolSpeedData.isCorrectToolForDrop
-                // temporary hardcode to workaround PE bug https://github.com/retrooper/packetevents/issues/1217; see https://github.com/DenemeAnticheat/Deneme/issues/2091
+
                 || player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_21_4) && HARVESTABLE_TYPES_1_21_4.contains(block)
-                // same reason as above; see https://github.com/DenemeAnticheat/Deneme/issues/2574
+
                 || player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_21) && HARVESTABLE_TYPES_1_21.contains(block);
 
         float damage = speedMultiplier / blockHardness;
@@ -187,9 +184,6 @@ public class BlockBreakSpeed {
         return speedMultiplier;
     }
 
-    // TODO technically its possible to use packet level manipulation to enforce Tool rules on newer clients on older servers
-    // But I've yet to hear of anyone even trying to do such a thing rather than just update the server
-    // And we can't support this because we don't see the tool components/data before Via
     private static ToolSpeedData getModernToolSpeedData(DenemePlayer player, ItemStack tool, StateType block) {
         Optional<ItemTool> toolComponentOpt = tool.getComponent(ComponentTypes.TOOL);
         float speedMultiplier = 1.0f;
@@ -197,8 +191,6 @@ public class BlockBreakSpeed {
         if (toolComponentOpt.isPresent()) {
             ItemTool itemTool = toolComponentOpt.get();
 
-            // Initialize with final default values. These will be used if the loop doesn't find a value.
-            // isCorrectToolForDrop is already set to false, no need to set again as default
             speedMultiplier = itemTool.getDefaultMiningSpeed();
 
             boolean speedFound = false;
@@ -209,7 +201,6 @@ public class BlockBreakSpeed {
                 ResourceLocation tagKey = predicate.getTagKey();
                 boolean isMatch;
 
-                // First, determine if the current rule even applies to this block.
                 if (tagKey != null) {
                     SyncedTag<StateType> playerTag = player.tagManager.block(tagKey);
                     isMatch = (playerTag != null && playerTag.contains(block))
@@ -218,15 +209,13 @@ public class BlockBreakSpeed {
                     isMatch = predicate.getEntities().contains(block.getMapped());
                 }
 
-                // If the rule matches the block, check if we still need its properties.
                 if (isMatch) {
-                    // Check for speed if we haven't found it yet.
+
                     if (!speedFound && rule.getSpeed() != null) {
                         speedMultiplier = rule.getSpeed();
                         speedFound = true;
                     }
 
-                    // Check for drops if we haven't found it yet.
                     if (!dropsFound && rule.getCorrectForDrops() != null) {
                         isCorrectToolForDrop = rule.getCorrectForDrops();
                         dropsFound = true;
@@ -245,7 +234,7 @@ public class BlockBreakSpeed {
         ItemType toolType = tool.getType();
         float speedMultiplier = 1.0f;
         boolean isCorrectToolForDrop = false;
-        // 1.13 and below need their own huge methods to support this...
+
         if (toolType.hasAttribute(ItemTypes.ItemAttribute.AXE)) {
             isCorrectToolForDrop = player.tagManager.block(SyncedTags.MINEABLE_AXE).contains(block);
         } else if (toolType.hasAttribute(ItemTypes.ItemAttribute.PICKAXE)) {
@@ -258,20 +247,20 @@ public class BlockBreakSpeed {
 
         if (isCorrectToolForDrop) {
             int tier = 0;
-            if (toolType.hasAttribute(ItemTypes.ItemAttribute.WOOD_TIER)) { // Tier 0
+            if (toolType.hasAttribute(ItemTypes.ItemAttribute.WOOD_TIER)) {
                 speedMultiplier = 2.0f;
-            } else if (toolType.hasAttribute(ItemTypes.ItemAttribute.STONE_TIER)) { // Tier 1
+            } else if (toolType.hasAttribute(ItemTypes.ItemAttribute.STONE_TIER)) {
                 speedMultiplier = 4.0f;
                 tier = 1;
-            } else if (toolType.hasAttribute(ItemTypes.ItemAttribute.IRON_TIER)) { // Tier 2
+            } else if (toolType.hasAttribute(ItemTypes.ItemAttribute.IRON_TIER)) {
                 speedMultiplier = 6.0f;
                 tier = 2;
-            } else if (toolType.hasAttribute(ItemTypes.ItemAttribute.DIAMOND_TIER)) { // Tier 3
+            } else if (toolType.hasAttribute(ItemTypes.ItemAttribute.DIAMOND_TIER)) {
                 speedMultiplier = 8.0f;
                 tier = 3;
-            } else if (toolType.hasAttribute(ItemTypes.ItemAttribute.GOLD_TIER)) { // Tier 0
+            } else if (toolType.hasAttribute(ItemTypes.ItemAttribute.GOLD_TIER)) {
                 speedMultiplier = 12.0f;
-            } else if (toolType.hasAttribute(ItemTypes.ItemAttribute.NETHERITE_TIER)) { // Tier 4
+            } else if (toolType.hasAttribute(ItemTypes.ItemAttribute.NETHERITE_TIER)) {
                 speedMultiplier = 9.0f;
                 tier = 4;
             }
@@ -285,7 +274,6 @@ public class BlockBreakSpeed {
             }
         }
 
-        // Shears can mine some blocks faster
         if (toolType == ItemTypes.SHEARS) {
             isCorrectToolForDrop = true;
 
@@ -303,7 +291,6 @@ public class BlockBreakSpeed {
             }
         }
 
-        // Swords can also mine some blocks faster
         if (toolType.hasAttribute(ItemTypes.ItemAttribute.SWORD)) {
             if (block == StateTypes.COBWEB) {
                 speedMultiplier = 15.0f;
@@ -313,7 +300,7 @@ public class BlockBreakSpeed {
 
             isCorrectToolForDrop = block == StateTypes.COBWEB;
         }
-        //
+
         return new ToolSpeedData(speedMultiplier, isCorrectToolForDrop);
     }
 }

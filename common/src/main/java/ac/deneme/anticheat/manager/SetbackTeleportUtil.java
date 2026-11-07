@@ -49,24 +49,20 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class SetbackTeleportUtil extends DenemeProcessor implements PostPredictionListener {
-    // Sync to netty
+
     public final ConcurrentLinkedQueue<TeleportData> pendingTeleports = new ConcurrentLinkedQueue<>();
     private final Random random = new Random();
     private static final DenemeTeleportEvent.Channel TELEPORT_CHANNEL = DenemeAPI.INSTANCE.getEventBus().get(DenemeTeleportEvent.class);
     private static final DenemePlayerSetbackEvent.Channel PLAYER_SETBACK_CHANNEL = DenemeAPI.INSTANCE.getEventBus().get(DenemePlayerSetbackEvent.class);
-    // Sync to netty, a player MUST accept a teleport to spawn into the world
-    // A teleport is used to end the loading screen.  Some cheats pretend to never end the loading screen
-    // in an attempt to disable the anticheat.  Be careful.
-    // We fix this by blocking serverbound movements until the player is out of the loading screen.
+
     public boolean hasAcceptedSpawnTeleport = false;
-    // Was there a ghost block that forces us to block offsets until the player accepts their teleport?
+
     public boolean blockOffsets = false;
     public SetbackPosWithVector lastKnownGoodPosition;
-    // Are we currently sending setback stuff?
+
     public boolean isSendingSetback = false;
     public int cheatVehicleInterpolationDelay = 0;
-    // This required setback data is the head of the teleport.
-    // It is set by both bukkit and netty due to going on the bukkit thread to setback players
+
     @Getter
     private SetBackData requiredSetBack = null;
     private long lastWorldResync = 0;
@@ -77,20 +73,17 @@ public class SetbackTeleportUtil extends DenemeProcessor implements PostPredicti
 
     @Override
     public void onPredictionComplete(final PredictionComplete predictionComplete) {
-        // Grab friction now when we know player on ground and other variables
+
         Vector3dm afterTickFriction = player.clientVelocity.clone();
 
-        // We must first check if the player has accepted their setback
-        // If the setback isn't complete, then this position is illegitimate
         if (predictionComplete.getData().getSetback() != null) {
-            // The player needs to now wait for their vehicle to go into the right place before getting back in
+
             if (cheatVehicleInterpolationDelay > 0) cheatVehicleInterpolationDelay = 10;
-            // Teleport, let velocity be reset
+
             lastKnownGoodPosition = new SetbackPosWithVector(new Vector3d(player.x, player.y, player.z), afterTickFriction);
         } else if (requiredSetBack == null || requiredSetBack.isComplete()) {
             cheatVehicleInterpolationDelay--;
-            // No simulation... we can do that later. We just need to know the valid position.
-            // As we didn't setback here, the new position is known to be safe!
+
             lastKnownGoodPosition = new SetbackPosWithVector(new Vector3d(player.x, player.y, player.z), afterTickFriction);
         }
 
@@ -99,22 +92,22 @@ public class SetbackTeleportUtil extends DenemeProcessor implements PostPredicti
 
     public void executeForceResync() {
         if (player.gamemode == GameMode.SPECTATOR || player.disableDeneme)
-            return; // We don't care about spectators, they don't flag
-        if (lastKnownGoodPosition == null) return; // Player hasn't spawned yet
+            return;
+        if (lastKnownGoodPosition == null) return;
         blockMovementsUntilResync(true, true);
     }
 
     public void executeNonSimulatingForceResync() {
         if (player.gamemode == GameMode.SPECTATOR || player.disableDeneme)
-            return; // We don't care about spectators, they don't flag
-        if (lastKnownGoodPosition == null) return; // Player hasn't spawned yet
+            return;
+        if (lastKnownGoodPosition == null) return;
         blockMovementsUntilResync(false, true);
     }
 
     public void executeNonSimulatingSetback() {
         if (player.gamemode == GameMode.SPECTATOR || player.disableDeneme)
-            return; // We don't care about spectators, they don't flag
-        if (lastKnownGoodPosition == null) return; // Player hasn't spawned yet
+            return;
+        if (lastKnownGoodPosition == null) return;
         blockMovementsUntilResync(false, false);
     }
 
@@ -125,18 +118,16 @@ public class SetbackTeleportUtil extends DenemeProcessor implements PostPredicti
     }
 
     private boolean isExempt() {
-        // Not exempting spectators here because timer check for spectators is actually valid.
-        // Player hasn't spawned yet
+
         if (lastKnownGoodPosition == null) return true;
-        // Setbacks aren't allowed
+
         if (player.disableDeneme) return true;
-        // Player has permission to cheat, permission not given to OP by default.
+
         return player.platformPlayer != null && player.noSetbackPermission;
     }
 
     private void simulateFriction(Vector3dm vector) {
-        // We must always do this before simulating positions, as this is the last actual (safe) movement
-        // We must not do this for knockback or explosions, as they are at the start of the tick
+
         if (player.wasTouchingWater) {
             PredictionEngineWater.staticVectorEndOfTick(player, vector, 0.8F, player.gravity, true);
         } else if (player.wasTouchingLava) {
@@ -145,26 +136,23 @@ public class SetbackTeleportUtil extends DenemeProcessor implements PostPredicti
                 vector.add(0.0D, -player.gravity / 4.0D, 0.0D);
         } else if (player.isGliding) {
             PredictionEngineElytra.getElytraMovement(player, vector, ReachUtils.getLook(player, player.yaw, player.pitch)).multiply(player.stuckSpeedMultiplier).multiply(0.99F, 0.98F, 0.99F);
-            vector.setY(vector.getY() - 0.05); // Make the player fall a bit
-        } else { // Gliding doesn't have friction, we handle it differently
-            PredictionEngineNormal.staticVectorEndOfTick(player, vector); // Lava and normal movement
+            vector.setY(vector.getY() - 0.05);
+        } else {
+            PredictionEngineNormal.staticVectorEndOfTick(player, vector);
         }
 
-        // Prevent abusing setbacks to move out of blocks like webs
         vector.multiply(player.stuckSpeedMultiplier);
 
-        // stop 1.8 players from stepping onto 1.25 high blocks, because why not?
         new PredictionEngine().applyMovementThreshold(player, new HashSet<>(Collections.singletonList(new VectorData(vector, VectorData.VectorType.BestVelPicked))));
     }
 
     private void blockMovementsUntilResync(boolean simulateNextTickPosition, boolean isResync) {
-        if (requiredSetBack == null) return; // Hasn't spawned
+        if (requiredSetBack == null) return;
         if (player.platformPlayer != null && player.noSetbackPermission)
-            return; // The player has permission to cheat
-        requiredSetBack.setPlugin(false); // The player has illegal movement, block from vanilla ac override
-        if (isPendingSetback()) return; // Don't spam setbacks
+            return;
+        requiredSetBack.setPlugin(false);
+        if (isPendingSetback()) return;
 
-        // Only let us full resync once every five seconds to prevent unneeded bukkit load
         if (System.currentTimeMillis() - lastWorldResync > 5 * 1000) {
             player.resyncPositions(player.boundingBox.copy().expand(1));
             lastWorldResync = System.currentTimeMillis();
@@ -175,13 +163,10 @@ public class SetbackTeleportUtil extends DenemeProcessor implements PostPredicti
         Pair<VelocityData, Vector3dm> futureKb = player.checkManager.getKnockbackHandler().getFutureKnockback();
         VelocityData futureExplosion = player.checkManager.getExplosionHandler().getFutureExplosion();
 
-        // Velocity sets
-        // Don't let player reuse setback velocity
         if (futureKb.first() != null && !futureKb.first().isSetback) {
             clientVel = futureKb.second();
         }
 
-        // Explosion adds
         if (futureExplosion != null && (futureKb.first() == null
                 || (futureKb.first().transaction < futureExplosion.transaction && !futureKb.first().isSetback))) {
             clientVel.add(futureExplosion.vector);
@@ -192,16 +177,14 @@ public class SetbackTeleportUtil extends DenemeProcessor implements PostPredicti
         SimpleCollisionBox oldBB = player.boundingBox;
         player.boundingBox = GetBoundingBox.getPlayerBoundingBox(player, position.getX(), position.getY(), position.getZ());
 
-        // Mini prediction engine - simulate collisions
         if (simulateNextTickPosition) {
             Vector3dm collide = Collisions.collide(player, clientVel.getX(), clientVel.getY(), clientVel.getZ());
 
             position = position.withX(position.getX() + collide.getX());
             position = position.withY(position.getY() + collide.getY());
-            // TODO: Is this even needed? Can't reproduce any phasing on vanilla 1.8 when being setback.
+
             if (player.getClientVersion().isOlderThan(ClientVersion.V_1_9)) {
-                // 1.8 players need the collision epsilon to not phase into blocks when being setback
-                // Due to simulation, this will not allow a flight bypass by sending a billion invalid movements
+
                 position = position.withY(position.getY() + SimpleCollisionBox.COLLISION_EPSILON);
             }
             position = position.withZ(position.getZ() + collide.getZ());
@@ -219,12 +202,11 @@ public class SetbackTeleportUtil extends DenemeProcessor implements PostPredicti
             simulateFriction(clientVel);
         }
 
-        player.boundingBox = oldBB; // reset back to the new bounding box
+        player.boundingBox = oldBB;
 
         if (!hasAcceptedSpawnTeleport || player.isFlying)
-            clientVel = null; // if the player is flying or hasn't spawned... don't force kb
+            clientVel = null;
 
-        // Something weird has occurred in the player's movement, block offsets until we resync
         if (isResync) {
             blockOffsets = true;
         }
@@ -253,23 +235,20 @@ public class SetbackTeleportUtil extends DenemeProcessor implements PostPredicti
         Vector3d position = data.getTeleportData().getLocation();
 
         try {
-            // Player is in a vehicle
+
             if (player.inVehicle()) {
                 int vehicleId = player.getRidingVehicleId();
                 if (player.compensatedEntities.serverPlayerVehicle != null) {
-                    // Dismount player from vehicle
+
                     if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_9)) {
                         player.user.sendPacket(new WrapperPlayServerSetPassengers(vehicleId, new int[2]));
                     } else {
                         player.user.sendPacket(new WrapperPlayServerAttachEntity(vehicleId, -1, false));
                     }
 
-                    // Stop the player from being able to teleport vehicles and simply re-enter them to continue,
-                    // therefore, teleport the entity
                     player.user.sendPacket(new WrapperPlayServerEntityTeleport(vehicleId, new Vector3d(position.getX(), position.getY(), position.getZ()), player.yaw % 360, 0, false));
-                    player.getSetbackTeleportUtil().cheatVehicleInterpolationDelay = Integer.MAX_VALUE; // Set to max until player accepts the new position
+                    player.getSetbackTeleportUtil().cheatVehicleInterpolationDelay = Integer.MAX_VALUE;
 
-                    // Make sure bukkit also knows the player got teleported out of their vehicle, can't do this async
                     DenemeAPI.INSTANCE.getScheduler().getEntityScheduler().execute(player.platformPlayer, DenemeAPI.INSTANCE.getDenemePlugin(), () -> {
                         if (player.platformPlayer != null) {
                             DenemeEntity vehicle = player.platformPlayer.getVehicle();
@@ -283,29 +262,25 @@ public class SetbackTeleportUtil extends DenemeProcessor implements PostPredicti
 
             double y = position.getY();
             if (PacketEvents.getAPI().getServerManager().getVersion().isOlderThanOrEquals(ServerVersion.V_1_7_10)) {
-                y += 1.62; // 1.7 teleport offset if deneme ever supports 1.7 again
+                y += 1.62;
             }
 
-            // Send a transaction now to make sure there's always transactions around teleport
             player.sendTransaction();
 
-            // Min value is 10000000000000000000000000000000 in binary, this makes sure the number is always < 0
             int teleportId = random.nextInt() | Integer.MIN_VALUE;
             data.setPlugin(false);
             data.setOnGround(isOnGround(position));
             data.getTeleportData().setTeleportId(teleportId);
             data.getTeleportData().setTransaction(player.lastTransactionSent.get());
 
-            // Use provided transaction ID to make sure it can never desync, although there's no reason to do this
             addSentTeleport(new Location(null, position.getX(), y, position.getZ()),
                     null, data.getTeleportData().getTransaction(), RelativeFlag.YAW.or(RelativeFlag.PITCH), false, teleportId);
-            // This must be done after setting the sent teleport, otherwise we lose velocity data
+
             requiredSetBack = data;
-            // Send after tracking to fix race condition
+
             PacketEvents.getAPI().getProtocolManager().receivePacketSilently(player.user.getChannel(), new WrapperPlayClientPlayerPosition(new Vector3d(position.getX(), y, position.getZ()), data.isOnGround()));
             PacketEvents.getAPI().getProtocolManager().sendPacketSilently(player.user.getChannel(), new WrapperPlayServerPlayerPositionAndLook(position.getX(), position.getY(), position.getZ(), 0, 0, data.getTeleportData().getFlags().getMask(), teleportId, false));
-            // Dual fire: packet-level signal for anticheat compat (DenemeTeleportEvent),
-            // semantic signal for admin/observability consumers (DenemePlayerSetbackEvent).
+
             long now = System.currentTimeMillis();
             TELEPORT_CHANNEL.fire(player, teleportId, now);
             PLAYER_SETBACK_CHANNEL.fire(player, teleportId, position.getX(), position.getY(), position.getZ(), now);
@@ -326,8 +301,7 @@ public class SetbackTeleportUtil extends DenemeProcessor implements PostPredicti
      * @return - Whether the player has completed a teleport by being at this position
      */
     public TeleportAcceptData checkTeleportQueue(double x, double y, double z, float yaw, float pitch) {
-        // Support teleports without teleport confirmations
-        // If the player is in a vehicle when teleported, they will exit their vehicle
+
         TeleportAcceptData teleportData = new TeleportAcceptData();
 
         TeleportData teleportPos;
@@ -336,10 +310,9 @@ public class SetbackTeleportUtil extends DenemeProcessor implements PostPredicti
             double trueTeleportY = (teleportPos.isRelativeY() ? player.y : 0) + teleportPos.getLocation().getY();
             double trueTeleportZ = (teleportPos.isRelativeZ() ? player.z : 0) + teleportPos.getLocation().getZ();
 
-            // There seems to be a version difference in teleports past 30 million... just clamp the vector
             Vector3d clamped = VectorUtils.clampVector(new Vector3d(trueTeleportX, trueTeleportY, trueTeleportZ));
             double threshold = teleportPos.isRelativePos() ? player.getMovementThreshold() : 0;
-            double yRoundingTolerance = player.getClientVersion().isOlderThan(ClientVersion.V_1_8) ? 1e-7 : 0; // 1.7 rounding
+            double yRoundingTolerance = player.getClientVersion().isOlderThan(ClientVersion.V_1_8) ? 1e-7 : 0;
             boolean closeEnoughY = Math.abs(clamped.getY() - y) <= yRoundingTolerance + threshold;
             boolean correctRotations = teleportPos.isValidRotation(player.getClientVersion(), yaw, pitch);
 
@@ -348,8 +321,6 @@ public class SetbackTeleportUtil extends DenemeProcessor implements PostPredicti
                 hasAcceptedSpawnTeleport = true;
                 blockOffsets = false;
 
-                // Player has accepted their setback!
-                // We can compare transactions to check if equals because each teleport gets its own transaction
                 if (requiredSetBack != null && requiredSetBack.getTeleportData().getTransaction() == teleportPos.getTransaction()) {
                     teleportData.setSetback(requiredSetBack);
                     requiredSetBack.setComplete(true);
@@ -359,7 +330,7 @@ public class SetbackTeleportUtil extends DenemeProcessor implements PostPredicti
                 teleportData.setTeleport(true);
                 break;
             } else if (player.lastTransactionReceived.get() > teleportPos.getTransaction()) {
-                // The player ignored the teleport (and this teleport matters), resynchronize
+
                 player.checkManager.get(BadPacketsN.class).flag();
                 pendingTeleports.poll();
                 requiredSetBack.setPlugin(false);
@@ -368,7 +339,7 @@ public class SetbackTeleportUtil extends DenemeProcessor implements PostPredicti
                 }
                 continue;
             }
-            // No farther setbacks before the player's transaction
+
             break;
         }
 
@@ -399,8 +370,6 @@ public class SetbackTeleportUtil extends DenemeProcessor implements PostPredicti
             } else if (lastTransaction > teleportPos.first() + 1) {
                 player.vehicleData.vehicleTeleports.poll();
 
-                // Vehicles have terrible netcode so just ignore it if the teleport wasn't from us setting the player back
-                // Players don't have to respond to vehicle teleports if they aren't controlling the entity anyways
                 continue;
             }
 
@@ -414,17 +383,16 @@ public class SetbackTeleportUtil extends DenemeProcessor implements PostPredicti
      * @return If the player is in a desync state and is waiting on information from the server
      */
     public boolean shouldBlockMovement() {
-        // This is required to ensure protection from servers teleporting from CREATIVE to SURVIVAL
-        // I should likely refactor
+
         return insideUnloadedChunk() || blockOffsets || (requiredSetBack != null && !requiredSetBack.isComplete());
     }
 
     private boolean isPendingSetback() {
-        // Relative setbacks shouldn't count
+
         if (requiredSetBack != null && (requiredSetBack.getTeleportData().isRelativeX() || requiredSetBack.getTeleportData().isRelativeY() || requiredSetBack.getTeleportData().isRelativeZ())) {
             return false;
         }
-        // The setback is not complete
+
         return requiredSetBack != null && !requiredSetBack.isComplete();
     }
 
@@ -436,14 +404,13 @@ public class SetbackTeleportUtil extends DenemeProcessor implements PostPredicti
     public boolean insideUnloadedChunk() {
         Column column = player.compensatedWorld.getChunk(DenemeMath.floor(player.x) >> 4, DenemeMath.floor(player.z) >> 4);
 
-        // If true, the player is in an unloaded chunk
         return !player.disableDeneme && (column == null || column.transaction() >= player.lastTransactionReceived.get() ||
-                // The player hasn't loaded past the DOWNLOADING TERRAIN screen
+
                 !player.getSetbackTeleportUtil().hasAcceptedSpawnTeleport);
     }
 
     public void addSentTeleport(Location position, @Nullable Vector3d velocity, int transaction, RelativeFlag flags, boolean plugin, int teleportId) {
-        // Clients below 1.21.2 do not have this.
+
         if (player.getClientVersion().isOlderThan(ClientVersion.V_1_21_2)) {
             velocity = null;
         }
@@ -461,7 +428,6 @@ public class SetbackTeleportUtil extends DenemeProcessor implements PostPredicti
 
         Vector3d safePosition = new Vector3d(position.getX(), position.getY(), position.getZ());
 
-        // We must convert relative teleports to avoid them becoming client controlled in the case of setback
         if (flags.has(RelativeFlag.X)) {
             safePosition = safePosition.withX(safePosition.getX() + lastKnownGoodPosition.pos.getX());
         }

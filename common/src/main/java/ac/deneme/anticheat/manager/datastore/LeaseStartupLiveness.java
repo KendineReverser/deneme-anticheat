@@ -76,7 +76,7 @@ final class LeaseStartupLiveness implements StartupLiveness {
         try {
             return ownership.readOwnership(ownershipStore, instanceId).orElse(null);
         } catch (BackendException e) {
-            // readOwnership is checked but isAlive is not; callers treat this like any other failed store read.
+
             throw new RuntimeException("failed to read server ownership for instance " + instanceId, e);
         }
     }

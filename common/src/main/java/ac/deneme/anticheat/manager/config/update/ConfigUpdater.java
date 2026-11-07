@@ -172,16 +172,12 @@ public final class ConfigUpdater {
      */
     public @NotNull Map<File, Result> updateAll(@NotNull Map<File, Spec> specs,
                                                 @NotNull String langCode) throws IOException {
-        // Pending cross-file writes keyed by sibling file's bare name. Each
-        // file's writes are accumulated in submission order; after every
-        // per-file update finishes, we flush these against the on-disk file
-        // through a fresh ConfigPatcher pass (no migrations re-run).
+
         Map<String, List<WriteLog.Entry>> pendingCrossFile = new LinkedHashMap<>();
-        // For sibling-file READS — load each on-disk parsed view lazily.
+
         Map<String, Map<String, Object>> siblingReadViews = new LinkedHashMap<>();
         Map<File, Result> results = new LinkedHashMap<>();
-        // Map of bare filename -> File so otherFile() reads/writes can be
-        // resolved against the actual on-disk path.
+
         Map<String, File> filesByName = new LinkedHashMap<>();
         for (File f : specs.keySet()) filesByName.put(f.getName(), f);
 
@@ -192,7 +188,6 @@ public final class ConfigUpdater {
                     updateSingle(configFile, spec, langCode, filesByName, siblingReadViews, pendingCrossFile));
         }
 
-        // Flush queued cross-file writes against each sibling file.
         for (Map.Entry<String, List<WriteLog.Entry>> q : pendingCrossFile.entrySet()) {
             File sibling = filesByName.get(q.getKey());
             if (sibling == null || !sibling.exists()) {
@@ -220,8 +215,7 @@ public final class ConfigUpdater {
                                          @NotNull Map<String, List<WriteLog.Entry>> pendingCrossFile)
             throws IOException {
         if (!configFile.exists()) {
-            // Fresh install — let the loader (Configuralize) copy the
-            // bundled default in place from the resource. No-op here.
+
             return new Result(false, -1, spec.latestVersion, null);
         }
 
@@ -268,12 +262,8 @@ public final class ConfigUpdater {
         YamlMap inputView = new YamlMapImpl(oldData, WriteLog.noop());
         YamlMap outputView = new YamlMapImpl(newData, ownLog);
 
-        // Auto-lift trivially-matching user values into outputView. The diff
-        // walk records each lift in ownLog so it goes through the same
-        // patcher pass as migration writes.
         autoLift("", oldData, newData, outputView);
 
-        // Run each version-gated migration in order.
         for (int v = oldVersion + 1; v <= spec.latestVersion; v++) {
             Migration m = spec.migrations.get(v);
             if (m == null) continue;
@@ -288,7 +278,6 @@ public final class ConfigUpdater {
             }
         }
 
-        // Always stamp version + flavor.
         outputView.put("config-version", spec.latestVersion);
         outputView.put("config-flavor", spec.flavor.name());
 
@@ -417,10 +406,7 @@ public final class ConfigUpdater {
                 Map<String, Object> parsed = readYaml(f.toPath());
                 return parsed == null ? new LinkedHashMap<>() : parsed;
             });
-            // Writes go into a per-file pending log that the updater flushes
-            // at the end of updateAll(). For single-file update() calls the
-            // log still accumulates but never gets flushed (sibling not in
-            // the batch); writes get dropped with a warning at flush time.
+
             WriteLog log = WriteLog.sibling(fileName, pendingCrossFile, logger);
             return new YamlMapImpl(view, log);
         }

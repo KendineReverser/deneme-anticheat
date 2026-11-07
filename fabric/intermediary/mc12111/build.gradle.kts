@@ -10,7 +10,6 @@ dependencies {
     modCompileOnly("me.lucko:fabric-permissions-api:0.6.1")
 }
 
-
 tasks.compileJava {
     options.release.set(21)
 }

@@ -37,11 +37,7 @@ public class ConfigManagerFileImpl implements ConfigManager, BasicReloadable {
     private void runConfigUpdates() {
         Logger logger = Logger.getLogger("deneme-config");
         ConfigUpdater updater = new ConfigUpdater(DenemeAPI.class, logger);
-        // Use the multi-file API so cross-file migrations (e.g. config.yml
-        // v9 → v10 lifting history.database.* into database.yml + the
-        // matching databases/<id>.yml) can target sibling files via
-        // ctx.otherFile(...). punishments.yml is intentionally absent —
-        // open-ended user-defined data, no schema versioning.
+
         Map<File, ConfigUpdater.Spec> batch = new LinkedHashMap<>();
         batch.put(getConfigFile("config.yml"), DenemeConfigSpecs.mainConfig());
         batch.put(getConfigFile("discord.yml"), DenemeConfigSpecs.discord());
@@ -50,9 +46,7 @@ public class ConfigManagerFileImpl implements ConfigManager, BasicReloadable {
         for (String id : BACKEND_IDS) {
             batch.put(getConfigFile("databases/" + id + ".yml"), DenemeConfigSpecs.backend(id));
         }
-        // Pass the same language Configuralize resolved (after its own
-        // all-or-nothing availability check above) so a zh operator gets
-        // ZH-comment bundled defaults stamped on disk to match.
+
         String langCode = config.getLanguage().getCode().toLowerCase();
         try {
             updater.updateAll(batch, langCode);
@@ -70,10 +64,7 @@ public class ConfigManagerFileImpl implements ConfigManager, BasicReloadable {
             config.addSource(DenemeAPI.class, "messages", getConfigFile("messages.yml"));
             config.addSource(DenemeAPI.class, "discord", getConfigFile("discord.yml"));
             config.addSource(DenemeAPI.class, "punishments", getConfigFile("punishments.yml"));
-            // database.yml + per-backend files load through here too; their
-            // keys are namespaced under `database:` / `<id>:` wrappers so
-            // they don't collide with config.yml / discord.yml / each other
-            // when Configuralize merges everything into one keyspace.
+
             config.addSource(DenemeAPI.class, "database", getConfigFile("database.yml"));
             for (String id : BACKEND_IDS) {
                 config.addSource(DenemeAPI.class, "databases/" + id, getConfigFile("databases/" + id + ".yml"));
@@ -84,10 +75,9 @@ public class ConfigManagerFileImpl implements ConfigManager, BasicReloadable {
 
         try {
             config.setLanguage(Language.valueOf(languageCode));
-        } catch (IllegalArgumentException ignored) { // not a valid language code
+        } catch (IllegalArgumentException ignored) {
         }
 
-        // Logic for system language
         if (!config.isLanguageAvailable(config.getLanguage())) {
             String lang = languageCode.toUpperCase();
             LogUtil.info("Unknown user language " + lang + ".");
@@ -96,20 +86,12 @@ public class ConfigManagerFileImpl implements ConfigManager, BasicReloadable {
         }
 
         try {
-            // Save bundled defaults BEFORE the updater runs so any cross-file
-            // migration (e.g. config.yml v9 → v10 lifting history.database.*
-            // into database.yml + databases/<id>.yml) can target files that
-            // exist on disk. saveAllDefaults(false) is non-overwriting — the
-            // operator's existing files keep their current content.
+
             config.saveAllDefaults(false);
         } catch (IOException e) {
             throw new RuntimeException("Failed to save default config files", e);
         }
 
-        // Cross-version migrations run AFTER Configuralize creates any
-        // missing files. Idempotent on already-current configs. Versioned
-        // backups (<name>.v<oldVersion>.bak) preserve operator-rollback
-        // evidence across stacked migration steps.
         runConfigUpdates();
 
         try {
@@ -133,7 +115,7 @@ public class ConfigManagerFileImpl implements ConfigManager, BasicReloadable {
                     configStringVersion = configStringVersion.replaceAll("\\D", "");
 
                     configVersion = Integer.parseInt(configStringVersion);
-                    // TODO: Do we have to hardcode this?
+
                     configString = configString.replaceAll("config-version: " + configStringVersion, "config-version: 9");
                     Files.write(config.toPath(), configString.getBytes());
 
@@ -179,7 +161,7 @@ public class ConfigManagerFileImpl implements ConfigManager, BasicReloadable {
     }
 
     private void removeLegacyTwoPointOne(File config) throws IOException {
-        // If config doesn't have config-version, it's a legacy config
+
         Files.move(config.toPath(), new File(DenemeAPI.INSTANCE.getDenemePlugin().getDataFolder(), "config-2.1.old.yml").toPath());
     }
 
@@ -191,7 +173,6 @@ public class ConfigManagerFileImpl implements ConfigManager, BasicReloadable {
         Files.write(config.toPath(), configString.getBytes());
     }
 
-    // TODO: Write conversion for this... I'm having issues with windows new lines
     private void addMissingPunishments() {
         File config = new File(DenemeAPI.INSTANCE.getDenemePlugin().getDataFolder(), "punishments.yml");
         String configString;
@@ -199,7 +180,6 @@ public class ConfigManagerFileImpl implements ConfigManager, BasicReloadable {
             try {
                 configString = new String(Files.readAllBytes(config.toPath()));
 
-                // If it works, it isn't stupid.  Only replace it if it exactly matches the default config.
                 int commentIndex = configString.indexOf("  # As of 2.2.2 these are just placeholders, there are no Killaura/Aim/Autoclicker checks other than those that");
                 if (commentIndex != -1) {
 
@@ -259,8 +239,8 @@ public class ConfigManagerFileImpl implements ConfigManager, BasicReloadable {
     }
 
     private void newOffsetNewDiscordConf(File config, String configString) throws IOException {
-        configString = configString.replace("threshold: 0.0001", "threshold: 0.001"); // 1e-5 -> 1e-4 default flag level
-        configString = configString.replace("threshold: 0.00001", "threshold: 0.001"); // 1e-6 -> 1e-4 antikb flag
+        configString = configString.replace("threshold: 0.0001", "threshold: 0.001");
+        configString = configString.replace("threshold: 0.00001", "threshold: 0.001");
         Files.write(config.toPath(), configString.getBytes());
 
         File discordFile = new File(DenemeAPI.INSTANCE.getDenemePlugin().getDataFolder(), "discord.yml");
@@ -284,8 +264,8 @@ public class ConfigManagerFileImpl implements ConfigManager, BasicReloadable {
     }
 
     private void addSuperDebug(File config, String configString) throws IOException {
-        // The default config didn't have this change
-        configString = configString.replace("threshold: 0.0001", "threshold: 0.001"); // 1e-5 -> 1e-4 default flag level
+
+        configString = configString.replace("threshold: 0.0001", "threshold: 0.001");
         if (!configString.contains("experimental-checks")) {
             configString += "\n\n# Enables experimental checks\n" +
                     "experimental-checks: false\n\n";
@@ -309,8 +289,8 @@ public class ConfigManagerFileImpl implements ConfigManager, BasicReloadable {
     }
 
     private void removeAlertsOnJoin(File config, String configString) throws IOException {
-        configString = configString.replaceAll("  # Should players with deneme\\.alerts permission automatically enable alerts on join\\?\r?\n  enable-on-join: (?:true|false)\r?\n", ""); // en
-        configString = configString.replaceAll("  # 管理员进入时是否自动开启警告？\r?\n  enable-on-join: (?:true|false)\r?\n", ""); // zh
+        configString = configString.replaceAll("  # Should players with deneme\\.alerts permission automatically enable alerts on join\\?\r?\n  enable-on-join: (?:true|false)\r?\n", "");
+        configString = configString.replaceAll("  # 管理员进入时是否自动开启警告？\r?\n  enable-on-join: (?:true|false)\r?\n", "");
         Files.write(config.toPath(), configString.getBytes());
     }
 

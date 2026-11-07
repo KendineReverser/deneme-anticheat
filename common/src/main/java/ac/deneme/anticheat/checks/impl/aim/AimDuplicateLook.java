@@ -21,7 +21,7 @@ public class AimDuplicateLook extends Check implements RotationListener {
             return;
         }
 
-        if (exempt) { // Exempt for a tick on teleport
+        if (exempt) {
             exempt = false;
             return;
         }

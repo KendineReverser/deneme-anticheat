@@ -20,11 +20,9 @@ import com.github.retrooper.packetevents.protocol.world.states.enums.West;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
 
 public class DynamicCollisionWall extends DynamicConnecting implements CollisionFactory {
-    // https://bugs.mojang.com/browse/MC-9565
-    // https://bugs.mojang.com/browse/MC-94016
+
     private static final CollisionBox[] COLLISION_BOXES = makeShapes(4.0F, 3.0F, 24.0F, 0.0F, 24.0F, false, 1);
     private static final boolean isNewServer = PacketEvents.getAPI().getServerManager().getVersion().isNewerThan(ServerVersion.V_1_12_2);
-
 
     /**
      * @deprecated use DynamicHitboxWall
@@ -56,11 +54,9 @@ public class DynamicCollisionWall extends DynamicConnecting implements Collision
             up = 1;
         }
 
-        // On 1.13+ clients the bounding box is much more complicated
         if (version.isNewerThanOrEquals(ClientVersion.V_1_13)) {
             ComplexCollisionBox box = new ComplexCollisionBox(5);
 
-            // Proper and faster way would be to compute all this beforehand
             if (up == 1) {
                 box.add(new HexCollisionBox(4, 0, 4, 12, 16, 12));
             }
@@ -88,7 +84,6 @@ public class DynamicCollisionWall extends DynamicConnecting implements Collision
             return box;
         }
 
-        // Magic 1.8 code for walls that I copied over, 1.12 below uses this mess
         float f = 0.25F;
         float f1 = 0.75F;
         float f2 = 0.25F;
@@ -130,7 +125,6 @@ public class DynamicCollisionWall extends DynamicConnecting implements Collision
     public CollisionBox fetch(DenemePlayer player, ClientVersion version, WrappedBlockState block, int x, int y, int z) {
         boolean isNewClient = version.isNewerThan(ClientVersion.V_1_12_2);
 
-        // Fast path for new client + new server
         if (isNewServer && isNewClient) {
             boolean north = block.getNorth() != North.NONE;
             boolean south = block.getSouth() != South.NONE;
@@ -142,13 +136,11 @@ public class DynamicCollisionWall extends DynamicConnecting implements Collision
                     : COLLISION_BOXES[getAABBIndex(north, east, south, west)].copy();
         }
 
-        // Handle connections for old server or old client
         boolean north = isNewServer ? block.getNorth() != North.NONE : connectsTo(player, version, x, y, z, BlockFace.NORTH);
         boolean south = isNewServer ? block.getSouth() != South.NONE : connectsTo(player, version, x, y, z, BlockFace.SOUTH);
         boolean west = isNewServer ? block.getWest() != West.NONE : connectsTo(player, version, x, y, z, BlockFace.WEST);
         boolean east = isNewServer ? block.getEast() != East.NONE : connectsTo(player, version, x, y, z, BlockFace.EAST);
 
-        // Only calculate up for new client on old server
         if (!isNewServer && isNewClient) {
             boolean up = connectsTo(player, version, x, y, z, BlockFace.UP);
 
@@ -169,7 +161,6 @@ public class DynamicCollisionWall extends DynamicConnecting implements Collision
             }
         }
 
-        // Old client collision box calculation
         float f = 0.25F;
         float f1 = 0.75F;
         float f2 = 0.25F;

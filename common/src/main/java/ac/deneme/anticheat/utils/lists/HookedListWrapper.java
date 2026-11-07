@@ -7,14 +7,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-// https://github.com/ThomasOM/Pledge/blob/master/src/main/java/dev/thomazz/pledge/util/collection/HookedListWrapper.java
 @SuppressWarnings({"unchecked"})
 public abstract class HookedListWrapper<T> extends ListWrapper<T> {
     public HookedListWrapper(List<T> base) {
         super(base);
     }
 
-    // We can use the List#size call to execute some code
     public abstract void onIterator();
 
     @Override

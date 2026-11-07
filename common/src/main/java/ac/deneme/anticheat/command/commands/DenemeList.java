@@ -26,8 +26,6 @@ import java.util.stream.Collectors;
 
 public class DenemeList implements BuildableCommand {
 
-    // Mainly for debugging purposes. Useful for seeing which players are exempt or not.
-
     @Override
     public void register(CommandManager<Sender> commandManager, CloudPlatformCommandArguments arguments) {
         commandManager.command(commandManager.commandBuilder("denemeac", "dac")
@@ -83,12 +81,12 @@ public class DenemeList implements BuildableCommand {
 
         final Map<UUID, PlatformPlayer> onlinePlayers = DenemeAPI.INSTANCE.getPlatformPlayerFactory().getOnlinePlayers()
                 .stream().collect(Collectors.toMap(DenemeIdentity::getUniqueId, Function.identity()));
-        //
+
         final Set<PlatformPlayer> unregisteredPlayers = new HashSet<>(onlinePlayers.values());
 
         boolean after = false;
         builder.append(Component.text("Players = [", NamedTextColor.GRAY));
-        //
+
         for (DenemePlayer entry : DenemeAPI.INSTANCE.getPlayerDataManager().getEntries()) {
             if (after) {
                 builder.append(Component.text(", ").color(NamedTextColor.GRAY));
@@ -101,7 +99,7 @@ public class DenemeList implements BuildableCommand {
             boolean exempt = !DenemeAPI.INSTANCE.getPlayerDataManager().shouldCheck(entry.user);
             builder.append(playerComponent(entry.getName(), entry.getUniqueId(), online, exempt));
         }
-        //
+
         for (PlatformPlayer platformPlayer : unregisteredPlayers) {
             if (after) {
                 builder.append(Component.text(", ").color(NamedTextColor.GRAY));
@@ -113,7 +111,7 @@ public class DenemeList implements BuildableCommand {
                     .hoverEvent(HoverEvent.showText(playerHoverComponent(platformPlayer.getUniqueId(), platformPlayer.isOnline(), false, false)))
             );
         }
-        // close and send
+
         builder.append(Component.text("]", NamedTextColor.GRAY));
         sender.sendMessage(builder.build());
     }

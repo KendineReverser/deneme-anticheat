@@ -33,7 +33,6 @@ final class ViolationHistory<T> {
             expired++;
         }
 
-        // Release oversized backing arrays after most of the history expires.
         if (expired > timestamps.size()) {
             timestamps.trim();
             values.trim();

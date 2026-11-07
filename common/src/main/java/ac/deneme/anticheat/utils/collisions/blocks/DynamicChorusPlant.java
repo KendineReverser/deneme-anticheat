@@ -20,9 +20,6 @@ import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import java.util.HashSet;
 import java.util.Set;
 
-// 1.13 clients on 1.12 servers have this mostly working, but chorus flowers don’t attach to chorus plants.
-// 1.12 clients run their usual calculations on 1.13 servers, same as 1.12 servers
-// 1.13 clients on 1.13 servers get everything included in the block data, no world reading required
 public class DynamicChorusPlant implements CollisionFactory {
     private static final BlockFace[] directions = new BlockFace[]{BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN};
     private static final CollisionBox[] modernShapes = makeShapes();
@@ -41,7 +38,7 @@ public class DynamicChorusPlant implements CollisionFactory {
         CollisionBox[] avoxelshape1 = new CollisionBox[64];
 
         for (int k = 0; k < 64; ++k) {
-            ComplexCollisionBox directionalShape = new ComplexCollisionBox(7, baseShape); // how big is this one??
+            ComplexCollisionBox directionalShape = new ComplexCollisionBox(7, baseShape);
 
             for (int j = 0; j < directions.length; ++j) {
                 if ((k & 1 << j) != 0) {
@@ -57,12 +54,10 @@ public class DynamicChorusPlant implements CollisionFactory {
 
     @Override
     public CollisionBox fetch(DenemePlayer player, ClientVersion version, WrappedBlockState block, int x, int y, int z) {
-        // ViaVersion replacement block (Purple wool)
+
         if (version.isOlderThanOrEquals(ClientVersion.V_1_8))
             return new SimpleCollisionBox(0, 0, 0, 1, 1, 1, true);
 
-        // Player is 1.12- on 1.13 server
-        // Player is 1.12 on 1.12 server
         if (version.isOlderThanOrEquals(ClientVersion.V_1_12_2)) {
             return getLegacyBoundingBox(player, version, x, y, z);
         }
@@ -70,7 +65,7 @@ public class DynamicChorusPlant implements CollisionFactory {
         Set<BlockFace> directions;
 
         if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_13)) {
-            // Player is 1.13 on 1.13 server
+
             directions = new HashSet<>();
             if (block.getWest() == West.TRUE) directions.add(BlockFace.WEST);
             if (block.getEast() == East.TRUE) directions.add(BlockFace.EAST);
@@ -79,10 +74,10 @@ public class DynamicChorusPlant implements CollisionFactory {
             if (block.isUp()) directions.add(BlockFace.UP);
             if (block.isDown()) directions.add(BlockFace.DOWN);
         } else {
-            // Player is 1.13 on 1.12 server
+
             directions = getLegacyStates(player, version, x, y, z);
         }
-        // Player is 1.13+ on 1.13+ server
+
         return modernShapes[getAABBIndex(directions)].copy();
     }
 
@@ -102,7 +97,6 @@ public class DynamicChorusPlant implements CollisionFactory {
     public Set<BlockFace> getLegacyStates(DenemePlayer player, ClientVersion version, int x, int y, int z) {
         Set<BlockFace> faces = new HashSet<>();
 
-        // 1.13 clients on 1.12 servers don't see chorus flowers attached to chorus because of a ViaVersion bug
         StateType versionFlower = version.isOlderThanOrEquals(ClientVersion.V_1_12_2) ? StateTypes.CHORUS_FLOWER : null;
 
         StateType downBlock = player.compensatedWorld.getBlockType(x, y - 1, z);

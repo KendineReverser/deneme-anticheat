@@ -3,7 +3,6 @@ package ac.deneme.anticheat.utils.math;
 import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.Contract;
 
-// My previous rant was wrong, we have 4 fastmath versions.  what the fuck optifine.
 @UtilityClass
 public class LegacyFastMath {
     private static final float[] SIN_TABLE_FAST = new float[4096];

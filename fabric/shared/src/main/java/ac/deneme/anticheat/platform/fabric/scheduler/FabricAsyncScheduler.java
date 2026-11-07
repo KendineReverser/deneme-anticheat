@@ -17,17 +17,8 @@ import java.util.function.Function;
 
 public class FabricAsyncScheduler implements AsyncScheduler {
 
-    // Bukkit's runTaskAsynchronously() hands work to a shared, growable thread pool
-    // (CraftAsyncScheduler uses a ThreadPoolExecutor, core 4 / max unbounded), and its scheduler is
-    // explicitly built for dispatch from ANY thread: CraftScheduler tracks live tasks in a
-    // ConcurrentHashMap (runners), mints ids with an AtomicInteger, and enqueues through a lock-free
-    // AtomicReference tail. So callers may schedule/cancel off the main thread. We mirror that
-    // contract: a pooled ScheduledExecutorService for execution and a ConcurrentHashMap for tracking.
     private final ScheduledExecutorService executor;
 
-    // Live tasks, kept so cancel(plugin)/cancelAll() can reach them. Keyed by a per-task token
-    // rather than the Future so a one-shot task can drop itself the moment it finishes without
-    // racing the Future being stored back here (the token is registered before the task can run).
     private final Map<Object, Tracked> tasks = new ConcurrentHashMap<>();
 
     private static final class Tracked {
@@ -73,8 +64,6 @@ public class FabricAsyncScheduler implements AsyncScheduler {
                 TimeUnit.MILLISECONDS);
     }
 
-    // One-shot tasks remove themselves from the map once they finish, so it can't grow unbounded;
-    // repeating tasks stay tracked until they're cancelled.
     private TaskHandle schedule(DenemePlugin plugin, Runnable task, boolean oneShot, Function<Runnable, Future<?>> submit) {
         Object token = new Object();
         Tracked tracked = new Tracked(plugin);

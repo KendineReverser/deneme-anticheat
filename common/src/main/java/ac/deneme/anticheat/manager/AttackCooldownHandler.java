@@ -15,10 +15,7 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPl
 public class AttackCooldownHandler extends DenemeProcessor implements PacketReceiveListener {
     private int ticksSinceLastSwing;
     private ItemStack stack = ItemStack.EMPTY;
-    // Since we don't know when the client ticks, we call updateHeldItem() when the held item changes,
-    // but that means ticksSinceLastSwing is incremented after it gets reset. This is wrong, so we
-    // compensate for that by not incrementing ticksSinceLastSwing if updateHeldItem() was called
-    // (and the held item changed) before the tick packet.
+
     private boolean stackChanged;
 
     public AttackCooldownHandler(DenemePlayer player) {
@@ -28,14 +25,14 @@ public class AttackCooldownHandler extends DenemeProcessor implements PacketRece
     @Override
     public void onPacketReceive(final PacketReceiveEvent event) {
         if (isAnimation(event.getPacketType())) {
-            // FIXME: should only run when the click misses
+
             reset();
         }
 
         if (event.getPacketType() == PacketType.Play.Client.PLAYER_DIGGING) {
             WrapperPlayClientPlayerDigging packet = new WrapperPlayClientPlayerDigging(event);
             if (packet.getAction() == DiggingAction.CANCELLED_DIGGING && packet.getBlockFace() == BlockFace.DOWN) {
-                // FIXME: this could also be triggered by switching targets while looking at the bottom face of a block
+
                 reset();
             }
         }
@@ -53,7 +50,6 @@ public class AttackCooldownHandler extends DenemeProcessor implements PacketRece
         ticksSinceLastSwing = 0;
     }
 
-    // called on client tick and whenever the slot gets updated
     public void updateHeldItem(boolean tick) {
         if (!tick && player.supportsEndTick()) return;
         ItemStack held = player.inventory.getHeldItem().copy();

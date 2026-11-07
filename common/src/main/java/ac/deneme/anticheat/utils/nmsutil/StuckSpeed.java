@@ -25,9 +25,8 @@ public class StuckSpeed {
             POWDER_SNOW
     };
 
-    // 0.03 hack
     public static int checkStuckSpeed(DenemePlayer player, double expand) {
-        // Use the bounding box for after the player's movement is applied
+
         SimpleCollisionBox box = GetBoundingBox.getCollisionBoxForPlayer(player, player.x, player.y, player.z).expand(expand);
 
         int minX = DenemeMath.mojangFloor(box.minX);

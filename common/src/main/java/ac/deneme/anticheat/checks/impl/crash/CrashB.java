@@ -20,7 +20,7 @@ public class CrashB extends Check implements PacketReceiveListener {
             if (player.gamemode != GameMode.CREATIVE) {
                 event.setCancelled(true);
                 player.onPacketCancel();
-                flag(); // Could be transaction split, no need to setback though
+                flag();
             }
         }
     }

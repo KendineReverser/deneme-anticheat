@@ -285,9 +285,7 @@ final class OwnershipHeartbeatScheduler {
 
     private void recoverOwnership() throws Exception {
         gate.close("ownership-recovery");
-        // Never compete with a different boot of a copied data folder. The claim
-        // below is atomic; its previous owner also detects a takeover between
-        // this read and the claim.
+
         ServerOwnershipSnapshot owner = ownership.readOwnership(ownershipStore, instanceId).orElse(null);
         if (owner != null && !isRecoveryOwner(owner)) {
             onLostOwnership(OwnershipRenewResult.lost(instanceId, startupId, fence, ownership.dbNowEpochMs()));
@@ -297,17 +295,13 @@ final class OwnershipHeartbeatScheduler {
         boolean existingCandidate = owner != null && recoveryStartupId.equals(owner.ownerStartupId());
         boolean candidateActive = existingCandidate && owner.activeAt(dbNow);
         if (existingCandidate && !candidateActive) {
-            // A peer can already have scheduled repair for this unsuccessful
-            // candidate. Do not attach live sessions to that expired startup.
+
             previousRecoveryOwner = owner;
             recoveryStartupId = UUID.randomUUID();
             recoveryFence = UUID.randomUUID();
             pendingRecovery = null;
         }
-        // An active candidate is already ours, possibly from an ambiguous
-        // claim response. Do not claim it again: it could expire between the
-        // read and claim, which would revive an identity peers may be repairing.
-        // The final renew below remains the authority for resuming writes.
+
         OwnershipClaimResult claim = candidateActive
                 ? OwnershipClaimResult.claimed(instanceId, recoveryStartupId, recoveryFence,
                         dbNow, owner.leaseExpiresAtEpochMs(), owner)
@@ -325,9 +319,7 @@ final class OwnershipHeartbeatScheduler {
             return;
         }
         if (shuttingDown.get()) return;
-        // Reuse an unexpired candidate after an ambiguous commit or a failed
-        // startup publish. Old sessions must never be reopened: peers
-        // may already have repaired them while this lease was expired.
+
         if (pendingRecovery == null) pendingRecovery = claim;
         publish.accept(new ServerStartupEvent()
                 .startupId(claim.startupId()).instanceId(instanceId).serverName(serverName)
@@ -335,7 +327,7 @@ final class OwnershipHeartbeatScheduler {
                 .hostname(hostname).denemeVersion(denemeVersion).serverVersionString(serverVersionString)
                 .verboseManifest(verboseManifest.get()));
         recoveryHandler.accept(pendingRecovery);
-        // Publishing and session reassignment may block past the TTL. Revalidate before admitting writes.
+
         OwnershipRenewResult renewed = ownership.renewOwnership(ownershipStore, instanceId,
                 claim.startupId(), claim.fence(), leaseTtlMs);
         if (!renewed.renewed()) return;
@@ -355,8 +347,7 @@ final class OwnershipHeartbeatScheduler {
         }
         synchronized (lifecycleLock) {
             if (shuttingDown.get()) return;
-            // Until completion succeeds, the next tick must retry recovery,
-            // even if ordinary renewal could still extend the candidate lease.
+
             pendingRecovery = null;
             recoveryStartupId = null;
             recoveryFence = null;

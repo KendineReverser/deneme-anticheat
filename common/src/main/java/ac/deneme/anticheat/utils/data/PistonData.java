@@ -12,10 +12,8 @@ public class PistonData {
     public final BlockFace direction;
     public final int lastTransactionSent;
 
-    // Calculate if the player has no-push, and when to end the possibility of applying piston
     public int ticksOfPistonBeingAlive = 0;
 
-    // The actual blocks pushed by the piston, plus the piston head itself
     public final List<SimpleCollisionBox> boxes;
 
     public PistonData(BlockFace direction, List<SimpleCollisionBox> pushedBlocks, int lastTransactionSent, boolean isPush, boolean hasSlimeBlock, boolean hasHoneyBlock) {
@@ -27,9 +25,6 @@ public class PistonData {
         this.hasHoneyBlock = hasHoneyBlock;
     }
 
-    // We don't know when the piston has applied, or what stage of pushing it is on
-    // Therefore, we need to use what we have - the number of movement packets.
-    // 10 is a very cautious number
     public boolean tickIfGuaranteedFinished() {
         return ++ticksOfPistonBeingAlive >= 10;
     }

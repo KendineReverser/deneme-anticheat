@@ -37,8 +37,7 @@ public class PositionBreakB extends Check implements BlockBreakListener {
         }
 
         if (blockBreak.action == DiggingAction.CANCELLED_DIGGING) {
-            // as of https://github.com/ViaVersion/ViaRewind/commit/e7b0606e187afbccf98ef7c88d3f3af27fe11da3,
-            // ViaRewind maps face 255 for 1.7 clients to 0. Let's allow both, just to be safe
+
             lastFace = blockBreak.faceId == 0 || allowLegacyFace && blockBreak.faceId == 255 ? null : blockBreak.face;
         }
     }

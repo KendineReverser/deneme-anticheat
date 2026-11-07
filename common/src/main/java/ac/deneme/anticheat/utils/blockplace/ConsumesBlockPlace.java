@@ -15,11 +15,10 @@ import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.NotNull;
 
-// HOW DIFFICULT CAN IT BE TO TELL THE SERVER THAT YOU RANG A BELL, AND NOT CREATE A GHOST BLOCK???
 @UtilityClass
 public class ConsumesBlockPlace {
     public static boolean consumesPlace(@NotNull DenemePlayer player, @NotNull WrappedBlockState state, @NotNull BlockPlace place) {
-        // Hey look, it's another DESYNC MOJANG
+
         if (state.getType() == StateTypes.BELL) {
             return goodBellHit(state, place);
         }

@@ -36,7 +36,6 @@ public class BStatsConfig {
             if (!configFile.exists()) {
                 bStatsFolder.mkdirs();
 
-                // Create default config
                 data = new LinkedHashMap<>();
                 data.put("enabled", true);
                 data.put("serverUuid", UUID.randomUUID().toString());
@@ -44,20 +43,18 @@ public class BStatsConfig {
                 data.put("logSentData", false);
                 data.put("logResponseStatusText", false);
 
-                // Write config with header
                 try (Writer writer = new OutputStreamWriter(new FileOutputStream(configFile), StandardCharsets.UTF_8)) {
                     writer.write(HEADER);
                     yaml.dump(data, writer);
                 }
             } else {
-                // Load existing config
+
                 data = yaml.load(new FileInputStream(configFile));
                 if (data == null) {
                     data = new LinkedHashMap<>();
                 }
             }
 
-            // Map the data to Config object
             config.enabled = getBoolean(data, "enabled", true);
             config.serverUuid = getString(data, "serverUuid", UUID.randomUUID().toString());
             config.logFailedRequests = getBoolean(data, "logFailedRequests", false);
@@ -66,7 +63,7 @@ public class BStatsConfig {
 
         } catch (IOException e) {
             LogUtil.error("Failed to load bStats config. Using default values.", e);
-            // Fallback to default values
+
             config.enabled = true;
             config.serverUuid = UUID.randomUUID().toString();
             config.logFailedRequests = false;
@@ -87,7 +84,6 @@ public class BStatsConfig {
         return value instanceof String ? (String) value : defaultValue;
     }
 
-    // Your existing Config class
     public static class Config {
         public boolean enabled = true;
         public String serverUuid;

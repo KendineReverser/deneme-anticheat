@@ -23,7 +23,7 @@ public class PacketOrderH extends Check implements PreViaPacketReceiveListener, 
 
     @Override
     public boolean isApplicable() {
-        // sneaking is set by input packet in 1.21.6+
+
         return player.getClientVersion().isOlderThan(ClientVersion.V_1_21_6);
     }
 

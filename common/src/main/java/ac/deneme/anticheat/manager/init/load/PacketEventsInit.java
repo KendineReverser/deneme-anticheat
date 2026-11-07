@@ -34,7 +34,7 @@ public class PacketEventsInit implements LoadableInitable {
                 .reEncodeByDefault(false)
                 .debug(false);
         PacketEvents.getAPI().load();
-        // This may seem useless, but it causes java to start loading stuff async before we need it
+
         Executors.defaultThreadFactory().newThread(() -> {
             StateTypes.AIR.getName();
             ItemTypes.AIR.getName();

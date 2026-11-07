@@ -22,7 +22,7 @@ public class BlockPlaceCheck extends Check {
     private static final List<StateType> buggyBoxes = new ArrayList<>();
 
     static {
-        // Fences and walls aren't worth checking.
+
         weirdBoxes.addAll(new ArrayList<>(BlockTags.FENCES.getStates()));
         weirdBoxes.addAll(new ArrayList<>(BlockTags.WALLS.getStates()));
         weirdBoxes.add(StateTypes.LECTERN);
@@ -33,7 +33,6 @@ public class BlockPlaceCheck extends Check {
         buggyBoxes.add(StateTypes.TRAPPED_CHEST);
         buggyBoxes.add(StateTypes.CHORUS_PLANT);
 
-        // The client changes these block states around when placing blocks, temporary desync
         buggyBoxes.add(StateTypes.KELP);
         buggyBoxes.add(StateTypes.KELP_PLANT);
         buggyBoxes.add(StateTypes.TWISTING_VINES);
@@ -67,11 +66,11 @@ public class BlockPlaceCheck extends Check {
     }
 
     protected SimpleCollisionBox getCombinedBox(final BlockPlace place) {
-        // Alright, instead of skidding AACAdditionsPro, let's just use bounding boxes
+
         Vector3i clicked = place.position;
 
         if (weirdBoxes.contains(place.getPlacedAgainstMaterial()) || buggyBoxes.contains(place.getPlacedAgainstMaterial())) {
-            // Invert the box to give lenience
+
             return new SimpleCollisionBox(clicked.getX() + 1, clicked.getY() + 1, clicked.getZ() + 1, clicked.getX(), clicked.getY(), clicked.getZ());
         }
 

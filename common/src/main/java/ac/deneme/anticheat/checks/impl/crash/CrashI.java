@@ -31,7 +31,7 @@ public class CrashI extends Check implements PreViaPacketReceiveListener {
             try {
                 selectedItemIndex = new WrapperPlayClientSelectBundleItem(event).getSelectedItemIndex();
             } catch (IllegalArgumentException e) {
-                // thanks packetevents!
+
                 if (e.getMessage().startsWith("Invalid selectedItemIndex: ")) {
                     selectedItemIndex = Integer.parseInt(e.getMessage().substring(27));
                 } else {

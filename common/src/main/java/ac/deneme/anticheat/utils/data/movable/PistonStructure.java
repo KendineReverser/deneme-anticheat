@@ -116,7 +116,6 @@ final class PistonStructure {
         int length = 1;
         if (length + toPush.size() > MAX_PUSH_DEPTH) return false;
 
-        // Sticky blocks drag the line behind them along
         while (isSticky(state)) {
             Pos behind = origin.relative(pushDirection.getOppositeFace(), length);
             WrappedBlockState previous = state;

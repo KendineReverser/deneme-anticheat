@@ -3,7 +3,6 @@ package ac.deneme.anticheat.manager.init.start;
 import ac.deneme.anticheat.DenemeAPI;
 import ac.deneme.anticheat.player.DenemePlayer;
 
-// Intended for future events we inject all platforms at the end of a tick
 public abstract class AbstractTickEndEvent implements StartableInitable {
 
     @Override

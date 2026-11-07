@@ -24,7 +24,7 @@ public class AirLiquidBreak extends Check implements BlockBreakListener {
     public final boolean noFireHitbox = player.getClientVersion().isOlderThanOrEquals(ClientVersion.V_1_15_2);
     private int lastTick;
     private boolean didLastFlag;
-    // Initialize to non-null values to prevent NPE when checking for blockType properties and if position equals old position
+
     private @NotNull Vector3i lastBreakLoc = new Vector3i();
     private @NotNull StateType lastBlockType = StateTypes.AIR;
 
@@ -39,10 +39,6 @@ public class AirLiquidBreak extends Check implements BlockBreakListener {
 
         final StateType block = blockBreak.block.getType();
 
-        // Fixes false from breaking kelp underwater
-        // The client sends two start digging packets to the server both in the same tick. AirLiquidBreak gets called twice, doesn't false the first time, but falses the second
-        // One ends up breaking the kelp, the other ends up doing nothing besides falsing this check because we think they're trying to mine water
-        // I am explicitly making this patch as narrow and specific as possible to potentially discover other blocks that exhibit similar behaviour
         int newTick = DenemeAPI.INSTANCE.getTickManager().currentTick;
         if (lastTick == newTick
                 && lastBreakLoc.equals(blockBreak.position)
@@ -55,7 +51,6 @@ public class AirLiquidBreak extends Check implements BlockBreakListener {
         lastBreakLoc = blockBreak.position;
         lastBlockType = block;
 
-        // the block does not have a hitbox
         boolean invalid = (block == StateTypes.LIGHT && !(player.inventory.getHeldItem().is(ItemTypes.LIGHT) || player.inventory.getOffHand().is(ItemTypes.LIGHT)))
                 || block.isAir()
                 || block == StateTypes.WATER
@@ -63,9 +58,9 @@ public class AirLiquidBreak extends Check implements BlockBreakListener {
                 || block == StateTypes.BUBBLE_COLUMN
                 || block == StateTypes.MOVING_PISTON
                 || block == StateTypes.FIRE && noFireHitbox
-                // or the client claims to have broken an unbreakable block
+
                 || block.getHardness() == -1.0f && blockBreak.action == DiggingAction.FINISHED_DIGGING
-                // or the player is holding a spear
+
                 || player.inventory.getHeldItem().hasComponent(ComponentTypes.PIERCING_WEAPON) && player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_21_11);
 
         if (invalid && flag(V.write(verbose())

@@ -29,7 +29,7 @@ public class Fabric1212PlatformPlayer extends Fabric1202PlatformPlayer {
                     location.getX(),
                     location.getY(),
                     location.getZ(),
-                    EnumSet.noneOf(Relative.class), // todo change to match paper? Do they do this?
+                    EnumSet.noneOf(Relative.class),
                     location.getYaw(),
                     location.getPitch(),
                     true

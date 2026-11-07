@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public final class FabricResolverRegistrar {
 
-    // Cache to ensure we only create one DenemePlugin wrapper per Fabric ModContainer.
     private final Map<ModContainer, DenemePlugin> modContainerCache = new ConcurrentHashMap<>();
     private final Map<Class<?>, DenemePlugin> classCache = new ConcurrentHashMap<>();
     private final Map<Object, DenemePlugin> entrypointCache = new ConcurrentHashMap<>();
@@ -77,7 +76,7 @@ public final class FabricResolverRegistrar {
      */
     private DenemePlugin resolveStringId(Object context) {
         if (context instanceof String modId) {
-            // Mod IDs are enforced to always be fully lowercase
+
             return FabricLoader.getInstance().getModContainer(modId.toLowerCase(Locale.ROOT))
                     .map(this::resolveMod)
                     .orElse(null);
@@ -89,7 +88,7 @@ public final class FabricResolverRegistrar {
      * Resolver #2: Mod Entrypoint Instance (slower, but cached)
      */
     private DenemePlugin resolveEntrypointInstance(Object context) {
-        // We only care about potential entrypoint instances
+
         if (context instanceof ModInitializer || context instanceof PreLaunchEntrypoint || context instanceof ClientModInitializer || context instanceof DedicatedServerModInitializer) {
             return entrypointCache.computeIfAbsent(context, this::findEntrypoint);
         }
@@ -128,22 +127,18 @@ public final class FabricResolverRegistrar {
 
     private DenemePlugin findClassProvider(Class<?> c) {
         try {
-            // 1. Get the path to the physical JAR/directory the class was loaded from.
-            // This is our ground truth.
+
             java.security.CodeSource codeSource = c.getProtectionDomain().getCodeSource();
             if (codeSource == null) return null;
             java.net.URL sourceUrl = codeSource.getLocation();
             if (sourceUrl == null) return null;
             Path sourcePath = Paths.get(sourceUrl.toURI());
 
-            // 2. Iterate through all mods and check if the class's source path
-            // matches the physical path of the mod's container.
             for (ModContainer modContainer : FabricLoader.getInstance().getAllMods()) {
                 for (Path modRootPath : modContainer.getRootPaths()) {
                     URI modUri = modRootPath.toUri();
                     Path modPhysicalPath = null;
 
-                    // 3. Determine the mod's physical path based on its URI scheme.
                     if ("file".equals(modUri.getScheme())) {
                         modPhysicalPath = modRootPath;
                     } else if ("jar".equals(modUri.getScheme())) {
@@ -155,14 +150,13 @@ public final class FabricResolverRegistrar {
                         }
                     }
 
-                    // 4. Perform the reliable file comparison.
                     if (modPhysicalPath != null && Files.isSameFile(modPhysicalPath, sourcePath)) {
                         return resolveMod(modContainer);
                     }
                 }
             }
         } catch (URISyntaxException | IOException | NullPointerException e) {
-            // Fail gracefully.
+
             return null;
         }
         return null;

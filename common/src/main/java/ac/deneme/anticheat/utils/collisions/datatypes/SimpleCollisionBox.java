@@ -58,7 +58,6 @@ public class SimpleCollisionBox implements CollisionBox {
         this(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1);
     }
 
-    // If you want to set a full block from a point
     public SimpleCollisionBox(double minX, double minY, double minZ) {
         this(minX, minY, minZ, minX + 1, minY + 1, minZ + 1, true);
     }
@@ -249,7 +248,7 @@ public class SimpleCollisionBox implements CollisionBox {
     }
 
     public boolean isIntersected(CollisionBox other) {
-        // Optimization - don't allocate a list if this is just a SimpleCollisionBox
+
         if (other instanceof SimpleCollisionBox) {
             return isIntersected((SimpleCollisionBox) other);
         }
@@ -311,7 +310,6 @@ public class SimpleCollisionBox implements CollisionBox {
             return true;
         }
 
-        // Get the direction of block we are trying to connect to -> towards the block that is trying to connect
         final BlockFace faceToSourceConnector = axis.getOppositeFace();
         return switch (faceToSourceConnector) {
             case EAST, WEST -> this.minX == 0 && this.maxX == 1;
@@ -335,10 +333,10 @@ public class SimpleCollisionBox implements CollisionBox {
         if (offsetX != 0 && (other.minY - maxY) < -COLLISION_EPSILON && (other.maxY - minY) > COLLISION_EPSILON &&
                 (other.minZ - maxZ) < -COLLISION_EPSILON && (other.maxZ - minZ) > COLLISION_EPSILON) {
             if (offsetX >= 0.0) {
-                double max_move = minX - other.maxX; // < 0.0 if no strict collision
+                double max_move = minX - other.maxX;
                 return max_move < -COLLISION_EPSILON ? offsetX : Math.min(max_move, offsetX);
             } else {
-                double max_move = maxX - other.minX; // > 0.0 if no strict collision
+                double max_move = maxX - other.minX;
                 return max_move > COLLISION_EPSILON ? offsetX : Math.max(max_move, offsetX);
             }
         }
@@ -354,10 +352,10 @@ public class SimpleCollisionBox implements CollisionBox {
         if (offsetY != 0 && (other.minX - maxX) < -COLLISION_EPSILON && (other.maxX - minX) > COLLISION_EPSILON &&
                 (other.minZ - maxZ) < -COLLISION_EPSILON && (other.maxZ - minZ) > COLLISION_EPSILON) {
             if (offsetY >= 0.0) {
-                double max_move = minY - other.maxY; // < 0.0 if no strict collision
+                double max_move = minY - other.maxY;
                 return max_move < -COLLISION_EPSILON ? offsetY : Math.min(max_move, offsetY);
             } else {
-                double max_move = maxY - other.minY; // > 0.0 if no strict collision
+                double max_move = maxY - other.minY;
                 return max_move > COLLISION_EPSILON ? offsetY : Math.max(max_move, offsetY);
             }
         }
@@ -373,10 +371,10 @@ public class SimpleCollisionBox implements CollisionBox {
         if (offsetZ != 0 && (other.minX - maxX) < -COLLISION_EPSILON && (other.maxX - minX) > COLLISION_EPSILON &&
                 (other.minY - maxY) < -COLLISION_EPSILON && (other.maxY - minY) > COLLISION_EPSILON) {
             if (offsetZ >= 0.0) {
-                double max_move = minZ - other.maxZ; // < 0.0 if no strict collision
+                double max_move = minZ - other.maxZ;
                 return max_move < -COLLISION_EPSILON ? offsetZ : Math.min(max_move, offsetZ);
             } else {
-                double max_move = maxZ - other.minZ; // > 0.0 if no strict collision
+                double max_move = maxZ - other.minZ;
                 return max_move > COLLISION_EPSILON ? offsetZ : Math.max(max_move, offsetZ);
             }
         }
@@ -419,8 +417,7 @@ public class SimpleCollisionBox implements CollisionBox {
      * @param maxDist maximum distance
      * @return intersection point on the bounding box (only the first is returned) or null if no intersection
      */
-    // Copied from hawk lol
-    // I would like to point out that this is magic to me and I have not attempted to understand this code
+
     public Vector3dm intersectsRay(Ray ray, float minDist, float maxDist) {
         Vector3dm invDir = new Vector3dm(1f / ray.direction().getX(), 1f / ray.direction().getY(), 1f / ray.direction().getZ());
 

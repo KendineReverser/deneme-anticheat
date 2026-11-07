@@ -102,31 +102,24 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-// Everything in this class should be sync'd to the anticheat thread.
-// Put variables sync'd to the Netty thread in PacketStateData
-// Variables that need lag compensation should have their own class
-// Soon there will be a generic class for lag compensation
 public class DenemePlayer implements DenemeUser {
     public final @NotNull User user;
     public final @NotNull UUID uuid;
     public int entityID;
     public @MonotonicNonNull PlatformPlayer platformPlayer;
-    // Start transaction handling stuff
-    // Determining player ping
-    // The difference between keepalive and transactions is that keepalive is async while transactions are sync
+
     public final @NotNull Queue<@NotNull ShortToLongPair> transactionsSent = new ConcurrentLinkedQueue<>();
     public final @NotNull Set<@NotNull Short> didWeSendThatTrans = ConcurrentHashMap.newKeySet();
     private final @NotNull AtomicInteger transactionIDCounter = new AtomicInteger(0);
     public final @NotNull AtomicInteger lastTransactionSent = new AtomicInteger(0);
     public final @NotNull AtomicInteger lastTransactionReceived = new AtomicInteger(0);
-    // End transaction handling stuff
-    // Manager like classes
+
     public final @NotNull CheckManager checkManager;
     public final @NotNull AttackCooldownHandler attackCooldown;
     public final @NotNull PunishmentManager punishmentManager;
     public final @NotNull MovementCheckRunner movementCheckRunner;
     public final @NotNull SyncedTags tagManager;
-    // End manager like classes
+
     public @NotNull Vector3dm clientVelocity = new Vector3dm();
     private @MonotonicNonNull PacketTracker viaPacketTracker;
     public final @NotNull PacketOrderProcessor packetOrderProcessor = new PacketOrderProcessor(this);
@@ -156,7 +149,7 @@ public class DenemePlayer implements DenemeUser {
     public double lastX;
     public double lastY;
     public double lastZ;
-    // Mojang uses xRot pitch and yRot for yaw
+
     public float yaw;
     public float pitch;
     public float lastYaw;
@@ -167,8 +160,7 @@ public class DenemePlayer implements DenemeUser {
     public boolean wasSneaking;
     public boolean isSprinting;
     public boolean lastSprinting;
-    // The client updates sprinting attribute at end of each tick
-    // Don't false if the server update's the player's sprinting status
+
     public boolean lastSprintingForSpeed;
     public boolean isFlying;
     public boolean canFly;
@@ -183,7 +175,7 @@ public class DenemePlayer implements DenemeUser {
     public @NotNull SimpleCollisionBox boundingBox = GetBoundingBox.getBoundingBoxFromPosAndSizeRaw(x, y, z, 0.6f, 1.8f);
     public @NotNull Pose pose = Pose.STANDING;
     public @NotNull Pose lastPose = Pose.STANDING;
-    // Determining slow movement has to be done before pose is updated
+
     public boolean isSlowMovement;
     public boolean isInBed;
     public boolean lastInBed;
@@ -192,9 +184,9 @@ public class DenemePlayer implements DenemeUser {
     public float sneakingSpeedMultiplier = 0.3f;
     public float flySpeed;
     public final @NotNull VehicleData vehicleData = new VehicleData();
-    // The client claims this
+
     public boolean clientClaimsLastOnGround;
-    // Set from base tick
+
     public boolean wasTouchingWater;
     public boolean wasWasTouchingWater;
     public boolean wasTouchingLava;
@@ -204,16 +196,11 @@ public class DenemePlayer implements DenemeUser {
     public boolean horizontalCollision;
     public boolean verticalCollision;
     public boolean clientControlledVerticalCollision;
-    // Okay, this is our 0.03 detection
-    //
-    // couldSkipTick determines if an input could have resulted in the player skipping a tick < 0.03
-    //
-    // skippedTickInActualMovement determines if, relative to actual movement, the player didn't move enough
-    // and a 0.03 vector was "close enough" to be an accurate prediction
+
     public boolean couldSkipTick;
-    // This determines if the
+
     public boolean skippedTickInActualMovement;
-    // You cannot initialize everything here for some reason
+
     public final @NotNull LastInstanceManager lastInstanceManager;
     public final @NotNull CompensatedFireworks fireworks;
     public final @NotNull CompensatedWorld compensatedWorld;
@@ -226,7 +213,7 @@ public class DenemePlayer implements DenemeUser {
     public final @NotNull PointThreeEstimator pointThreeEstimator;
     public final @NotNull TrigHandler trigHandler = new TrigHandler(this);
     public final @NotNull PacketStateData packetStateData = new PacketStateData();
-    // Keep track of basetick stuff
+
     public final @NotNull Vector3dm baseTickAddition = new Vector3dm();
     public final @NotNull Vector3dm baseTickWaterPushing = new Vector3dm();
     public @NotNull Vector3dm startTickClientVel = new Vector3dm();
@@ -245,7 +232,7 @@ public class DenemePlayer implements DenemeUser {
     public final @NotNull AtomicInteger cancelledPackets = new AtomicInteger(0);
     public @NotNull MainSupportingBlockData mainSupportingBlockData = MainSupportingBlockData.AIR_OFF_GROUND;
     public final @NotNull Object2DoubleMap<FluidTag> fluidHeight = new Object2DoubleArrayMap<>(2);
-    // possibleEyeHeights[0] = Standing eye heights, [1] = Sneaking. [2] = Elytra, Swimming, and Riptide Trident which only exists in 1.9+
+
     public final double[][] possibleEyeHeights = new double[3][];
     public final @NotNull Queue<@NotNull BlockPlaceSnapshot> placeUseItemPackets = new LinkedBlockingQueue<>();
     public final @NotNull Queue<@NotNull BlockBreak> queuedBreaks = new LinkedBlockingQueue<>();
@@ -255,9 +242,9 @@ public class DenemePlayer implements DenemeUser {
     @Getter @Setter private ResyncHandler resyncHandler = DenemeAPI.INSTANCE.getConfigManager().getConfig().getBooleanElse("disable-default-resync-handler", false) ? NoOpResyncHandler.INSTANCE : new DefaultResyncHandler(this);
     @Getter private final @NotNull FeatureManagerImpl featureManager = new FeatureManagerImpl(this);
     public boolean serverOpenedInventoryThisTick;
-    // Whether this tick's movement intersected a nether portal block (see MultiActionsD)
+
     public boolean intersectedWithNetherPortal;
-    // start config
+
     private boolean debugPacketCancel;
     private int spamThreshold = 100;
     private int maxTransactionTime = 60;
@@ -271,11 +258,10 @@ public class DenemePlayer implements DenemeUser {
     @Getter private boolean resetItemUsageOnItemUpdate;
     @Getter private boolean resetItemUsageOnSlotChange;
     @Getter private boolean resetItemUsageOnItemUse;
-    // end config
+
     public boolean noModifyPacketPermission;
     public boolean noSetbackPermission;
-    // This variable is for support with test servers that want to be able to disable deneme
-    // Deneme disabler 2022 still working!
+
     public boolean disableDeneme;
     public final @NotNull ArrayDeque<@NotNull Movement> movementThisTick = new ArrayDeque<>(8);
     public final @NotNull List<@NotNull Movement> finalMovementsThisTick = new ObjectArrayList<>();
@@ -290,7 +276,7 @@ public class DenemePlayer implements DenemeUser {
     public DenemePlayer(@NotNull User user) {
         this.user = Objects.requireNonNull(user, "user");
         this.uuid = Objects.requireNonNull(user.getUUID(), "uuid");
-        this.fireworks = new CompensatedFireworks(this); // Must be before checkmanager
+        this.fireworks = new CompensatedFireworks(this);
         this.inventory = new CompensatedInventory(this);
 
         this.compensatedWorld = new CompensatedWorld(this);
@@ -303,27 +289,26 @@ public class DenemePlayer implements DenemeUser {
         this.attackCooldown = new AttackCooldownHandler(this);
         this.checkManager = new CheckManager(this);
         this.punishmentManager = new PunishmentManager(this);
-        this.tagManager = new SyncedTags(this); // must be after this.user = user
+        this.tagManager = new SyncedTags(this);
         this.movementCheckRunner = new MovementCheckRunner(this);
 
-        this.uncertaintyHandler = new UncertaintyHandler(this); // must be after checkmanager
+        this.uncertaintyHandler = new UncertaintyHandler(this);
         this.pointThreeEstimator = new PointThreeEstimator(this);
 
         if (getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_14)) {
             final float scale = (float) compensatedEntities.self.getAttributeValue(Attributes.SCALE);
-            possibleEyeHeights[2] = new double[]{0.4 * scale, 1.62 * scale, 1.27 * scale}; // Elytra, standing, sneaking (1.14)
-            possibleEyeHeights[1] = new double[]{1.27 * scale, 1.62 * scale, 0.4 * scale}; // sneaking (1.14), standing, Elytra
-            possibleEyeHeights[0] = new double[]{1.62 * scale, 1.27 * scale, 0.4 * scale}; // standing, sneaking (1.14), Elytra
-        } else if (getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_9)) { // standing, sneaking Elytra
-            possibleEyeHeights[2] = new double[]{0.4, 1.62, 1.54}; // Elytra, standing, sneaking (1.13)
-            possibleEyeHeights[1] = new double[]{1.54, 1.62, 0.4}; // sneaking (1.9-1.13), standing, Elytra
-            possibleEyeHeights[0] = new double[]{1.62, 1.54, 0.4}; // standing, sneaking (1.9-1.13), Elytra
+            possibleEyeHeights[2] = new double[]{0.4 * scale, 1.62 * scale, 1.27 * scale};
+            possibleEyeHeights[1] = new double[]{1.27 * scale, 1.62 * scale, 0.4 * scale};
+            possibleEyeHeights[0] = new double[]{1.62 * scale, 1.27 * scale, 0.4 * scale};
+        } else if (getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_9)) {
+            possibleEyeHeights[2] = new double[]{0.4, 1.62, 1.54};
+            possibleEyeHeights[1] = new double[]{1.54, 1.62, 0.4};
+            possibleEyeHeights[0] = new double[]{1.62, 1.54, 0.4};
         } else {
-            possibleEyeHeights[1] = new double[]{(double) (1.62f - 0.08f), (double) (1.62f)}; // sneaking, standing
-            possibleEyeHeights[0] = new double[]{(double) (1.62f), (double) (1.62f - 0.08f)}; // standing, sneaking
+            possibleEyeHeights[1] = new double[]{(double) (1.62f - 0.08f), (double) (1.62f)};
+            possibleEyeHeights[0] = new double[]{(double) (1.62f), (double) (1.62f - 0.08f)};
         }
 
-        // reload last
         reload();
     }
 
@@ -351,7 +336,7 @@ public class DenemePlayer implements DenemeUser {
         }
 
         if (likelyKB != null) {
-            // Allow water pushing to affect knockback
+
             set.add(new VectorData(likelyKB.vector.clone(), VectorData.VectorType.Knockback));
         }
 
@@ -363,8 +348,6 @@ public class DenemePlayer implements DenemeUser {
         Set<VectorData> possibleMovements = new HashSet<>();
         possibleMovements.add(new VectorData(clientVelocity, VectorData.VectorType.Normal));
 
-        // A player cannot swim hop (> 0 y vel) and be on the ground
-        // Fixes bug with underwater stepping movement being confused with swim hopping movement
         if (canSwimHop && !onGround) {
             Vector3dm vector = clientVelocity.clone().setY(0.30000001192092896 + (canFloatWhileRidden ? 0.03999999910593033 : 0.0));
             if (getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_21_2)) {
@@ -378,9 +361,6 @@ public class DenemePlayer implements DenemeUser {
             possibleMovements.add(new VectorData(vector, VectorData.VectorType.Swimhop));
         }
 
-        // If the player has that client sided riptide thing and has colliding with an entity
-        // This was determined in the previous tick but whatever just include the 2 ticks around it
-        // for a bit of safety as I doubt people will try to bypass this, it would be a very useless cheat
         if (riptideSpinAttackTicks >= 0 && Collections.max(uncertaintyHandler.riptideEntities) > 0) {
             possibleMovements.add(new VectorData(clientVelocity.clone().multiply(-0.2), VectorData.VectorType.Trident));
         }
@@ -389,8 +369,6 @@ public class DenemePlayer implements DenemeUser {
             possibleMovements.add(new VectorData(clientVelocity.clone().setY(lastWasClimbing + baseTickAddition.getY()), VectorData.VectorType.Climbable));
         }
 
-        // Knockback takes precedence over piston pushing in my testing
-        // It's very difficult to test precedence so if there's issues with this bouncy implementation let me know
         for (VectorData data : new HashSet<>(possibleMovements)) {
             for (BlockFace direction : uncertaintyHandler.slimePistonBounces) {
                 if (direction.getModX() != 0) {
@@ -406,10 +384,6 @@ public class DenemePlayer implements DenemeUser {
         return possibleMovements;
     }
 
-    // Players can get 0 ping by repeatedly sending invalid transaction packets, but that will only hurt them
-    // The design is allowing players to miss transaction packets, which shouldn't be possible
-    // But if some error made a client miss a packet, then it won't hurt them too bad.
-    // Also it forces players to take knockback
     public boolean addTransactionResponse(short id) {
         ShortToLongPair data = null;
         boolean hasID = false;
@@ -423,7 +397,7 @@ public class DenemePlayer implements DenemeUser {
         }
 
         if (hasID) {
-            // Transactions that we send don't count towards total limit
+
             if (viaPacketTracker != null) viaPacketTracker.setIntervalPackets(viaPacketTracker.getIntervalPackets() - 1);
 
             if (skipped > 0 && System.currentTimeMillis() - joinTime > 5000)
@@ -440,13 +414,11 @@ public class DenemePlayer implements DenemeUser {
                 playerClockAtLeast = data.second();
             } while (data.first() != id);
 
-            // A transaction means a new tick, so handle any block interactions
             CheckManagerListener.handleQueuedPlaces(this, false, 0, 0, System.currentTimeMillis());
             CheckManagerListener.handleQueuedBreaks(this, false, 0, 0, System.currentTimeMillis());
             latencyUtils.handleNettySyncTransaction(lastTransactionReceived.get());
         }
 
-        // Were we the ones who sent the packet?
         return data != null;
     }
 
@@ -476,7 +448,6 @@ public class DenemePlayer implements DenemeUser {
             return ((PacketEntityHappyGhast) riding).isControllingPassenger() ? Math.max(value, 1.0F) : value;
         }
 
-        // Pigs, horses, striders, and other vehicles all have 1 stepping height by default
         return value;
     }
 
@@ -485,11 +456,9 @@ public class DenemePlayer implements DenemeUser {
     }
 
     public void sendTransaction(boolean async) {
-        // don't send transactions outside PLAY phase
-        // Sending in non-play corrupts the pipeline, don't waste bandwidth when anticheat disabled
+
         if (user.getEncoderState() != ConnectionState.PLAY) return;
 
-        // Send a packet once every 15 seconds to avoid any memory leaks
         if (disableDeneme && (System.nanoTime() - getPlayerClockAtLeast()) > 15e9) {
             return;
         }
@@ -514,8 +483,8 @@ public class DenemePlayer implements DenemeUser {
                 addTransactionSend(transactionID);
                 user.writePacket(packet);
             }
-        } catch (Exception ignored) { // Fix protocollib + viaversion support by ignoring any errors :) // TODO: Fix this
-            // recompile
+        } catch (Exception ignored) {
+
         }
     }
 
@@ -549,7 +518,7 @@ public class DenemePlayer implements DenemeUser {
         LogUtil.info("Disconnecting " + user.getProfile().getName() + " for " + MessageUtil.stripColor(textReason));
         try {
             user.sendPacket(new WrapperPlayServerDisconnect(reason));
-        } catch (Exception ignored) { // There may (?) be an exception if the player is in the wrong state...
+        } catch (Exception ignored) {
             LogUtil.warn("Failed to send disconnect packet to disconnect " + user.getProfile().getName() + "! Disconnecting anyways.");
         }
         user.closeConnection();
@@ -560,13 +529,9 @@ public class DenemePlayer implements DenemeUser {
     }
 
     public void pollData() {
-        // Send a transaction at least once a tick, for timer and post check purposes
-        // Don't be the first to send the transaction, or we will stack overflow
-        //
-        // This will only really activate if there's no entities around the player being tracked
-        // 80 is a magic value that is roughly every other tick, we don't want to spam too many packets.
+
         if (lastTransSent != 0 && lastTransSent + 80 < System.currentTimeMillis()) {
-            sendTransaction(true); // send on netty thread
+            sendTransaction(true);
         }
         if ((System.nanoTime() - getPlayerClockAtLeast()) > maxTransactionTime * 1e9) {
             timedOut();
@@ -586,10 +551,6 @@ public class DenemePlayer implements DenemeUser {
             updatePermissions();
         }
 
-        // Datastore session heartbeat — throttled internally to once per
-        // `database.session.heartbeat-interval-ms`, so this runs every tick
-        // but only emits a row upsert every N seconds. Bounds how stale
-        // last_activity_epoch_ms can be when the server crashes.
         DenemeAPI.INSTANCE.getDataStoreLifecycle().sessionTracker()
                 .pollHeartbeat(uuid, System.currentTimeMillis());
     }
@@ -620,7 +581,6 @@ public class DenemePlayer implements DenemeUser {
         }
     }
 
-    // TODO: Create a configurable timer for this
     @Override
     public void updatePermissions() {
         runSafely(() -> {
@@ -656,26 +616,13 @@ public class DenemePlayer implements DenemeUser {
     }
 
     public ClientVersion getClientVersion() {
-        // If temporarily null, assume server version...
+
         return Objects.requireNonNullElseGet(user.getClientVersion(), () -> ClientVersion.getById(PacketEvents.getAPI().getServerManager().getVersion().getProtocolVersion()));
     }
 
-    // Alright, someone at mojang decided to not send a flying packet every tick with 1.9
-    // Thanks for wasting my time to save 1 MB an hour
-    //
-    // MEANING, to get an "acceptable" 1.9+ reach check, we must only treat it like a 1.8 clients
-    // when it is acting like one and sending a packet every tick.
-    //
-    // There are two predictable scenarios where this happens:
-    // 1. The player moves more than 0.03/0.0002 blocks every tick
-    //     - This code runs after the prediction engine to prevent a false when immediately switching back to 1.9-like movements
-    //     - 3 ticks is a magic value, but it should buffer out incorrect predictions somewhat.
-    // 2. The player is in a vehicle
     public boolean isTickingReliablyFor(int ticks) {
         if (!cameraEntity.isSelf()) return false;
 
-        // 1.21.2+: Tick end packet, on servers 1.21.2+
-        // 1.8-: Flying packet
         return !canSkipTicks() || (inVehicle()
                 || !uncertaintyHandler.lastPointThree.hasOccurredSince(ticks))
                 && !uncertaintyHandler.lastVehicleSwitch.hasOccurredSince(1);
@@ -693,19 +640,19 @@ public class DenemePlayer implements DenemeUser {
         return inVehicle() ? getVehicle().getType() : null;
     }
 
-    public double[] getPossibleEyeHeights() { // We don't return sleeping eye height
-        // 1.8 Players once again ruin my clean switch-case
+    public double[] getPossibleEyeHeights() {
+
         if (this.getClientVersion().isOlderThan(ClientVersion.V_1_9)) {
             return this.possibleEyeHeights[this.isSneaking ? 1 : 0];
         } else {
-            // 1.8 players just have their pose set to standing all the time
+
             return switch (pose) {
-                case FALL_FLYING, // Elytra gliding
-                     SPIN_ATTACK, // Riptide trident
-                     SWIMMING -> // Swimming (includes crawling in 1.14+)
-                        this.possibleEyeHeights[2]; // [swimming/gliding/riptide height, standing height, sneaking height]
-                case NINE_CROUCHING, CROUCHING -> this.possibleEyeHeights[1]; // [sneaking height, standing height, swimming/gliding/riptide height]
-                default -> this.possibleEyeHeights[0]; // [standing height, sneaking height, swimming/gliding/riptide height]
+                case FALL_FLYING,
+                     SPIN_ATTACK,
+                     SWIMMING ->
+                        this.possibleEyeHeights[2];
+                case NINE_CROUCHING, CROUCHING -> this.possibleEyeHeights[1];
+                default -> this.possibleEyeHeights[0];
             };
         }
     }
@@ -741,10 +688,8 @@ public class DenemePlayer implements DenemeUser {
         boolean verticalCollision = inputY != collisionY;
         boolean calculatedOnGround = verticalCollision && inputY < 0.0D;
 
-        // We don't care about ground results here
         if (exemptOnGround()) return false;
 
-        // If the player is on the ground with a y velocity of 0, let the player decide (too close to call)
         if (inputY == -SimpleCollisionBox.COLLISION_EPSILON && collisionY > -SimpleCollisionBox.COLLISION_EPSILON && collisionY <= 0)
             return false;
 
@@ -764,9 +709,9 @@ public class DenemePlayer implements DenemeUser {
         TrackerData data = compensatedEntities.getTrackedEntity(vehicleID);
 
         if (data != null) {
-            // If we actually need to check vehicle movement
+
             if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_9) && getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_9)) {
-                // And if the vehicle is a type of vehicle that we track
+
                 if (EntityTypes.isTypeInstanceOf(data.getEntityType(), EntityTypes.BOAT) ||
                         EntityTypes.isTypeInstanceOf(data.getEntityType(), EntityTypes.ABSTRACT_HORSE) ||
                         data.getEntityType() == EntityTypes.PIG ||
@@ -774,14 +719,12 @@ public class DenemePlayer implements DenemeUser {
                         EntityTypes.isTypeInstanceOf(data.getEntityType(), EntityTypes.CAMEL) ||
                         data.getEntityType() == EntityTypes.HAPPY_GHAST ||
                         EntityTypes.isTypeInstanceOf(data.getEntityType(), EntityTypes.ABSTRACT_NAUTILUS)) {
-                    // We need to set its velocity otherwise it will jump a bit on us, flagging the anticheat
-                    // The server does override this with some vehicles. This is intentional.
+
                     user.writePacket(new WrapperPlayServerEntityVelocity(vehicleID, new Vector3d()));
                 }
             }
         }
 
-        // Help prevent transaction split
         sendTransaction();
 
         latencyUtils.addRealTimeTask(lastTransactionSent.get(), () -> this.vehicleData.wasVehicleSwitch = true);
@@ -794,7 +737,6 @@ public class DenemePlayer implements DenemeUser {
     public void handleDismountVehicle(PacketSendEvent event) {
         EntityType entityType = getVehicleType();
 
-        // Help prevent transaction split
         sendTransaction();
 
         compensatedEntities.serverPlayerVehicle = null;
@@ -804,11 +746,9 @@ public class DenemePlayer implements DenemeUser {
                 TrackerData data = compensatedEntities.serverPositionsMap.get(ridingId);
                 if (data != null) {
                     final Vector3d pos = new Vector3d(data.getX(), data.getY(), data.getZ());
-                    // Resync the position of the entity
+
                     if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_21_2)) {
-                        // Yes, this is the new "entity teleport" on 1.21.2+!
-                        // WrapperPlayServerEntityTeleport on 1.21.2+ still exists but has a different purpose!
-                        // Using WrapperPlayServerEntityTeleport is wrong and will lead to weird behaviour!
+
                         user.writePacket(new WrapperPlayServerEntityPositionSync(ridingId, new EntityPositionData(pos, new Vector3d(), data.getXRot(), data.getYRot()), false));
                     } else {
                         user.writePacket(new WrapperPlayServerEntityTeleport(ridingId, pos, data.getXRot(), data.getYRot(), false));
@@ -819,8 +759,7 @@ public class DenemePlayer implements DenemeUser {
 
         latencyUtils.addRealTimeTask(lastTransactionSent.get(), () -> {
             this.vehicleData.wasVehicleSwitch = true;
-            // Pre-1.14 players desync sprinting attribute when in vehicle to be false, sprinting itself doesn't change
-            // 1.21.5 introduced this again! (only in dummy vehicles?)
+
             if (getClientVersion().isOlderThanOrEquals(ClientVersion.V_1_14)) {
                 compensatedEntities.hasSprintingAttributeEnabled = false;
             }
@@ -828,12 +767,11 @@ public class DenemePlayer implements DenemeUser {
     }
 
     public boolean canGlide() {
-        // don't check the client/server version, this is relevant for all
+
         final ItemStack chestPlate = inventory.getChestplate();
         if (chestPlate.getType() == ItemTypes.ELYTRA && chestPlate.getDamageValue() < chestPlate.getMaxDamage() - 1)
             return true;
 
-        // if the server or client doesn't support glider components return false
         if (getClientVersion().isOlderThan(ClientVersion.V_1_21_2)
                 || PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_21_2)) return false;
 
@@ -858,8 +796,7 @@ public class DenemePlayer implements DenemeUser {
     }
 
     public boolean canPlaceGameMasterBlocks() {
-        // This check was added in 1.11
-        // 1.11+ players must be in creative and have a permission level at or above 2
+
         return getClientVersion().isOlderThanOrEquals(ClientVersion.V_1_10) || canUseGameMasterBlocks();
     }
 
@@ -980,20 +917,17 @@ public class DenemePlayer implements DenemeUser {
         boolean shouldDisableResync = config.getBooleanElse("disable-default-resync-handler", false);
         Class<?> currentHandlerClass = this.resyncHandler.getClass();
 
-        // Check if the current handler is EXACTLY one of our internal types.
-        // If someone extended DefaultResyncHandler, .getClass() will not match,
-        // so we will skip this block and preserve their custom handler.
         boolean isInternalHandler = currentHandlerClass == DefaultResyncHandler.class
                 || currentHandlerClass == NoOpResyncHandler.class;
 
         if (isInternalHandler) {
             if (shouldDisableResync) {
-                // Config says disable, but we aren't using NoOp yet? Switch to NoOp.
+
                 if (currentHandlerClass != NoOpResyncHandler.class) {
                     this.resyncHandler = NoOpResyncHandler.INSTANCE;
                 }
             } else {
-                // Config says enable, but we are using NoOp? Switch to Default.
+
                 if (currentHandlerClass != DefaultResyncHandler.class) {
                     this.resyncHandler = new DefaultResyncHandler(this);
                 }
@@ -1004,9 +938,9 @@ public class DenemePlayer implements DenemeUser {
         resetItemUsageOnItemUpdate = config.getBooleanElse("reset-item-usage-on-item-update", true);
         resetItemUsageOnSlotChange = config.getBooleanElse("reset-item-usage-on-slot-change", true);
         resetItemUsageOnItemUse = config.getBooleanElse("reset-item-usage-on-item-use", true);
-        // reload all checks
+
         checkManager.reload();
-        // reload punishment manager
+
         punishmentManager.reload(config);
         this.movementCheckRunner.reload(config);
     }
@@ -1077,12 +1011,10 @@ public class DenemePlayer implements DenemeUser {
 
     }
 
-    // TODO (Cross-platform) keep track of world at packet level; do not rely on potentially non-lag-compensated platformPlayer.getWorld()
     public Location getLocation() {
         return new Location(platformPlayer.getWorld(), this.x, this.y, this.z, this.yaw, this.pitch);
     }
 
-    // Looked up on first use, the server can send tags during configuration before pollData's first tick
     public @Nullable UserConnection getViaUserConnection() {
         if (this.viaUserConnection == null && ViaVersionUtil.isAvailable) {
             this.viaUserConnection = Via.getManager().getConnectionManager().getConnectedClient(uuid);

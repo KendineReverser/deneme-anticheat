@@ -44,7 +44,7 @@ public class TickTimer extends Check implements PrePredictionPacketReceiveListen
     }
 
     private void handleViolation() {
-        // Although we don't cancel the packet, this should be counted as an invalid packet.
+
         player.onPacketCancel();
     }
 }

@@ -35,9 +35,6 @@ public class PacketWorldReaderEight extends BasePacketWorldReader {
             Chunk_v1_9[] chunkSections = new Chunk_v1_9[16];
             readChunk(buffer, chunkSections, bitset);
 
-            // 256 is the biome data at the end of the array
-            // 2048 is blocklight
-            // 2048 is skylight, which is determined by the first boolean sent
             int chunks = Integer.bitCount(mask[column]);
             buffer.readerIndex(buffer.readerIndex() + 256 + (chunks * 2048) + (skylight ? (chunks * 2048) : 0));
 
@@ -54,14 +51,14 @@ public class PacketWorldReaderEight extends BasePacketWorldReader {
         boolean groundUp = wrapper.readBoolean();
 
         BitSet mask = BitSet.valueOf(new long[]{(long) wrapper.readUnsignedShort()});
-        int size = wrapper.readVarInt(); // Ignore size
+        int size = wrapper.readVarInt();
 
         final Chunk_v1_9[] chunks = new Chunk_v1_9[16];
         this.readChunk((ByteBuf) event.getByteBuf(), chunks, mask);
 
         this.addChunkToCache(event, player, chunks, groundUp, chunkX, chunkZ, null);
 
-        event.setLastUsedWrapper(null); // Make sure this incomplete packet isn't sent
+        event.setLastUsedWrapper(null);
     }
 
     private void readChunk(final ByteBuf buf, final Chunk_v1_9[] chunks, final BitSet set) {
@@ -77,7 +74,7 @@ public class PacketWorldReaderEight extends BasePacketWorldReader {
         BitStorage storage = new BitStorage(4, 4096);
         DataPalette dataPalette = new DataPalette(palette, storage, PaletteType.CHUNK);
 
-        palette.stateToId(0); // Make sure to init chunk as air
+        palette.stateToId(0);
 
         int lastNext = -1;
         int lastID = -1;
@@ -86,22 +83,15 @@ public class PacketWorldReaderEight extends BasePacketWorldReader {
         for (int i = 0; i < 4096; ++i) {
             int next = in.readShort();
 
-            if (next != 0) { // If not air, doesn't need any endian flip
+            if (next != 0) {
                 blockCount++;
             }
 
-            // 0111 0000 0000 0000
-            // First byte of block type, followed by data, followed by second and third byte of block data
-            //
-            // This is bedrock
-            //
-            // Due to endian weirdness, it must be turned into
-            // 0000 0000 01110 0000
-            if (next != lastNext) { // If same, then couldn't have changed palette size, optimization
+            if (next != lastNext) {
                 lastNext = next;
-                next = (short) (((next & 0xFF00) >> 8) | (next << 8)); // Flip endian bytes, computations are cheap compared to memory access
-                dataPalette.set(i & 15, (i >> 8) & 15, (i >> 4) & 15, next); // Allow it to resize
-                lastID = dataPalette.storage.get(i); // Get stored ID
+                next = (short) (((next & 0xFF00) >> 8) | (next << 8));
+                dataPalette.set(i & 15, (i >> 8) & 15, (i >> 4) & 15, next);
+                lastID = dataPalette.storage.get(i);
                 continue;
             }
 

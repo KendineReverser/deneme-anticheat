@@ -16,12 +16,9 @@ public final class SteppedEntityInterpolation implements EntityInterpolation {
     private SimpleCollisionBox positionBounds;
     private SimpleCollisionBox segmentStartBounds;
 
-    // Count ticks from the start of the whole path, including optional steps
-    // Don't reset these when we remove finished steps
     private double retiredDuration;
     private double confirmedDuration;
 
-    // Don't skip the same optional step twice when advancing the upper bound
     private double upperBoundSkippedThrough;
     private int acknowledgedTransaction = Integer.MIN_VALUE;
     private boolean hasUncertainty;
@@ -43,8 +40,7 @@ public final class SteppedEntityInterpolation implements EntityInterpolation {
 
     @Override
     public void begin(PositionPath path, boolean relative, boolean hasPos, double packetX, double packetY, double packetZ, Float yaw, Float pitch, boolean positionSync, int transaction) {
-        // The spawn or an earlier task may have already confirmed this transaction
-        // We still need to wait for the second transaction for this movement
+
         acknowledgedTransaction = Math.min(acknowledgedTransaction, transaction - 1);
 
         boolean hasPendingSteps = state.hasSteps();
@@ -70,8 +66,7 @@ public final class SteppedEntityInterpolation implements EntityInterpolation {
 
         boolean mayIgnoreUpdate = (hasUncertainty && (sameTargetPosition || path == null)) || (sameTargetPosition && state.targetYaw == targetYaw && state.targetPitch == targetPitch);
         if (mayIgnoreUpdate) {
-            // The client ignores duplicate targets while interpolating, but starts a new
-            // interpolation if it has already finished, so we have to allow both here
+
             SimpleCollisionBox targetBounds = path == null ? previousTargetBounds.copy() : SteppedInterpolationUtils.pointBounds(targetPosition);
             appendOptionalStep(targetPosition, targetYaw, targetPitch, interpolationInterval, targetBounds, transaction);
         } else {
@@ -90,7 +85,6 @@ public final class SteppedEntityInterpolation implements EntityInterpolation {
                 break;
             }
 
-            // No tick between the transactions, so we know the client ignored this duplicate
             if (!hasUncertainty && step.optionalDurationTicks() != 0) {
                 state.availableDuration -= step.optionalDurationTicks();
 
@@ -108,7 +102,6 @@ public final class SteppedEntityInterpolation implements EntityInterpolation {
             return;
         }
 
-        // Even a step with no duration needs its packet to reach the client first
         boolean allMovementsDelivered = lastStep().transaction() <= acknowledgedTransaction;
         if (!allMovementsDelivered || !tickingReliably) {
             enableProgressBounds();
@@ -169,9 +162,6 @@ public final class SteppedEntityInterpolation implements EntityInterpolation {
 
         enableProgressBounds();
 
-        // Teleporting far away doesn't clear the client's interpolation queue
-        // The client moves the queued positions too, but only if there is no collision
-        // We don't know which happened, so include both the old and shifted positions
         SimpleCollisionBox translationBounds = new SimpleCollisionBox(
                 Math.min(0, targetPosition.x - previousBounds.maxX),
                 Math.min(0, targetPosition.y - previousBounds.maxY),
@@ -201,10 +191,7 @@ public final class SteppedEntityInterpolation implements EntityInterpolation {
     }
 
     private void appendPathWithUncertainTarget(SteppedPositionPath path, SimpleCollisionBox previousTargetBounds, Vector3d targetPosition, float targetYaw, float targetPitch, int transaction) {
-        // After a teleport, we may not know the client's previous target
-        // If this path ends at that target, the client moves straight towards it and ignores
-        // the other points, otherwise it follows the full path
-        // Allow both until it finishes
+
         SimpleCollisionBox pathBounds = previousTargetBounds.copy();
         int pathDuration = 0;
 
@@ -232,8 +219,6 @@ public final class SteppedEntityInterpolation implements EntityInterpolation {
             return false;
         }
 
-        // The client won't queue the same target again until it finishes interpolating
-        // Keep one optional step and wait for the latest duplicate's transaction
         state.steps.set(state.steps.size() - 1, new SteppedInterpolationState.Step(targetPosition, targetYaw, targetPitch, 0, transaction, interpolationInterval, targetBounds));
         confirmedDuration = Math.min(confirmedDuration, state.availableDuration - interpolationInterval);
 
@@ -267,8 +252,6 @@ public final class SteppedEntityInterpolation implements EntityInterpolation {
             SteppedInterpolationState.Step step = state.steps.get(stepIndex);
             optionalDuration += step.optionalDurationTicks();
 
-            // For the upper bound, assume the client ignored this duplicate and skip it
-            // The lower bound still allows it to take the full interpolation interval
             if (step.optionalDurationTicks() != 0 && segmentStartProgress >= upperBoundSkippedThrough && progressRange.maximumProgress >= segmentStartProgress) {
                 progressRange.maximumProgress += step.optionalDurationTicks();
                 upperBoundSkippedThrough = segmentStartProgress + step.maximumDurationTicks();
@@ -291,8 +274,6 @@ public final class SteppedEntityInterpolation implements EntityInterpolation {
             return;
         }
 
-        // We were tracking ticks within the current step, but the bounds count from the start
-        // of the whole path, so add the finished steps and keep any float rounding error
         double initialProgress = retiredDuration + state.nextSampleTicks;
         progressRange.minimumProgress = initialProgress;
         progressRange.maximumProgress = initialProgress;
@@ -317,8 +298,6 @@ public final class SteppedEntityInterpolation implements EntityInterpolation {
             positionBounds.encompass(startBounds);
         }
 
-        // The entity can change direction between the lowest and highest possible progress
-        // Check each step in that range, otherwise we'd miss positions around those turns
         for (int stepIndex = state.currentStepIndex; stepIndex < state.steps.size(); stepIndex++) {
             SteppedInterpolationState.Step step = state.steps.get(stepIndex);
             SimpleCollisionBox endBounds = step.positionBounds();

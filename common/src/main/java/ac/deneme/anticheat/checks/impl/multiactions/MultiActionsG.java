@@ -20,7 +20,7 @@ public class MultiActionsG extends BlockPlaceCheck implements PacketReceiveListe
             .or("action=attack")
             .or("action=spectateEntity")
             .or("action=use")
-            .or("action=place"); // shape index == ACTION_* value
+            .or("action=place");
 
     private static final int ACTION_INTERACT = 0;
     private static final int ACTION_ATTACK = 1;
@@ -77,7 +77,7 @@ public class MultiActionsG extends BlockPlaceCheck implements PacketReceiveListe
     }
 
     public boolean isCheckActive() {
-        return !player.vehicleData.wasVehicleSwitch // one tick off?
+        return !player.vehicleData.wasVehicleSwitch
                 && player.inVehicle() && player.compensatedEntities.self.getRiding().getType().isInstanceOf(EntityTypes.BOAT)
                 && (player.vehicleData.nextVehicleForward != 0 || player.vehicleData.nextVehicleHorizontal != 0);
     }

@@ -48,24 +48,20 @@ public class SneakingEstimator extends DenemeProcessor implements PostPrediction
     public void onPredictionComplete(final PredictionComplete predictionComplete) {
         if (!predictionComplete.isChecked()) return;
 
-        // player.friction already includes air drag
         double trueFriction = player.friction;
         if (player.wasTouchingLava) trueFriction = 0.5;
         if (player.wasTouchingWater) trueFriction = 0.96;
         if (player.isGliding) trueFriction = 0.99;
 
-        // START HACKERY
-
-        // Avoid calling the method if the player isn't sneaking
         if (!player.uncertaintyHandler.stuckOnEdge.hasOccurredSince(0)) {
             sneakingPotentialHiddenVelocity = new SimpleCollisionBox();
             return;
         }
 
         for (VectorData data : possible) {
-            // Don't let the player always get jumping bonus, for example
+
             if (data.isJump() == player.predictedVelocity.isJump() && data.isKnockback() == player.predictedVelocity.isKnockback() && data.isExplosion() == player.predictedVelocity.isExplosion()) {
-                // Fuck, we are compounding this which is very dangerous. After light testing seems fine... can we do better?
+
                 if (player.uncertaintyHandler.lastStuckWest.hasOccurredSince(0) || player.uncertaintyHandler.lastStuckNorth.hasOccurredSince(0)) {
                     sneakingPotentialHiddenVelocity.minX = Math.min(sneakingPotentialHiddenVelocity.minX, data.vector.getX());
                     sneakingPotentialHiddenVelocity.minZ = Math.min(sneakingPotentialHiddenVelocity.minZ, data.vector.getZ());
@@ -77,8 +73,6 @@ public class SneakingEstimator extends DenemeProcessor implements PostPrediction
                 }
             }
         }
-        // END HACKERY
-
 
         sneakingPotentialHiddenVelocity.minX *= trueFriction;
         sneakingPotentialHiddenVelocity.minZ *= trueFriction;
@@ -90,7 +84,6 @@ public class SneakingEstimator extends DenemeProcessor implements PostPrediction
         sneakingPotentialHiddenVelocity.maxX = Math.max(0.15, sneakingPotentialHiddenVelocity.maxX);
         sneakingPotentialHiddenVelocity.maxZ = Math.max(0.15, sneakingPotentialHiddenVelocity.maxZ);
 
-        // Now we just have to handle reducing this velocity over ticks so we know when it's being abused
         if (!player.uncertaintyHandler.lastStuckEast.hasOccurredSince(0)) {
             sneakingPotentialHiddenVelocity.maxX = 0;
         }

@@ -24,7 +24,7 @@ public class PreViaCheckManagerListener extends PacketListenerAbstract {
 
     @Override
     public void onPacketReceive(final @NotNull PacketReceiveEvent event) {
-        // Allow checks to listen to configuration packets
+
         if (event.getConnectionState() == ConnectionState.CONFIGURATION) {
             final DenemePlayer player = DenemeAPI.INSTANCE.getPlayerDataManager().getPlayer(event.getUser());
             if (player == null) return;
@@ -40,7 +40,7 @@ public class PreViaCheckManagerListener extends PacketListenerAbstract {
 
     @Override
     public void onPacketSend(final @NotNull PacketSendEvent event) {
-        // Allow checks to listen to configuration packets
+
         if (event.getConnectionState() == ConnectionState.CONFIGURATION) {
             final DenemePlayer player = DenemeAPI.INSTANCE.getPlayerDataManager().getPlayer(event.getUser());
             if (player == null) return;

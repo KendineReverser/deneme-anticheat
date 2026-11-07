@@ -19,9 +19,6 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPl
 public class PacketOrderB extends Check implements PreViaPacketReceiveListener {
     private static final Verbose V = Verbose.of("[pre-attack|post-attack]");
 
-    // 1.9 packet order: INTERACT -> ANIMATION
-    // 1.8 packet order: ANIMATION -> INTERACT
-    // I personally think 1.8 made much more sense. You swing and THEN you hit!
     private final boolean is1_9 = player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_9);
 
     private boolean sentAnimationSinceLastAttack = player.getClientVersion().isNewerThan(ClientVersion.V_1_8);
@@ -63,7 +60,7 @@ public class PacketOrderB extends Check implements PreViaPacketReceiveListener {
 
         if (event.getPacketType() == PacketType.Play.Client.HELD_ITEM_CHANGE && !is1_9 && !sentSlotSwitch) {
             sentSlotSwitch = true;
-            return; // do not set sentAnimation to false
+            return;
         }
 
         if (!isAsync(event.getPacketType())) {
@@ -81,7 +78,7 @@ public class PacketOrderB extends Check implements PreViaPacketReceiveListener {
         sentAttack = true;
 
         if (is1_9 ? !sentAnimationSinceLastAttack : !sentAnimation) {
-            sentAttack = false; // don't flag twice
+            sentAttack = false;
             if (flag(V.write(verbose()).bool(true)) && shouldModifyPackets()) {
                 event.setCancelled(true);
                 player.onPacketCancel();

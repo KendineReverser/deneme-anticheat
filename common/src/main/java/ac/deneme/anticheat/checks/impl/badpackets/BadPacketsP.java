@@ -42,7 +42,6 @@ public class BadPacketsP extends Check implements PacketReceiveListener, PacketS
             WindowClickType clickType = wrapper.getWindowClickType();
             int button = wrapper.getButton();
 
-            // TODO: Adjust for containers
             boolean flag = switch (clickType) {
                 case PICKUP, QUICK_MOVE, CLONE -> button > 2 || button < 0;
                 case SWAP -> (button > 8 || button < 0) && button != 40;
@@ -52,7 +51,6 @@ public class BadPacketsP extends Check implements PacketReceiveListener, PacketS
                 case UNKNOWN -> true;
             };
 
-            // Allowing this to false flag to debug and find issues faster
             if (flag) {
                 boolean hasContainer = wrapper.getWindowId() == containerId;
                 if (flag(V.write(verbose()).uint(VerboseCodecs.enumId(clickType)).sint(button).bool(hasContainer).sint(containerType))

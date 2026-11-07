@@ -14,7 +14,6 @@ public final class ConfigPatcher {
     private final List<String> lines;
     private final Map<String, NodePosition> locationMap;
 
-    // ... (formatValue and YAML_KEYWORDS/SPECIAL_CHARS constants are unchanged) ...
     private static final Set<String> YAML_KEYWORDS_TO_QUOTE = new HashSet<>(Arrays.asList(
             "y", "Y", "yes", "Yes", "YES", "n", "N", "no", "No", "NO",
             "true", "True", "TRUE", "false", "False", "FALSE",
@@ -89,16 +88,14 @@ public final class ConfigPatcher {
     }
 
     private void replaceListBlock(NodePosition keyPosition, List<?> newList) {
-        // If the key has an inline list on its own line (e.g. `chain: [a, b]`),
-        // strip the inline value off the line first so it doesn't co-exist with
-        // the block-list items we're about to insert below.
+
         scrubInlineListFromKeyLine(keyPosition.lineIndex);
 
         int blockStartLine = -1, blockEndLine = keyPosition.lineIndex + 1, listIndent = -1;
         for (int i = keyPosition.lineIndex + 1; i < lines.size(); i++) {
             String line = lines.get(i);
             if (line.trim().isEmpty() || line.trim().startsWith("#")) {
-                if (blockStartLine != -1) blockEndLine = i + 1; // Include comments/blank lines within the block
+                if (blockStartLine != -1) blockEndLine = i + 1;
                 continue;
             }
             int currentIndent = getIndentation(line);
@@ -128,7 +125,6 @@ public final class ConfigPatcher {
         }
     }
 
-    // ... (generateListBlock, formatValue, getIndentation, save, NodePosition are unchanged from previous correct version) ...
     private String generateListBlock(List<?> list, int indentation) {
         if (list.isEmpty()) return "";
         StringBuilder block = new StringBuilder();
@@ -164,10 +160,7 @@ public final class ConfigPatcher {
             }
         }
         if (needsQuotes) {
-            // Double-quoted YAML scalars interpret backslash escapes, so a
-            // raw `\d` from a regex round-trips as an "unknown escape"
-            // parser error. Escape `\` first so the `\` we inject ahead of
-            // any embedded `"` doesn't get re-doubled by the second pass.
+
             return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
         }
         return s;
@@ -189,8 +182,7 @@ public final class ConfigPatcher {
         int colonIdx = line.indexOf(':');
         if (colonIdx < 0) return;
         String afterColon = line.substring(colonIdx + 1);
-        // Split off any trailing comment so the bracket detection is local
-        // to the value portion only.
+
         int hashIdx = -1;
         boolean inString = false;
         char quote = 0;
@@ -209,8 +201,7 @@ public final class ConfigPatcher {
         String valuePart = (hashIdx >= 0 ? afterColon.substring(0, hashIdx) : afterColon).trim();
         String trailingComment = hashIdx >= 0 ? "  " + afterColon.substring(hashIdx).trim() : "";
         if (valuePart.startsWith("[") && valuePart.endsWith("]")) {
-            // Inline-list form. Keep "key:" + any trailing comment; let the
-            // block-list rewrite happen below.
+
             lines.set(lineIndex, line.substring(0, colonIdx + 1) + trailingComment);
         }
     }

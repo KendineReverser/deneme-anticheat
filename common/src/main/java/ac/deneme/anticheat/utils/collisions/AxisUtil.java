@@ -10,8 +10,7 @@ import java.util.Objects;
 
 @UtilityClass
 public class AxisUtil {
-    // I couldn't figure out what Mojang was doing, but I think this looks nice
-    // Bounding boxes just have to be put into the modification thing before into this to be for faces
+
     public static @NotNull SimpleCollisionBox combine(@NotNull SimpleCollisionBox base, @NotNull SimpleCollisionBox toMerge) {
         boolean insideX = toMerge.minX <= base.minX && toMerge.maxX >= base.maxX;
         boolean insideY = toMerge.minY <= base.minY && toMerge.maxY >= base.maxY;

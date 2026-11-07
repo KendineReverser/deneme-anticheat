@@ -14,8 +14,8 @@ public abstract class TypedPacketEntity {
         this.isLivingEntity = EntityTypes.isTypeInstanceOf(type, EntityTypes.LIVINGENTITY);
         this.isMinecart = EntityTypes.isTypeInstanceOf(type, EntityTypes.MINECART_ABSTRACT);
         this.isHorse = EntityTypes.isTypeInstanceOf(type, EntityTypes.ABSTRACT_HORSE);
-        // isAgeable really means "is there a baby version of this mob" and is no longer the term used in modern Minecraft
-        this.isAgeable = // armor stands are not included here because it has a separate tag called isSmall, though it does the same thing
+
+        this.isAgeable =
                 (EntityTypes.isTypeInstanceOf(type, EntityTypes.ABSTRACT_AGEABLE) && !(EntityTypes.isTypeInstanceOf(type, EntityTypes.ABSTRACT_PARROT) || type == EntityTypes.FROG))
                         || EntityTypes.isTypeInstanceOf(type, EntityTypes.ZOMBIE)
                         || EntityTypes.isTypeInstanceOf(type, EntityTypes.ABSTRACT_PIGLIN)
@@ -28,9 +28,7 @@ public abstract class TypedPacketEntity {
     }
 
     public boolean isPushable() {
-        // Players can only push living entities
-        // Minecarts and boats are the only non-living that can push
-        // Bats, parrots, and armor stands cannot
+
         if (getType() == EntityTypes.ARMOR_STAND || getType() == EntityTypes.BAT || getType() == EntityTypes.PARROT)
             return false;
         return isLivingEntity || isBoat || isMinecart;

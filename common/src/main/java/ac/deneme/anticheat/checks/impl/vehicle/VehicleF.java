@@ -31,7 +31,7 @@ public class VehicleF extends Check implements PacketReceiveListener {
     @Override
     public void onPacketReceive(final PacketReceiveEvent event) {
         if (event.getPacketType() == PacketType.Play.Client.STEER_BOAT) {
-            // lastVehicleSwitch isn't updated by this time.
+
             if (lastTickVehicle != player.getVehicle()) return;
 
             WrapperPlayClientSteerBoat packet = new WrapperPlayClientSteerBoat(event);
@@ -48,7 +48,7 @@ public class VehicleF extends Check implements PacketReceiveListener {
                 expectedRight = player.vehicleData.nextVehicleForward > 0 || player.vehicleData.nextVehicleHorizontal > 0;
 
                 if (player.vehicleData.nextVehicleForward == 0 && packet.isLeftPaddleTurning() && packet.isRightPaddleTurning()) {
-                    return; // the player is pressing forward and backward
+                    return;
                 }
             }
 

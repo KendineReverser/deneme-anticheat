@@ -20,7 +20,6 @@ import org.yaml.snakeyaml.Yaml;
 import java.io.*;
 import java.util.Map;
 
-// TODO (Cross-Platform) ensure this is correct, and modify to only check appropriate files for each platform
 public class ProxyAlertMessenger extends PacketListenerAbstract {
     @Getter private static boolean usingProxy;
 
@@ -66,7 +65,6 @@ public class ProxyAlertMessenger extends PacketListenerAbstract {
         return usingProxy && DenemeAPI.INSTANCE.getConfigManager().getConfig().getBooleanElse("alerts.proxy.receive", false) && DenemeAPI.INSTANCE.getAlertManager().hasAlertListeners();
     }
 
-    // TODO (Cross-Platform) check if new getBooleanFromFile impl is correct
     private static boolean getBooleanFromFile(String pathToFile, String pathToValue) {
         File file = new File(pathToFile);
         if (!file.exists()) return false;

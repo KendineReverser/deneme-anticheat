@@ -34,10 +34,9 @@ public class SelfInteract extends Check implements PreViaPacketReceiveListener {
         }
     }
 
-    // TODO: should check for camera entity id instead of player entity id?
     private void onInteract(PacketReceiveEvent event, int entityId) {
         if (player.cameraEntity.isSelf() && entityId == player.entityID
-                && flag() && shouldModifyPackets()) { // Instant ban
+                && flag() && shouldModifyPackets()) {
             event.setCancelled(true);
             player.onPacketCancel();
         }

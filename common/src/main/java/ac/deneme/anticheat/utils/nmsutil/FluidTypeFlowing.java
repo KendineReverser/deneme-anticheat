@@ -21,7 +21,6 @@ public class FluidTypeFlowing {
         return version.isOlderThan(ClientVersion.V_1_13) ? legacy$getFlow(player, version, originalX, originalY, originalZ) : modern$getFlow(player, version, originalX, originalY, originalZ);
     }
 
-    // getOwnHeight, vanilla's getFlow ignores fluid above unlike getFluidLevelAt
     private static float ownHeight(DenemePlayer player, int x, int y, int z) {
         WrappedBlockState state = player.compensatedWorld.getBlock(x, y, z);
         if (state.getType() == StateTypes.LAVA) {
@@ -32,7 +31,7 @@ public class FluidTypeFlowing {
             int level = state.getLevel();
             return (level & 0x8) == 8 ? 8 / 9f : (8 - level) / 9f;
         }
-        return 8 / 9f; // waterlogged, or a source-like block such as kelp
+        return 8 / 9f;
     }
 
     private static Vector3dm modern$getFlow(DenemePlayer player, ClientVersion version, int originalX, int originalY, int originalZ) {
@@ -51,9 +50,6 @@ public class FluidTypeFlowing {
                 if (adjacentLevel == 0.0F) {
                     StateType mat = player.compensatedWorld.getBlockType(modifiedX, originalY, modifiedZ);
 
-                    // Deneme's definition of solid is whether the block has a hitbox
-                    // Minecraft is... it's whatever Mojang was feeling like, but it's very consistent
-                    // Use method call to support 1.13-1.15 clients and banner oddity
                     if (Materials.isSolidBlockingBlacklist(mat, version)) {
                         if (affectsFlow(player, originalX, originalY, originalZ, modifiedX, originalY - 1, modifiedZ)) {
                             adjacentLevel = ownHeight(player, modifiedX, originalY - 1, modifiedZ);
@@ -75,8 +71,6 @@ public class FluidTypeFlowing {
 
         Vector3dm vec3d = new Vector3dm(modX, 0.0D, modZ);
 
-        // Fluid level 1-7 is for regular fluid heights
-        // Fluid level 8-15 is for falling fluids
         WrappedBlockState state = player.compensatedWorld.getBlock(originalX, originalY, originalZ);
         if ((state.getType() == StateTypes.WATER || state.getType() == StateTypes.LAVA) && state.getLevel() >= 8) {
             for (BlockFace direction : new BlockFace[]{BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST}) {
@@ -159,7 +153,6 @@ public class FluidTypeFlowing {
         if (isSame(player, x, y, z, originalX, y, originalZ)) return false;
         if (type == StateTypes.ICE) return false;
 
-        // 1.11 and below clients use a different method to determine solid faces
         if (player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_12)) {
             if (type == StateTypes.PISTON || type == StateTypes.STICKY_PISTON) {
                 return data.getFacing().getOppositeFace() == direction ||
@@ -170,19 +163,10 @@ public class FluidTypeFlowing {
         }
 
         if (player.getClientVersion().isOlderThan(ClientVersion.V_1_12)) {
-            // No bush, cocoa, wart, reed
-            // No double grass, tall grass, or vine
-            // No button, flower pot, ladder, lever, rail, redstone, redstone wire, skull, torch, trip wire, or trip wire hook
-            // No carpet
-            // No snow
-            // Otherwise, solid
+
             return !Materials.isSolidBlockingBlacklist(type, player.getClientVersion());
         } else if (player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_12) && player.getClientVersion().isOlderThanOrEquals(ClientVersion.V_1_13_2)) {
-            // 1.12/1.13 exempts stairs, pistons, sticky pistons, and piston heads.
-            // It also exempts shulker boxes, leaves, trapdoors, stained glass, beacons, cauldrons, glass, glowstone, ice, sea lanterns, and conduits.
-            //
-            // Everything is hardcoded, and I have attempted by best at figuring out things, although it's not perfect
-            // Report bugs on GitHub, as always.  1.13 is an odd version and issues could be lurking here.
+
             if (Materials.isStairs(type) || Materials.isLeaves(type)
                     || Materials.isShulker(type) || Materials.isGlassBlock(type)
                     || BlockTags.TRAPDOORS.contains(type))
@@ -198,7 +182,7 @@ public class FluidTypeFlowing {
             return type == StateTypes.SOUL_SAND || (CollisionData.getData(type).getMovementCollisionBox(player, player.getClientVersion(), data, x, y, z).isFullBlock());
         } else {
             if (Materials.isLeaves(type)) {
-                // Leaves don't have solid faces in 1.13, they do in 1.14 and 1.15, and they don't in 1.16 and beyond
+
                 return player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_14) && player.getClientVersion().isOlderThanOrEquals(ClientVersion.V_1_15_2);
             } else if (type == StateTypes.SNOW) {
                 return data.getLayers() == 8;
@@ -209,7 +193,7 @@ public class FluidTypeFlowing {
             } else if (type == StateTypes.SOUL_SAND) {
                 return player.getClientVersion().isOlderThanOrEquals(ClientVersion.V_1_12_2) || player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_16);
             } else if (type == StateTypes.MUD) {
-                // Support shape is a full block even though it collides 2 pixels short
+
                 return true;
             } else if (type == StateTypes.LADDER) {
                 return data.getFacing().getOppositeFace() == direction;
@@ -224,7 +208,6 @@ public class FluidTypeFlowing {
                 }
             }
 
-            // Explicitly a full block, therefore it has a full face
             return (CollisionData.getData(type).getMovementCollisionBox(player, player.getClientVersion(), data, x, y, z).isFullBlock());
         }
     }
@@ -233,8 +216,6 @@ public class FluidTypeFlowing {
         return player.compensatedWorld.getFluidLevelAt(x, y, z) == 0;
     }
 
-    // Check if both are a type of water or both are a type of lava
-    // This is a bit slow... but I don't see a better way to do it with the bukkit api and no nms
     public static boolean isSame(DenemePlayer player, int x1, int y1, int z1, int x2, int y2, int z2) {
         return player.compensatedWorld.getWaterFluidLevelAt(x1, y1, z1) > 0 &&
                 player.compensatedWorld.getWaterFluidLevelAt(x2, y2, z2) > 0 ||

@@ -11,7 +11,7 @@ import com.github.retrooper.packetevents.protocol.component.builtin.item.ItemUse
 import com.github.retrooper.packetevents.protocol.item.ItemStack;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 
-public class ModernInputTransformer extends DoubleInputTransformer { // 1.21.5+
+public class ModernInputTransformer extends DoubleInputTransformer {
     @Override
     public DoubleInput transformInputsToVector(DenemePlayer player, int sideways, int vertical, int forward) {
         Vec2 moveVector = new Vec2(sideways, forward).normalized();

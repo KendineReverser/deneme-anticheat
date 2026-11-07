@@ -6,14 +6,11 @@ import com.github.retrooper.packetevents.util.Vector3d;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-// Copied directly from Hawk
 public record Ray(@NotNull Vector3d origin, @NotNull Vector3d direction) implements Cloneable {
     public Ray(@NotNull DenemePlayer player, double x, double y, double z, float xRot, float yRot) {
         this(new Vector3d(x, y, z), calculateDirection(player, xRot, yRot));
     }
 
-    // Account for FastMath by using player's trig handler
-    // Copied from hawk which probably copied it from NMS
     public static @NotNull Vector3d calculateDirection(@NotNull DenemePlayer player, float xRot, float yRot) {
         float rotX = (float) Math.toRadians(xRot);
         float rotY = (float) Math.toRadians(yRot);
@@ -37,7 +34,6 @@ public record Ray(@NotNull Vector3d origin, @NotNull Vector3d direction) impleme
         return origin.add(direction.multiply(distance));
     }
 
-    // https://en.wikipedia.org/wiki/Skew_lines#Nearest_Points
     public @NotNull Pair<@NotNull Vector3d, @NotNull Vector3d> closestPointsBetweenLines(@NotNull Ray other) {
         Vector3d n1 = direction.crossProduct(other.direction.crossProduct(direction));
         Vector3d n2 = other.direction.crossProduct(direction.crossProduct(other.direction));

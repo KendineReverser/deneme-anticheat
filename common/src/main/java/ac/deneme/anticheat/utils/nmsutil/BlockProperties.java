@@ -44,7 +44,6 @@ public class BlockProperties {
             return movementSpeed * (0.21600002f / (blockFriction * blockFriction * blockFriction));
         }
 
-        // The game uses values known as flyingSpeed for some vehicles in the air
         if (player.inVehicle()) {
             PacketEntity riding = player.compensatedEntities.self.getRiding();
             if (riding.getType() == EntityTypes.PIG || riding instanceof PacketEntityNautilus || riding instanceof PacketEntityHorse) {
@@ -52,12 +51,11 @@ public class BlockProperties {
             }
 
             if (riding instanceof PacketEntityStrider strider) {
-                // Unsure which version the speed changed in
+
                 if (player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_20)) {
                     return movementSpeed * 0.1f;
                 }
 
-                // Vanilla multiplies by 0.1 to calculate speed
                 return (float) strider.getAttributeValue(Attributes.MOVEMENT_SPEED) * (strider.isShaking ? 0.66F : 1.0F) * 0.1f;
             }
         }
@@ -66,7 +64,6 @@ public class BlockProperties {
             return player.flySpeed * 20 * (player.isSprinting ? 0.1f : 0.05f);
         }
 
-        // In 1.19.4, air sprinting is based on current sprinting, not last sprinting
         if (player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_19_4)) {
             return player.isSprinting ? 0.025999999F : 0.02f;
         }
@@ -106,7 +103,7 @@ public class BlockProperties {
     }
 
     public static float getBlockSpeedFactor(DenemePlayer player, MainSupportingBlockData mainSupportingBlockData, Vector3d playerPos) {
-        // This system was introduces in 1.15 players to add support for honey blocks slowing players down
+
         if (player.getClientVersion().isOlderThan(ClientVersion.V_1_15)) return 1.0f;
         if (player.isGliding || player.isFlying) return 1.0f;
 
@@ -150,7 +147,6 @@ public class BlockProperties {
         if (mainBlockPos != null) {
             StateType blockstate = player.compensatedWorld.getBlockType(mainBlockPos.x, mainBlockPos.y, mainBlockPos.z);
 
-            // I genuinely don't understand this code, or why fences are special
             boolean shouldReturn = (!((double) searchBelowPlayer <= 0.5D) || !BlockTags.FENCES.contains(blockstate)) &&
                     !BlockTags.WALLS.contains(blockstate) &&
                     !BlockTags.FENCE_GATES.contains(blockstate);
@@ -167,7 +163,7 @@ public class BlockProperties {
         if (material == StateTypes.ICE) friction = 0.98f;
         if (material == StateTypes.SLIME_BLOCK && player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_8))
             friction = 0.8f;
-        // ViaVersion honey block replacement
+
         if (material == StateTypes.HONEY_BLOCK && player.getClientVersion().isOlderThan(ClientVersion.V_1_15))
             friction = 0.8f;
         if (material == StateTypes.PACKED_ICE) friction = 0.98f;
@@ -198,7 +194,6 @@ public class BlockProperties {
     private static float getBlockSpeedFactorLegacy(DenemePlayer player, Vector3d pos) {
         StateType block = player.compensatedWorld.getBlockType(pos.getX(), pos.getY(), pos.getZ());
 
-        // This is the 1.16.0 and 1.16.1 method for detecting if the player is on soul speed
         if (player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_16) && player.getClientVersion().isOlderThanOrEquals(ClientVersion.V_1_16_1)) {
             StateType onBlock = BlockProperties.getOnBlock(player, pos.getX(), pos.getY(), pos.getZ());
             if (onBlock == StateTypes.SOUL_SAND && player.inventory.getBoots().getEnchantmentLevel(EnchantmentTypes.SOUL_SPEED) > 0)
@@ -216,9 +211,7 @@ public class BlockProperties {
     private static float getBlockSpeedFactor(DenemePlayer player, StateType type) {
         if (type == StateTypes.HONEY_BLOCK) return 0.4f;
         if (type == StateTypes.SOUL_SAND) {
-            // Soul speed is a 1.16+ enchantment
-            // This new method for detecting soul speed was added in 1.16.2
-            // On 1.21, let attributes handle this
+
             if (player.getClientVersion().isOlderThan(ClientVersion.V_1_21)
                     && player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_16_2)
                     && player.inventory.getBoots().getEnchantmentLevel(EnchantmentTypes.SOUL_SPEED) > 0)

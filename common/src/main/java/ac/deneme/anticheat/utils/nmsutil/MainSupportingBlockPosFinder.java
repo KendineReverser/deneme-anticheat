@@ -54,18 +54,7 @@ public class MainSupportingBlockPosFinder {
     }
 
     private boolean firstHasPriorityOverSecond(int firstX, int firstY, int firstZ, @NotNull Vector3i second) {
-        // Order of loop is X, Y, and Z
-        // We prioritize lowest Y axis, then lowest X axis, then lowest Z axis
-        // Ties among the X and Z positions are broken by the order of looping being X
-        //
-        // X O O
-        // 0 X 0
-        // 0 0 X
-        // If the three blocks were this, the lowest right would win because of iteration order
-        //
-        // X 0 0
-        // 0 0 X
-        // But the upper left would win here because of prioritizing negative X and negative Z
+
         if (firstY < second.getY()) return true;
 
         double sumX = second.getX() - firstX;
@@ -73,11 +62,10 @@ public class MainSupportingBlockPosFinder {
 
         double horizontalSumTotal = sumX + sumY;
         if (horizontalSumTotal == 0) {
-            // If X is farther in the X direction, then it was found later and therefore won't override
+
             return sumX < 0;
         }
 
-        // Otherwise, lower X and lower Z have priority
         return horizontalSumTotal < 0;
     }
 }

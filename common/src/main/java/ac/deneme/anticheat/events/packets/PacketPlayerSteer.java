@@ -80,7 +80,6 @@ public class PacketPlayerSteer extends PacketListenerAbstract {
             player.vehicleData.nextVehicleForward = inputVector.x();
             player.vehicleData.nextVehicleHorizontal = inputVector.y();
 
-            // that's how mojang is dealing with sneaking from now on...
             if (player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_21_6)) {
                 player.isSneaking = input.isShift();
             }
@@ -90,7 +89,6 @@ public class PacketPlayerSteer extends PacketListenerAbstract {
             DenemePlayer player = DenemeAPI.INSTANCE.getPlayerDataManager().getPlayer(event.getUser());
             if (player == null || !player.inVehicle() || player.getClientVersion().isOlderThan(ClientVersion.V_1_21_2)) return;
 
-            // player_input is not sent every tick, so we need to stick to this packet
             tickPlayerWorld(player);
         }
     }
@@ -99,35 +97,27 @@ public class PacketPlayerSteer extends PacketListenerAbstract {
         Objects.requireNonNull(player, "player");
         PacketEntity riding = player.compensatedEntities.self.getRiding();
 
-        // Multiple steer vehicles in a row, the player is not in control of their vehicle
-        // We must do this SYNC! to netty, as to get the packet location of the vehicle
-        // Otherwise other checks may false because the player's position is unknown.
         if (player.packetStateData.receivedSteerVehicle && riding != null) {
-            // Horse and boat have first passenger in control
-            // If the player is the first passenger, disregard this attempt to have the server control the entity
+
             if ((riding.isBoat || riding.isHappyGhast || (riding instanceof JumpableEntity jumpable && jumpable.hasSaddle())) &&
                     riding.passengers.get(0) == player.compensatedEntities.self &&
-                    // Although if the player has server controlled entities
+
                     player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_9) &&
-                    // or the server controls the entities, then this is vanilla logic so allow it
+
                     PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_9)) {
                 return;
             }
 
-            // Tick update
             player.compensatedWorld.tickPlayerInPistonPushingArea();
             player.compensatedEntities.tick();
             player.dashableEntities.tick();
 
-            // Note for the movement check
             player.vehicleData.lastDummy = true;
 
-            // Update knockback and explosions after getting the vehicle
             int controllingEntityId = player.inVehicle() ? player.getRidingVehicleId() : player.entityID;
             player.firstBreadKB = player.checkManager.getKnockbackHandler().calculateFirstBreadKnockback(controllingEntityId, player.lastTransactionReceived.get());
             player.likelyKB = player.checkManager.getKnockbackHandler().calculateRequiredKB(controllingEntityId, player.lastTransactionReceived.get(), false);
 
-            // The player still applies kb even if they aren't in control of the vehicle, for some reason
             if (player.firstBreadKB != null) {
                 player.clientVelocity = player.firstBreadKB.vector;
             }
@@ -138,14 +128,9 @@ public class PacketPlayerSteer extends PacketListenerAbstract {
             player.firstBreadExplosion = player.checkManager.getExplosionHandler().getFirstBreadAddedExplosion(player.lastTransactionReceived.get());
             player.likelyExplosions = player.checkManager.getExplosionHandler().getPossibleExplosions(player.lastTransactionReceived.get(), false);
 
-            // Not responsible for applying knockback/explosions
             player.checkManager.getExplosionHandler().forceExempt();
             player.checkManager.getKnockbackHandler().forceExempt();
 
-            // Set position now to support "dummy" riding without control
-            // Warning - on pigs and striders players, can turn into dummies independent of whether they have
-            // control of the vehicle or not (which could be abused to set velocity to 0 repeatedly and kind
-            // of float in the air, although what's the point inside a vehicle?)
             player.lastX = player.x;
             player.lastY = player.y;
             player.lastZ = player.z;
@@ -161,7 +146,6 @@ public class PacketPlayerSteer extends PacketListenerAbstract {
             }
             player.lastSprinting = player.isSprinting;
 
-            // 1.21.5+ sprint desync
             if (player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_21_5)) {
                 player.compensatedEntities.hasSprintingAttributeEnabled = false;
             }

@@ -20,8 +20,6 @@ public class SprintA extends Check implements PostPredictionListener {
     public void onPredictionComplete(PredictionComplete predictionComplete) {
         if (!predictionComplete.isChecked()) return;
 
-        // Players can sprint if they're able to fly
-        // Players can also sprint if they are on a camel, regardless of their hunger level
         if (player.canFly || EntityTypes.isTypeInstanceOf(player.getVehicleType(), EntityTypes.CAMEL)) return;
 
         if (player.food <= 6.0F) {

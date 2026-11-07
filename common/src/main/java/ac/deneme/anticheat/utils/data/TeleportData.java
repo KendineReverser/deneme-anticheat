@@ -27,18 +27,17 @@ public class TeleportData {
     private int teleportId;
 
     public boolean isValidRotation(ClientVersion version, float receivedYaw, float receivedPitch) {
-        // before 1.19.3, the teleport handler uses setPositionAndRotation / absMoveTo
+
         float expectedYaw = version.isOlderThan(ClientVersion.V_1_19_3) ? yaw % 360.0F : yaw;
         float expectedPitch = pitch;
         if (version.isOlderThanOrEquals(ClientVersion.V_1_8)) {
-            expectedPitch %= 360.0F; // 1.8 applies setRotation without first clamping the pitch
+            expectedPitch %= 360.0F;
         } else if (version.isOlderThan(ClientVersion.V_1_19_3) || version.isNewerThanOrEquals(ClientVersion.V_1_21_5)) {
-            expectedPitch = DenemeMath.clamp(expectedPitch, -90.0F, 90.0F); // 1.9-1.19.2 clamp in absMoveTo, since 1.21.5, calculateAbsolute clamps first
+            expectedPitch = DenemeMath.clamp(expectedPitch, -90.0F, 90.0F);
         } else if (version.isNewerThanOrEquals(ClientVersion.V_1_21_2)) {
-            expectedPitch = DenemeMath.clamp(expectedPitch % 360.0F, -90.0F, 90.0F); // 1.21.2-1.21.4 only normalize in setXRot, so the remainder precedes the clamp
+            expectedPitch = DenemeMath.clamp(expectedPitch % 360.0F, -90.0F, 90.0F);
         }
 
-        // rotations are updated every frame, we can't accurately check them if they're relative
         return (isRelativeYaw() || receivedYaw == expectedYaw) && (isRelativePitch() || receivedPitch == expectedPitch);
     }
 
@@ -51,8 +50,8 @@ public class TeleportData {
 
             if (!isRelativeY()) {
                 vector.setY(0);
-                player.lastWasClimbing = 0; // Vertical movement reset
-                player.canSwimHop = false; // Vertical movement reset
+                player.lastWasClimbing = 0;
+                player.canSwimHop = false;
             }
 
             if (!isRelativeZ()) {
@@ -61,7 +60,7 @@ public class TeleportData {
         }
 
         if (velocity != null && isStupidTeleportSystem) {
-            // WHAT WAS MOJANG THINKING MAKING TELEPORTS A REPLACEMENT PACKET FOR EXPLOSION VELOCITY /s
+
             if (isRelativeDeltaX()) {
                 vector.setX(vector.getX() + velocity.getX());
             } else {
@@ -72,9 +71,9 @@ public class TeleportData {
                 vector.setY(vector.getY() + velocity.getY());
             } else {
                 vector.setY(velocity.getY());
-                // Is this correct? Don't know don't care.
-                player.lastWasClimbing = 0; // Vertical movement reset
-                player.canSwimHop = false; // Vertical movement reset
+
+                player.lastWasClimbing = 0;
+                player.canSwimHop = false;
             }
 
             if (isRelativeDeltaZ()) {

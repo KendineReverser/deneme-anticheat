@@ -53,7 +53,6 @@ public class ExplosionHandler extends Check implements PacketSendListener, PostP
         if (event.getPacketType() == PacketType.Play.Server.EXPLOSION) {
             WrapperPlayServerExplosion explosion = new WrapperPlayServerExplosion(event);
 
-            // Since 1.21.2, the server will instead send these changes via block change packets
             final boolean hasBlocks = PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_21_2);
             if (hasBlocks) {
                 this.handleBlockExplosions(explosion);
@@ -61,7 +60,7 @@ public class ExplosionHandler extends Check implements PacketSendListener, PostP
 
             Vector3d velocity = explosion.getKnockback();
             if (velocity != null && (velocity.x != 0 || velocity.y != 0 || velocity.z != 0)) {
-                // No need to spam transactions
+
                 if (!hasBlocks || explosion.getRecords().isEmpty()) player.sendTransaction();
                 addPlayerExplosion(player.lastTransactionSent.get(), velocity);
                 event.getTasksAfterSend().add(player::sendTransaction);
@@ -80,22 +79,21 @@ public class ExplosionHandler extends Check implements PacketSendListener, PostP
 
         player.latencyUtils.addRealTimeTask(player.lastTransactionSent.get(), () -> {
             for (Vector3i record : explosion.getRecords()) {
-                // Null OR not flip redstone blocks, then set to air
+
                 if (blockInteraction != WrapperPlayServerExplosion.BlockInteraction.TRIGGER_BLOCKS) {
                     player.compensatedWorld.updateBlock(record.x, record.y, record.z, 0);
                 } else {
-                    // We need to flip redstone blocks, or do special things with other blocks
+
                     final WrappedBlockState state = player.compensatedWorld.getBlock(record);
                     final StateType type = state.getType();
                     if (BlockTags.CANDLES.contains(type) || BlockTags.CANDLE_CAKES.contains(type)) {
                         state.setLit(false);
                         continue;
                     } else if (type == StateTypes.BELL) {
-                        // Does this affect anything? I don't know, I don't see anything that relies on whether a bell is ringing.
+
                         continue;
                     }
 
-                    // Otherwise try and flip/open it.
                     final boolean canFlip = state.hasProperty(StateValue.POWERED) && !state.isPowered() || type == StateTypes.LEVER;
                     if (canFlip) {
                         player.compensatedWorld.tickOpenable(record.x, record.y, record.z);
@@ -106,20 +104,18 @@ public class ExplosionHandler extends Check implements PacketSendListener, PostP
     }
 
     public VelocityData getFutureExplosion() {
-        // Chronologically in the future
+
         if (!firstBreadMap.isEmpty()) {
             return firstBreadMap.peek();
         }
 
-        // Less in the future
         if (lastExplosionsKnownTaken != null) {
             return lastExplosionsKnownTaken;
         }
 
-        // Uncertain, might be in the future
         if (player.firstBreadExplosion != null && player.likelyExplosions == null) {
             return player.firstBreadExplosion;
-        } else if (player.likelyExplosions != null) { // Known to be in the present
+        } else if (player.likelyExplosions != null) {
             return player.likelyExplosions;
         }
         return null;
@@ -155,7 +151,7 @@ public class ExplosionHandler extends Check implements PacketSendListener, PostP
     }
 
     public void forceExempt() {
-        // Unsure explosion was taken
+
         if (player.firstBreadExplosion != null) {
             player.firstBreadExplosion.offset = 0;
         }
@@ -177,13 +173,6 @@ public class ExplosionHandler extends Check implements PacketSendListener, PostP
             return;
         }
 
-        // We must check to see if knockback has overridden this explosion
-        // (Yes, I could make this very simple and exempt on kb, but that allows people to ignore most explosions)
-        //
-        // We do this by finding the minimum explosion transaction that could have been overridden
-        // We then compare this against the maximum velocity transaction that could override
-        //
-        // If velocity is over transaction, exempt
         int minTrans = Math.min(player.likelyExplosions != null ? player.likelyExplosions.transaction : Integer.MAX_VALUE,
                 player.firstBreadExplosion != null ? player.firstBreadExplosion.transaction : Integer.MAX_VALUE);
         int kbTrans = Math.max(player.likelyKB != null ? player.likelyKB.transaction : Integer.MIN_VALUE,
@@ -191,12 +180,12 @@ public class ExplosionHandler extends Check implements PacketSendListener, PostP
 
         if (player.predictedVelocity.isFirstBreadExplosion()) {
             firstBreadAddedExplosion = null;
-            firstBreadMap.poll(); // Remove from map so we don't pull it again
+            firstBreadMap.poll();
         }
 
         if (wasZero || player.predictedVelocity.isExplosion() ||
                 (minTrans < kbTrans)) {
-            // Unsure knockback was taken
+
             if (player.firstBreadExplosion != null) {
                 player.firstBreadExplosion.offset = Math.min(player.firstBreadExplosion.offset, offset);
             }
@@ -206,7 +195,6 @@ public class ExplosionHandler extends Check implements PacketSendListener, PostP
             }
         }
 
-        // 100% known kb was taken
         if (player.likelyExplosions != null && !player.compensatedEntities.self.isDead) {
             if (player.likelyExplosions.offset > offsetToFlag) {
                 boolean ignored = player.likelyExplosions.offset == Integer.MAX_VALUE;
@@ -232,12 +220,12 @@ public class ExplosionHandler extends Check implements PacketSendListener, PostP
     private void handleTransactionPacket(int transactionID) {
         VelocityData data = firstBreadMap.peek();
         while (data != null) {
-            if (data.transaction == transactionID) { // First bread explosion
+            if (data.transaction == transactionID) {
                 if (lastExplosionsKnownTaken != null)
                     firstBreadAddedExplosion = new VelocityData(-1, data.transaction, data.isSetback, lastExplosionsKnownTaken.vector.clone().add(data.vector));
                 else
                     firstBreadAddedExplosion = new VelocityData(-1, data.transaction, data.isSetback, data.vector);
-                break; // All knockback after this will have not been applied
+                break;
             } else if (data.transaction < transactionID) {
                 if (lastExplosionsKnownTaken != null) {
                     lastExplosionsKnownTaken.vector.add(data.vector);
@@ -245,11 +233,10 @@ public class ExplosionHandler extends Check implements PacketSendListener, PostP
                     lastExplosionsKnownTaken = new VelocityData(-1, data.transaction, data.isSetback, data.vector);
                 }
 
-                // Explosion has been applied and is now required, remove it from first bread
                 firstBreadAddedExplosion = null;
                 firstBreadMap.poll();
                 data = firstBreadMap.peek();
-            } else { // We are too far ahead in the future
+            } else {
                 break;
             }
         }

@@ -24,10 +24,10 @@ public class PacketPlayerCooldown extends PacketListenerAbstract {
 
         int lastTransactionSent = player.lastTransactionSent.get();
 
-        if (cooldown.getCooldownTicks() == 0) { // for removing the cooldown
+        if (cooldown.getCooldownTicks() == 0) {
             player.latencyUtils.addRealTimeTask(lastTransactionSent + 1,
                     () -> player.checkManager.getCompensatedCooldown().removeCooldown(cooldown.getCooldownGroup()));
-        } else { // Not for removing the cooldown
+        } else {
             player.latencyUtils.addRealTimeTask(lastTransactionSent,
                     () -> player.checkManager.getCompensatedCooldown().addCooldown(
                             cooldown.getCooldownGroup(),

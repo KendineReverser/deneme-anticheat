@@ -19,7 +19,6 @@ public class FeatureManagerImpl implements FeatureManager, ConfigReloadObserver 
 
     private static final Map<String, DenemeFeature> FEATURES;
 
-    /// @deprecated use {@link #getFeatures()}
     @Contract(pure = true)
     @Deprecated
     public static Map<String, DenemeFeature> getFEATURES() {

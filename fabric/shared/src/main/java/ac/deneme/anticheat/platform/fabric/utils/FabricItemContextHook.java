@@ -58,15 +58,10 @@ public final class FabricItemContextHook {
 
                 MethodHandle raw = lookup.findStatic(contextClass, "supplyWithContext",
                         MethodType.methodType(Object.class, providerClass, Supplier.class));
-                // The inventory owner (ServerPlayer) implements PacketContextProvider at runtime via
-                // fabric-api's own net.fabricmc.fabric.mixin.networking.ServerPlayerMixin (it delegates
-                // getPacketContext() to player.connection). We accept it as a plain Object here and let
-                // the handle's runtime checkcast validate it, so the parent module needn't compile against
-                // the API. Verified live: the bind resolves "via net.minecraft.server.level.ServerPlayer".
+
                 supplyWithContext = raw.asType(MethodType.methodType(Object.class, Object.class, Supplier.class));
             } catch (Throwable t) {
-                // Older fabric-api/Polymer (PacketTweaker-based) tolerates a missing context, so failing to
-                // resolve the new API here is not fatal — degrade to a no-op pass-through.
+
                 LogUtil.info("[DenemeAC] Polymer is present but fabric-api's PacketContext API is unavailable; "
                         + "leaving item encoding to Polymer's own context handling.");
             }
@@ -91,12 +86,10 @@ public final class FabricItemContextHook {
             return supplier.get();
         }
         try {
-            // The handle is pre-shaped to (Object, Supplier)Object in <clinit>, so invokeExact matches the
-            // call-site descriptor exactly and skips the per-call argument adaptation plain invoke() does.
+
             return (T) (Object) SUPPLY_WITH_CONTEXT.invokeExact(player, (Supplier<Object>) supplier);
         } catch (Throwable t) {
-            // Binding failed (e.g. the player is not yet a context provider). Run without it; the encode's
-            // own try/catch handles any downstream Polymer failure.
+
             return supplier.get();
         }
     }

@@ -21,7 +21,7 @@ public class NegativeTimer extends Timer implements PacketReceiveListener, PostP
 
     @Override
     public void onPrePredictionPacketReceive(PacketReceiveEvent event) {
-        // NegativeTimer runs the inherited timer processing during normal packet dispatch.
+
     }
 
     @Override
@@ -31,7 +31,7 @@ public class NegativeTimer extends Timer implements PacketReceiveListener, PostP
 
     @Override
     public void onPredictionComplete(final PredictionComplete predictionComplete) {
-        // We can't negative timer check a 1.9+ player who is standing still.
+
         if (player.uncertaintyHandler.lastPointThree.hasOccurredSince(2) || !predictionComplete.isChecked()) {
             timerBalanceRealTime = System.nanoTime() + clockDrift;
         }
@@ -45,8 +45,7 @@ public class NegativeTimer extends Timer implements PacketReceiveListener, PostP
 
     @Override
     public void doCheck(final PacketReceiveEvent event) {
-        // We don't know if the player is ticking stable, therefore we must wait until prediction
-        // determines this.  Do nothing here!
+
     }
 
     @Override

@@ -68,7 +68,7 @@ public interface PlatformScheduler {
      * <p>
      * <b>Example:</b>
      * <pre>
-     * long delayInTicks = PlatformScheduler.convertTimeToTicks(5, TimeUnit.SECONDS); // 5 seconds = 100 ticks
+     * long delayInTicks = PlatformScheduler.convertTimeToTicks(5, TimeUnit.SECONDS);
      * </pre>
      * </p>
      *
@@ -91,9 +91,9 @@ public interface PlatformScheduler {
      *
      * <p><b>Example:</b></p>
      * <pre>
-     * long ticks = 100;                                   // 100 ticks
+     * long ticks = 100;
      * long seconds = PlatformScheduler.convertTicksToTime(ticks, TimeUnit.SECONDS);
-     * // seconds == 5
+     * The result is 5.
      * </pre>
      *
      * @param ticks     The number of ticks to convert.

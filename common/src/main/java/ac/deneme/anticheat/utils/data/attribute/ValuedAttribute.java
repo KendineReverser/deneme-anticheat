@@ -18,14 +18,12 @@ public final class ValuedAttribute {
     private static final DoubleUnaryOperator DEFAULT_GET_REWRITE = DoubleUnaryOperator.identity();
 
     private final Attribute attribute;
-    // Attribute limits defined by https://minecraft.wiki/w/Attribute
-    // These seem to be clamped on the client, but not the server
+
     private final double min, max;
     private final double defaultValue;
     private WrapperPlayServerUpdateAttributes.Property lastProperty;
     private double value;
 
-    // This allows us to rewrite the value based on client & server version
     private DoubleBinaryOperator setRewriter;
     private DoubleUnaryOperator getRewriter;
 
@@ -80,7 +78,7 @@ public final class ValuedAttribute {
     public void reset() {
         this.value = defaultValue;
         this.lastProperty =
-                null; // Remove the old property with its modifiers so we don't accidentally use it again, messing up the calculation.
+                null;
     }
 
     public double get() {
@@ -91,7 +89,7 @@ public final class ValuedAttribute {
         this.value = value;
     }
 
-    @Deprecated // Avoid using this, it only exists for special cases
+    @Deprecated
     public Optional<WrapperPlayServerUpdateAttributes.Property> property() {
         return Optional.ofNullable(lastProperty);
     }

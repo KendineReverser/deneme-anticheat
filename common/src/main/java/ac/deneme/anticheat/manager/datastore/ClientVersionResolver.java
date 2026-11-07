@@ -23,8 +23,7 @@ public final class ClientVersionResolver {
         if (versionString == null) return -1;
         String trimmed = versionString.trim();
         if (trimmed.isEmpty()) return -1;
-        // Reverse the PE release-name algorithm: enum is V_<major>_<minor>[_<patch>]
-        // where dots become underscores. "1.21.1" → "V_1_21_1".
+
         String enumName = "V_" + trimmed.replace('.', '_').toUpperCase(Locale.ROOT);
         try {
             ClientVersion cv = ClientVersion.valueOf(enumName);

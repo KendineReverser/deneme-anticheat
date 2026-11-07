@@ -48,27 +48,18 @@ public class ClientBrand extends DenemeProcessor implements PacketReceiveListene
             byte[] minusLength = new byte[data.length - 1];
             System.arraycopy(data, 1, minusLength, 0, minusLength.length);
 
-            brand = new String(minusLength).replace(" (Velocity)", ""); // removes velocity's brand suffix
-            brand = MessageUtil.stripColor(brand); // strip color codes from client brand
+            brand = new String(minusLength).replace(" (Velocity)", "");
+            brand = MessageUtil.stripColor(brand);
             if (!DenemeAPI.INSTANCE.getConfigManager().isIgnoredClient(brand)) {
                 String message = DenemeAPI.INSTANCE.getConfigManager().getConfig().getStringElse("client-brand-format", "%prefix% &f%player% joined using %brand%");
                 Component component = MessageUtil.replacePlaceholders(player, MessageUtil.miniMessage(message));
 
                 DenemeAPI.INSTANCE.getAlertManager().sendBrand(component, null);
             }
-            // Push the now-known brand into the session row. The initial onJoin
-            // upsert ran from PlayerJoinEvent, before the brand packet arrived,
-            // so client_brand was null on disk. observeBrandFromCheck re-issues
-            // the upsert with the same session_id (idempotent) but the brand
-            // column now filled in. NOOP impl skips the work entirely.
+
             DenemeAPI.INSTANCE.getDataStoreLifecycle().liveWriteHooks().observeBrandFromCheck(player);
         }
 
-        // https://github.com/MinecraftForge/MinecraftForge/issues/9309
-        // "Forge 40.1.22 1.18.2+ has extended player reach"
-        // quality development from forge devs
-        // inbuilt reach hacks for over a year across 2 (3 if you include 1.19.3/1.20) major versions
-        // Fixed in 1.19.4 possibly? Definitely fixed in 1.20+.
         final boolean hasReachHacks = brand.contains("forge")
                 && player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_18_2)
                 && player.getClientVersion().isOlderThan(ClientVersion.V_1_19_4);

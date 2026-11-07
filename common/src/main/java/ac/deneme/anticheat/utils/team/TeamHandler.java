@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.UUID;
 
-// Reminder: Entities use UUIDs, players use name, for setting teams.
 public class TeamHandler extends DenemeProcessor implements PacketSendListener {
 
     private final Map<String, EntityTeam> entityTeams = new Object2ObjectOpenHashMap<>();
@@ -36,7 +35,7 @@ public class TeamHandler extends DenemeProcessor implements PacketSendListener {
     }
 
     public EntityTeam getEntityTeam(PacketEntity entity) {
-        // TODO in what cases is UUID null in 1.9+?
+
         final UUID uuid = entity.getUuid();
         return uuid == null ? null : entityToTeam.get(uuid.toString());
     }

@@ -16,7 +16,6 @@ import ac.deneme.anticheat.utils.lazy.LazyHolder;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
 
-
 public class DenemeACFabric1170LoaderPlugin extends DenemeACFabricIntermediaryLoaderPlugin {
 
     public DenemeACFabric1170LoaderPlugin() {

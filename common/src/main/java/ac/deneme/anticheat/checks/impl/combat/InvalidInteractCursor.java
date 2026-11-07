@@ -24,7 +24,7 @@ public class InvalidInteractCursor extends Check implements PacketReceiveListene
 
     public InvalidInteractCursor(final DenemePlayer player) {
         super(player);
-        // pre-1.9 expands hitboxes by 0.1 on all sides; this is not lenience, it is vanilla.
+
         double expansion = player.getClientVersion().isOlderThan(ClientVersion.V_1_9) ? 0.1f : 0;
         maxHorizontalDisplacement = 0.3001 + expansion;
         minVerticalDisplacement = -0.0001 - expansion;
@@ -40,10 +40,10 @@ public class InvalidInteractCursor extends Check implements PacketReceiveListene
     public void onPacketReceive(final PacketReceiveEvent event) {
         if (event.getPacketType().equals(PacketType.Play.Client.INTERACT_ENTITY)) {
             final WrapperPlayClientInteractEntity wrapper = new WrapperPlayClientInteractEntity(event);
-            // Only INTERACT_AT actually has an interaction vector
+
             if (wrapper.getAction() != WrapperPlayClientInteractEntity.InteractAction.INTERACT_AT) return;
             Vector3d targetVector = wrapper.getLocation();
-            if (targetVector == null) return; // shouldn't ever happen, but whatever
+            if (targetVector == null) return;
 
             if (!Double.isFinite(targetVector.x) || !Double.isFinite(targetVector.y) || !Double.isFinite(targetVector.z)) {
                 flag(V.write(verbose()).f64(targetVector.x).f64(targetVector.y).f64(targetVector.z));
@@ -51,22 +51,16 @@ public class InvalidInteractCursor extends Check implements PacketReceiveListene
             }
 
             final PacketEntity packetEntity = player.compensatedEntities.getEntity(wrapper.getEntityId());
-            // Don't continue if the compensated entity hasn't been resolved
+
             if (packetEntity == null) {
                 return;
             }
 
-            // Make sure our target entity is actually a player (Player NPCs work too)
             if (!EntityTypes.PLAYER.equals(packetEntity.getType())) {
-                // We can't check for any entity that is not a player
+
                 return;
             }
 
-            // Perform the interaction vector check
-            // TODO:
-            //  27/12/2023 - Dynamic values for more than just one entity type?
-            //  28/12/2023 - Player-only is fine
-            //  30/12/2023 - Expansions differ in 1.9+
             final float scale = (float) packetEntity.getAttributeValue(Attributes.SCALE);
             if (targetVector.y > (minVerticalDisplacement * scale) && targetVector.y < (maxVerticalDisplacement * scale)
                     && Math.abs(targetVector.x) < (maxHorizontalDisplacement * scale)
@@ -74,8 +68,6 @@ public class InvalidInteractCursor extends Check implements PacketReceiveListene
                 return;
             }
 
-            // Log the vector
-            // We could pretty much ban the player at this point
             flag(V.write(verbose()).f64(targetVector.x).f64(targetVector.y).f64(targetVector.z));
         }
     }

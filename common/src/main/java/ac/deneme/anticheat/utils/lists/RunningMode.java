@@ -9,9 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 
-// This class is copyright DefineOutside licensed under MIT
-//
-// This class calculates the running mode of a list in best case o(1) worst case o(n) time.
 public class RunningMode {
     private static final double threshold = 1e-3;
     private final Queue<Double> addList;
@@ -39,7 +36,6 @@ public class RunningMode {
             }
         }
 
-        // Nothing found
         popularityMap.put(value, 1);
         addList.add(value);
     }
@@ -47,11 +43,11 @@ public class RunningMode {
     private void pop() {
         if (addList.size() >= maxSize) {
             double type = addList.remove();
-            int popularity = popularityMap.get(type);  // Being null isn't possible
+            int popularity = popularityMap.get(type);
             if (popularity == 1) {
-                popularityMap.remove(type); // Make sure not to leak memory
+                popularityMap.remove(type);
             } else {
-                popularityMap.put(type, popularity - 1); // Decrease popularity
+                popularityMap.put(type, popularity - 1);
             }
         }
     }

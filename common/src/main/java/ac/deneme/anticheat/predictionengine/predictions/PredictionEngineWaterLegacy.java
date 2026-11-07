@@ -33,7 +33,6 @@ public class PredictionEngineWaterLegacy extends PredictionEngine {
         for (VectorData vector : player.getPossibleVelocitiesMinusKnockback()) {
             vector.vector.multiply(swimmingFriction, 0.8F, swimmingFriction);
 
-            // Gravity
             vector.vector.setY(vector.vector.getY() - 0.02D);
         }
     }

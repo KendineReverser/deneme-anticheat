@@ -60,18 +60,12 @@ public final class DenemeConfigSpecs {
                     String type = typeRaw == null ? null : typeRaw.trim().toUpperCase(Locale.ROOT);
                     String backendId = backendIdFor(type);
                     if (backendId != null) {
-                        // Route every relational category to the operator's
-                        // chosen backend so the new layout matches the old
-                        // single-DB shape. blob is intentionally absent —
-                        // none of the SQL backends declare support for it
-                        // (would fail capability validation); leave it on
-                        // whatever the bundled default routes blob to.
+
                         for (String cat : new String[]{"violation", "session", "player-identity", "setting"}) {
                             ctx.otherFile("database.yml").put("database.routing." + cat, backendId);
                         }
                     }
-                    // Carry the rendering settings over — these moved out of
-                    // history: into database.* with the same names.
+
                     Integer entriesPerPage = ctx.input().getInt("history.entries-per-page");
                     if (entriesPerPage != null) {
                         ctx.otherFile("database.yml").put("database.history.entries-per-page", entriesPerPage);
@@ -81,8 +75,7 @@ public final class DenemeConfigSpecs {
                         ctx.otherFile("database.yml").put("database.server-name", serverName);
                     }
                     if (backendId != null && !backendId.equals("sqlite")) {
-                        // Connection details only matter for networked backends.
-                        // SQLite settings (file path) stay at their defaults.
+
                         String target = "databases/" + backendId + ".yml";
                         Object host = ctx.input().get("history.database.host");
                         Object port = ctx.input().get("history.database.port");
@@ -158,8 +151,7 @@ public final class DenemeConfigSpecs {
     private static void preservePoolSettingOverrides(
             @NotNull MigrationContext ctx,
             @NotNull String backendId) {
-        // v1 did not ship these keys, but preserve values if an operator
-        // already added them by hand before the bundled defaults caught up.
+
         String prefix = backendId + ".pool-settings.";
         for (String key : new String[]{
                 "maximum-pool-size",

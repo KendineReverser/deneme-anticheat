@@ -16,7 +16,6 @@ public class MovementTickerHappyGhast extends MovementTickerLivingVehicle {
 
         player.speed = (float) happyGhastPacket.getAttributeValue(Attributes.FLYING_SPEED) * 5.0F / 3.0F;
 
-        // Setup player inputs
         float sideways = player.vehicleData.vehicleHorizontal;
         float forward = 0.0F;
         float upAndDown = 0.0F;

@@ -16,7 +16,7 @@ import java.util.ArrayDeque;
 
 @CheckData(name = "PacketOrderK", stableKey = "deneme.packetorder.inventory_open_order", description = "Opened, clicked, or closed inventory in the wrong packet order", experimental = true)
 public class PacketOrderK extends Check implements PacketReceiveListener, PostPredictionListener {
-    // Shape index == KIND_* constant value.
+
     private static final Verbose V = Verbose
             .of("open, clicking={bool}, closing={bool}")
             .or("click")

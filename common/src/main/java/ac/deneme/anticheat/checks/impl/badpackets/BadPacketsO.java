@@ -38,7 +38,7 @@ public class BadPacketsO extends Check implements PacketReceiveListener, PacketS
 
             for (long keepalive : keepalives) {
                 if (keepalive == id) {
-                    // Found the ID, remove stuff until we get to it (to stop very slow memory leaks)
+
                     Long data;
                     do {
                         data = keepalives.poll();

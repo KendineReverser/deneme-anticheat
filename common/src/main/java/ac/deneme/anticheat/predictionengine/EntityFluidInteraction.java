@@ -287,8 +287,7 @@ public class EntityFluidInteraction {
                 }
 
                 current = current.multiply(scale);
-                // Store the vector before handling 0.003, so knockback can use it
-                // However, do this after the multiplier, so that we don't have to recompute it
+
                 player.baseTickAddWaterPushing(current);
                 if (Math.abs(player.clientVelocity.getX()) < 0.003 && Math.abs(player.clientVelocity.getZ()) < 0.003 && current.length() < 0.0045000000000000005) {
                     current = VectorUtils.normalize(ClientVersion.V_26_1, current).multiply(0.0045000000000000005);

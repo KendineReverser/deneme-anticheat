@@ -50,10 +50,10 @@ public class SpectateManager implements StartableInitable, ReloadableInitable {
     }
 
     public boolean shouldHidePlayer(DenemePlayer receiver, UUID uuid) {
-        return !Objects.equals(uuid, receiver.uuid) // don't hide to yourself
-                && (spectatingPlayers.containsKey(uuid) || hiddenPlayers.contains(uuid)) //hide if you are a spectator
-                && !(receiver.uuid != null && (spectatingPlayers.containsKey(receiver.uuid) || hiddenPlayers.contains(receiver.uuid))) // don't hide to other spectators
-                && (!checkWorld || (receiver.platformPlayer != null && allowedWorlds.contains(receiver.platformPlayer.getWorld().getName()))); // hide if you are in a specific world
+        return !Objects.equals(uuid, receiver.uuid)
+                && (spectatingPlayers.containsKey(uuid) || hiddenPlayers.contains(uuid))
+                && !(receiver.uuid != null && (spectatingPlayers.containsKey(receiver.uuid) || hiddenPlayers.contains(receiver.uuid)))
+                && (!checkWorld || (receiver.platformPlayer != null && allowedWorlds.contains(receiver.platformPlayer.getWorld().getName())));
     }
 
     public boolean enable(PlatformPlayer platformPlayer) {
@@ -71,7 +71,6 @@ public class SpectateManager implements StartableInitable, ReloadableInitable {
         handlePlayerStopSpectating(uuid);
     }
 
-    // only call this synchronously
     public void disable(@NotNull PlatformPlayer platformPlayer, boolean teleportBack) {
         PreviousState previousState = spectatingPlayers.get(platformPlayer.getUniqueId());
         if (previousState != null) {

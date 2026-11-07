@@ -19,7 +19,6 @@ import it.unimi.dsi.fastutil.longs.LongSet;
 import java.util.List;
 import java.util.Optional;
 
-// 1.21.5
 public class BlockEffectsResolverV1_21_5 implements BlockEffectsResolver {
 
     public static final BlockEffectsResolver INSTANCE = new BlockEffectsResolverV1_21_5();

@@ -103,16 +103,15 @@ public final class AlertManagerImpl implements AlertManager, ConfigReloadable, S
      * @throws NullPointerException if the DenemePlayer's platformPlayer is null.
      */
     private @NotNull PlatformPlayer requirePlatformPlayerFromUser(@NotNull DenemeUser user) {
-        Objects.requireNonNull(user, "user cannot be null"); // Should be guaranteed by interface contract, but good practice
+        Objects.requireNonNull(user, "user cannot be null");
 
         if (!(user instanceof DenemePlayer denemePlayer)) {
-            // Throw a specific exception if the type is wrong
+
             throw new IllegalArgumentException("AlertManager action called with non-DenemePlayer user: " + user.getName());
         }
 
         PlatformPlayer platformPlayer = denemePlayer.platformPlayer;
 
-        // Throw NullPointerException with the specific message if platformPlayer is null
         Objects.requireNonNull(platformPlayer, "AlertManager action for user " + user.getName() + " with null platformPlayer (potentially during early join)");
 
         return platformPlayer;
@@ -150,10 +149,7 @@ public final class AlertManagerImpl implements AlertManager, ConfigReloadable, S
     @Override
     public boolean hasBrandsEnabled(@NotNull DenemeUser player) {
         DenemePlayer denemePlayer = (DenemePlayer) player;
-        // Some proxies break packet order in sending brand and send the data too early for performance
-        // which causes us to iterate over all players with this method
-        // before platformPlayer is intialized; while generally packet order is important to maintain
-        // for compatibility's sake lets just default to not sending alerts to these players
+
         if (denemePlayer.platformPlayer == null) return false;
 
         return hasBrandsEnabled(denemePlayer.platformPlayer);
@@ -285,7 +281,6 @@ public final class AlertManagerImpl implements AlertManager, ConfigReloadable, S
         return enabled;
     }
 
-    // All internal code, will replace later
     private void setPlayerStateAndNotify(@NotNull PlatformPlayer platformPlayer, boolean enabled, boolean silent, @NotNull AlertType type) {
         Objects.requireNonNull(platformPlayer, "platformPlayer cannot be null");
         boolean changed = enabled ? type.players.add(platformPlayer) : type.players.remove(platformPlayer);

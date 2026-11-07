@@ -1,18 +1,4 @@
-// This file was designed and is an original check for DenemeAC
-// Copyright (C) 2021 DefineOutside
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 package ac.deneme.anticheat.utils.data.packetentity;
 
 import com.github.retrooper.packetevents.protocol.vector.positionpath.PositionPath;
@@ -45,14 +31,13 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
 
-// You may not copy this check unless your anticheat is licensed under GPL
 public class PacketEntity extends TypedPacketEntity {
 
     public final TrackedPosition trackedServerPosition;
     protected final Map<Attribute, ValuedAttribute> attributeMap = new IdentityHashMap<>();
-    // TODO in what cases is UUID null in 1.9+?
+
     @Getter
-    private final UUID uuid; // NULL ON VERSIONS BELOW 1.9 (or for some entities, apparently??)
+    private final UUID uuid;
     @Getter
     public PacketEntity riding;
     public final List<PacketEntity> passengers = new ArrayList<>(0);
@@ -82,7 +67,7 @@ public class PacketEntity extends TypedPacketEntity {
         initAttributes(player);
         this.trackedServerPosition = new TrackedPosition();
         this.trackedServerPosition.setPos(new Vector3d(x, y, z));
-        if (player.getClientVersion().isOlderThan(ClientVersion.V_1_9)) { // Thanks ViaVersion
+        if (player.getClientVersion().isOlderThan(ClientVersion.V_1_9)) {
             trackedServerPosition.setPos(new Vector3d(((int) (x * 32)) / 32d, ((int) (y * 32)) / 32d, ((int) (z * 32)) / 32d));
         }
         final Vector3d pos = trackedServerPosition.getPos();
@@ -150,15 +135,13 @@ public class PacketEntity extends TypedPacketEntity {
         attributeMap.values().forEach(ValuedAttribute::reset);
     }
 
-    // Set the old packet location to the new one
-    // Set the new packet location to the updated packet location
     public void onFirstTransaction(boolean relative, boolean hasPos, double relX, double relY, double relZ,
                                    @Nullable Float packetXRot, @Nullable Float packetYRot, DenemePlayer player, @Nullable PositionPath path, boolean positionSync, int transaction) {
         if (path != null) {
             trackedServerPosition.setPos(path.getEndPosition());
         } else if (hasPos) {
             if (relative) {
-                // This only matters for 1.9+ clients, but it won't hurt 1.8 clients either... align for imprecision
+
                 final double scale = trackedServerPosition.getScale();
                 Vector3d vec3d;
                 if (player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_16)) {
@@ -169,9 +152,7 @@ public class PacketEntity extends TypedPacketEntity {
                 trackedServerPosition.setPos(vec3d);
             } else {
                 trackedServerPosition.setPos(new Vector3d(relX, relY, relZ));
-                // ViaVersion desync's here for teleports
-                // It simply teleports the entity with its position divided by 32... ignoring the offset this causes.
-                // Thanks a lot ViaVersion!  Please don't fix this, or it will be a pain to support.
+
                 if (player.getClientVersion().isOlderThan(ClientVersion.V_1_9)) {
                     trackedServerPosition.setPos(new Vector3d(((int) (relX * 32)) / 32d, ((int) (relY * 32)) / 32d, ((int) (relZ * 32)) / 32d));
                 }
@@ -216,12 +197,10 @@ public class PacketEntity extends TypedPacketEntity {
         this.riding = null;
     }
 
-    // This is for handling riding and entities attached to one another.
     public void setPositionRaw(DenemePlayer player, SimpleCollisionBox box) {
-        // I'm disappointed in you mojang.  Please don't set the packet position as it desyncs it...
-        // But let's follow this flawed client-sided logic!
+
         this.trackedServerPosition.setPos(new Vector3d((box.maxX - box.minX) / 2 + box.minX, box.minY, (box.maxZ - box.minZ) / 2 + box.minZ));
-        // This disables interpolation
+
         if (interpolation == null) {
             interpolation = EntityInterpolations.create(player, this, box);
         }
@@ -258,9 +237,6 @@ public class PacketEntity extends TypedPacketEntity {
         potionsMap.removeInt(effect);
     }
 
-    // Mojang makes this default to true and overrides it for everything where it isn't
-    // That's too much work for us to replicate...
-    // This is temporary hack and technically wrong
     /* By Default every entity in the game cannot be hit by player crosshair. This is overwritten as follows as of 1.21.1:
       Most Boats, Minecart's, TNT, Falling Blocks, and LivingEntities can only be hit if they're not removed
       Every single BlockAttachedEntity can be hit (Leashes and other decorations)
@@ -270,7 +246,7 @@ public class PacketEntity extends TypedPacketEntity {
       Of all Projectiles, only redirectable ones (Fireballs - not blaze fireballs, Wind Charge, and Breeze Wind charges) can be hit
       Persistent Projectiles can only be hit if they're not on the ground and redirectable
     */
-    // TLDR If we want to get 90% of the way there everything can be hit except for fishing rod bobbers, arrows, and marker armor stands
+
     public boolean canHit() {
         return !this.isDead;
     }

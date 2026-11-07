@@ -17,19 +17,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-// Class from https://github.com/Tecnio/AntiCheatBase/blob/master/src/main/java/me/tecnio/anticheat/check/Check.java
 @Getter
 public class Check extends DenemeProcessor implements AbstractCheck {
     private static final FlagEvent.Channel FLAG_CHANNEL = DenemeAPI.INSTANCE.getEventBus().get(FlagEvent.class);
     private static final ThreadLocal<VerboseBuf> VERBOSE = ThreadLocal.withInitial(VerboseBuf::new);
 
-    // violations
     public double violations;
     private long lastViolationTime;
     private boolean lastFlagStoredBinaryVerbose;
     private final VerboseBuf verbose = VERBOSE.get();
 
-    // check data
     private final @NotNull String checkName;
     private final @NotNull String configName;
     private final @NotNull String alternativeName;
@@ -39,14 +36,12 @@ public class Check extends DenemeProcessor implements AbstractCheck {
     private final double defaultDecay;
     private final double defaultSetbackVL;
 
-    // configurable
     private @NotNull String displayName;
     private @NotNull String description;
     private double decay;
     private double setbackVL;
     @Setter private boolean isEnabled;
 
-    // permissions
     private boolean exemptPermission;
     private boolean noSetbackPermission;
     private boolean noModifyPacketPermission;
@@ -130,7 +125,7 @@ public class Check extends DenemeProcessor implements AbstractCheck {
 
     private boolean recordFlag(@NotNull Supplier<String> verbose) {
         if (player.disableDeneme || (experimental && !player.isExperimentalChecks()) || exemptPermission)
-            return false; // Avoid calling event if disabled
+            return false;
 
         if (FLAG_CHANNEL.fire(player, this, verbose)) return false;
 
@@ -146,7 +141,7 @@ public class Check extends DenemeProcessor implements AbstractCheck {
         byte[] verboseData = verbose.data();
 
         if (player.disableDeneme || (experimental && !player.isExperimentalChecks()) || exemptPermission)
-            return false; // Avoid calling event if disabled
+            return false;
 
         if (FLAG_CHANNEL.fire(player, this, rendered)) return false;
 

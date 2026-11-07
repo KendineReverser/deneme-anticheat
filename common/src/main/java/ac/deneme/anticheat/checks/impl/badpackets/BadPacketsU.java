@@ -33,11 +33,9 @@ public class BadPacketsU extends Check implements PreViaPacketReceiveListener {
     public void onPreViaPacketReceive(@NotNull PacketReceiveEvent event) {
         if (event.getPacketType() != PacketType.Play.Client.PLAYER_BLOCK_PLACEMENT) return;
         final WrapperPlayClientPlayerBlockPlacement packet = new WrapperPlayClientPlayerBlockPlacement(event);
-        // face 255 is USE_ITEM for pre 1.9
+
         if (packet.getFaceId() != 255) return;
 
-        // This packet is always sent at (-1, -1, -1) at (0, 0, 0) on the block
-        // except y gets wrapped on 1.7
         final int expectedY = player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_8) ? -1 : 255;
 
         final boolean failedItemCheck = isEmpty(packet.getItemStack().orElse(null));

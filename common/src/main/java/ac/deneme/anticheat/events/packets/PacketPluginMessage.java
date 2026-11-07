@@ -29,7 +29,7 @@ public class PacketPluginMessage extends PacketListenerAbstract {
     private void checkChannel(User user, String channelName) {
         if (!"vv:proxy_details".equals(channelName)) return;
         final boolean usingProxy = ProxyAlertMessenger.isUsingProxy();
-        // warn if they are using a proxy, unless the server has asked not to be told again
+
         if (usingProxy && CommonDenemeArguments.WARN_ON_VIA_PROXY.value()) {
             LogUtil.warn(
                     user.getName() + " seems to have connected through a proxy running ViaVersion. "
@@ -37,7 +37,7 @@ public class PacketPluginMessage extends PacketListenerAbstract {
                             + "Please remove ViaVersion from your proxy server and install it on your backend servers instead."
             );
         }
-        // kick if they do not have a proxy configured OR they have ViaVersion installed on the backend
+
         if (CommonDenemeArguments.KICK_ON_VIA_PROXY.value() && (!usingProxy || ViaVersionUtil.isAvailable)) {
 
             LogUtil.warn(user.getName() + " is being disconnected for sending ViaVersion proxy data.");

@@ -47,10 +47,7 @@ public class TrigHandler {
     }
 
     public void setOffset(double offset) {
-        // Offset too high, this is an outlier, ignore
-        // We are checking in the range of 1e-3 to 5e-5, around what using the wrong trig system results in
-        //
-        // Ignore if 0 offset
+
         if (offset == 0 || offset > 1e-3) {
             return;
         }
@@ -64,14 +61,13 @@ public class TrigHandler {
             fastMath = new Vector3dm(Math.abs(fastMath.getX()), 0, Math.abs(fastMath.getZ()));
 
             double minCorrectHorizontal = Math.min(correctMath.getX(), correctMath.getZ());
-            // Support diagonal inputs
+
             minCorrectHorizontal = Math.min(minCorrectHorizontal, Math.abs(correctMath.getX() - correctMath.getZ()));
 
             double minFastMathHorizontal = Math.min(fastMath.getX(), fastMath.getZ());
-            // Support diagonal inputs
+
             minFastMathHorizontal = Math.min(minFastMathHorizontal, Math.abs(fastMath.getX() - fastMath.getZ()));
 
-            // Both tables give the exact same sin and cos at some yaws, so a tie says nothing about which one the client uses
             if (minCorrectHorizontal == minFastMathHorizontal) return;
 
             boolean newVanilla = minCorrectHorizontal < minFastMathHorizontal;

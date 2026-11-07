@@ -26,10 +26,9 @@ import java.util.Set;
 
 public class PredictionEngineBoat extends PredictionEngine {
     public PredictionEngineBoat(DenemePlayer player) {
-        player.uncertaintyHandler.collidingEntities.add(0); // We don't do collisions like living entities
+        player.uncertaintyHandler.collidingEntities.add(0);
         player.vehicleData.midTickY = 0;
 
-        // This does stuff like getting the boat's movement on the water
         player.vehicleData.oldStatus = player.vehicleData.status;
         player.vehicleData.status = getStatus(player);
     }
@@ -123,7 +122,7 @@ public class PredictionEngineBoat extends PredictionEngine {
 
         for (int x = minX; x < maxX; ++x) {
             for (int z = minZ; z < maxZ; ++z) {
-                // can be 0, 1, or 2
+
                 int j2 = (x != minX && x != maxX - 1 ? 0 : 1) + (z != minZ && z != maxZ - 1 ? 0 : 1);
                 if (j2 == 2) continue;
                 for (int y = minY; y < maxY; ++y) {
@@ -148,12 +147,9 @@ public class PredictionEngineBoat extends PredictionEngine {
         List<VectorData> vectors = new ArrayList<>();
 
         for (VectorData data : possibleVectors) {
-            // TODO: is this correct?
+
             data.input = new Vector3dm(player.vehicleData.vehicleForward, 0, player.vehicleData.vehicleHorizontal);
 
-            // Boats ignore forward steering, using raw inputs instead,
-            // so if a player tries to move in both directions, a packet will
-            // show that the player is staying, but the boat will move anyway
             if (player.vehicleData.vehicleForward == 0) {
                 Vector3dm vector = data.vector.clone();
                 controlBoat(player, vector, true);
@@ -174,7 +170,7 @@ public class PredictionEngineBoat extends PredictionEngine {
 
     private void addStuckSpeedResults(DenemePlayer player, List<VectorData> vectors, VectorData result) {
         if (player.uncertaintyHandler.shouldSimulateStuckSpeed) {
-            // only simulate no stuck speed if player is leaving
+
             if (player.uncertaintyHandler.stuckSpeedMultiplierMask == 0 || !player.isForceStuckSpeed())
                 addStuckSpeedResult(vectors, result, null);
             addStuckSpeedResult(vectors, result, player.stuckSpeedMultiplier);
@@ -222,7 +218,6 @@ public class PredictionEngineBoat extends PredictionEngine {
         super.endOfTick(player, d);
         Collisions.handleInsideBlocks(player);
 
-        // yes, this is how mojank does it
         Collisions.applyEffectsFromBlocks(player);
         Collisions.applyEffectsFromBlocks(player);
         PotentSulfurGeyser.launchEntityTicker(player, player.clientVelocity, true);
@@ -315,7 +310,6 @@ public class PredictionEngineBoat extends PredictionEngine {
             f += 0.005F;
         }
 
-        //player.boatData.yRot += player.boatData.deltaRotation;
         if (intermediate || player.vehicleData.vehicleForward > 0.1) {
             f += 0.04F;
         }

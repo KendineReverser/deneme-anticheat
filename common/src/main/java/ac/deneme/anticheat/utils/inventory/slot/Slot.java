@@ -87,12 +87,10 @@ public class Slot {
 
     public void onTake(DenemePlayer player, ItemStack itemStack) {}
 
-    // No override
     public boolean allowModification(DenemePlayer player) {
         return this.mayPickup(player) && this.mayPlace(this.getItem());
     }
 
-    // TODO: Implement for anvil and smithing table
     public boolean mayPickup(DenemePlayer player) {
         return true;
     }

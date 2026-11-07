@@ -17,6 +17,6 @@ public class ResultSlot extends Slot {
 
     @Override
     public void onTake(DenemePlayer player, ItemStack itemStack) {
-        // Resync the player's inventory
+
     }
 }

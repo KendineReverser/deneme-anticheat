@@ -87,10 +87,7 @@ public final class LiveWriteHooksImpl implements LiveWriteHooks {
         if (!writesAllowed.getAsBoolean()) return;
         UUID sessionId = sessionTracker.currentSessionId(playerUuid);
         if (sessionId == null) {
-            // Two real cases: a check fired on a packet between LOGIN_SUCCESS
-            // and PlayerJoinEvent (no session yet), or a test harness called
-            // recordFlag directly. Synthesise a session so the violation has
-            // somewhere to land; PlayerJoinEvent's onJoin will extend it.
+
             sessionId = sessionTracker.observeActivity(playerUuid, now, meta);
         }
         final int checkId = resolveCheckId(check);
@@ -116,7 +113,7 @@ public final class LiveWriteHooksImpl implements LiveWriteHooks {
         if (!writesAllowed.getAsBoolean()) return;
         UUID sessionId = sessionTracker.currentSessionId(playerUuid);
         if (sessionId == null) {
-            // See recordFlag(): binary verbose uses the same synthesized-session fallback.
+
             sessionId = sessionTracker.observeActivity(playerUuid, now, meta);
         }
         final int checkId = resolveCheckId(check);
@@ -141,7 +138,7 @@ public final class LiveWriteHooksImpl implements LiveWriteHooks {
     @Override
     public void onQuitFromUserDisconnect(@NotNull User user, @Nullable DenemePlayer denemePlayer, long now) {
         UUID uuid = user.getUUID();
-        if (uuid == null) return; // disconnected pre-LOGIN_SUCCESS — no session to close
+        if (uuid == null) return;
         onQuit(uuid, now, LiveWriteHooks.clientMetaFor(user, denemePlayer));
     }
 
@@ -161,8 +158,7 @@ public final class LiveWriteHooksImpl implements LiveWriteHooks {
         try {
             recordFlag(player.uuid, check, vl, verbose, System.currentTimeMillis(), SessionTracker.ClientMeta.empty());
         } catch (RuntimeException e) {
-            // Don't let a datastore issue break the alert path; the legacy
-            // write already ran when we got here. One warn, then swallow.
+
             LogUtil.warn("v1 datastore recordFlag failed: " + e.getMessage());
         }
     }
@@ -176,7 +172,7 @@ public final class LiveWriteHooksImpl implements LiveWriteHooks {
         try {
             recordFlagData(player.uuid, check, vl, verboseData, System.currentTimeMillis(), SessionTracker.ClientMeta.empty());
         } catch (RuntimeException e) {
-            // Don't let a datastore issue break the check path.
+
             LogUtil.warn("v1 datastore recordFlag failed: " + e.getMessage());
         }
     }
@@ -192,9 +188,7 @@ public final class LiveWriteHooksImpl implements LiveWriteHooks {
         if (declaredStable != null && !declaredStable.isEmpty()) {
             stable = declaredStable;
         } else {
-            // Check hasn't adopted the stable-key contract yet. Fall back to
-            // the legacy map, and warn exactly once per display so the
-            // missing declaration surfaces without spamming the log.
+
             if (missingStableKeyLogged.add(key)) {
                 LogUtil.warn("[deneme-history] check " + display
                         + " has no stableKey declared; falling back to StableKeyMapping. "

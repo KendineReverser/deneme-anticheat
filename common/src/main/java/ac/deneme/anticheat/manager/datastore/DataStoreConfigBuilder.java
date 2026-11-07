@@ -117,7 +117,7 @@ public final class DataStoreConfigBuilder {
         Map<Category<?>, String> out = new LinkedHashMap<>();
         for (Map.Entry<String, Object> e : raw.entrySet()) {
             Category<?> cat = categoryFor(e.getKey());
-            if (cat == null) continue; // unknown category id in yaml — ignore, warn elsewhere if needed
+            if (cat == null) continue;
             out.put(cat, Objects.toString(e.getValue(), "none"));
         }
         return out;
@@ -167,7 +167,7 @@ public final class DataStoreConfigBuilder {
         Map<Category<?>, RetentionRule> out = new LinkedHashMap<>();
         for (Map.Entry<String, Object> e : raw.entrySet()) {
             Category<?> cat = categoryFor(e.getKey());
-            if (cat == null) continue; // unknown category id in yaml — nothing to retain under it
+            if (cat == null) continue;
             String base = NS + "retention." + e.getKey() + ".";
             boolean enabled = config.getBooleanElse(base + "enabled", false);
             long days = config.getLongElse(base + "max-age-days", 0L);

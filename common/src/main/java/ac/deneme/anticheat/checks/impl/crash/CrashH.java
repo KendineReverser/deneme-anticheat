@@ -23,7 +23,7 @@ public class CrashH extends Check implements PacketReceiveListener {
             WrapperPlayClientTabComplete wrapper = new WrapperPlayClientTabComplete(event);
             String text = wrapper.getText();
             final int length = text.length();
-            // general length limit
+
             if (length > (!player.canUseGameMasterBlocks() ? 256 : 32500)) {
                 if (shouldModifyPackets()) {
                     event.setCancelled(true);
@@ -32,7 +32,7 @@ public class CrashH extends Check implements PacketReceiveListener {
                 flag(V.write(verbose()).bool(true).sint(length));
                 return;
             }
-            // paper's patch
+
             final int index;
             if (length > 64 && ((index = text.indexOf(' ')) == -1 || index >= 64)) {
                 if (shouldModifyPackets()) {

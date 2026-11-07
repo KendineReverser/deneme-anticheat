@@ -37,7 +37,7 @@ public class PacketOrderI extends Check implements PacketReceiveListener, PostPr
     private boolean exemptPlacingWhileDigging;
 
     private boolean setback;
-    // for placing
+
     private boolean cancelledDigging;
     private WrappedBlockState startedDiggingBlock;
     private boolean digging;
@@ -99,10 +99,7 @@ public class PacketOrderI extends Check implements PacketReceiveListener, PostPr
             digging |= cancelledDigging;
 
             if (startedDiggingBlock != null && !digging) {
-                // Check this here because we don't know for certain what slot they were using until now.
-                // This is because the client doesn't notify the server when changing slots with the number keys,
-                // and that the client doesn't sync the hotbar slot when starting to dig.
-                // The client does sync on placing and using though, so this is safe.
+
                 double damage = BlockBreakSpeed.getBlockDamage(player, startedDiggingBlock);
                 if (damage < 1 && (damage > 0 || player.gamemode != GameMode.CREATIVE)) {
                     digging = true;
@@ -149,7 +146,7 @@ public class PacketOrderI extends Check implements PacketReceiveListener, PostPr
                 }
                 case START_DIGGING -> {
                     if (shouldCheckPlacingWhileDigging()) {
-                        cancelledDigging = false; // we don't care about any cancels before this
+                        cancelledDigging = false;
                         startedDiggingBlock = player.compensatedWorld.getBlock(packet.getBlockPosition());
                     }
                 }

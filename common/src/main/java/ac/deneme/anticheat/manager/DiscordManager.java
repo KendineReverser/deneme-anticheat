@@ -79,9 +79,7 @@ public class DiscordManager implements StartableInitable, ReloadableInitable {
     @Override
     public void reload() {
         try {
-            // Yes all of these fields should technically be volatile so they will be updated correctly on reload for HTTP threads to read
-            // No we're not going to pay for atomic reads in the hot loop however cheap for a one in a billion chance to read an outdated config
-            // When your discord webhook settings are changed (who changes them in prod?) that can be fixed with a restart
+
             ConfigManager config = DenemeAPI.INSTANCE.getConfigManager().getConfig();
             if (!config.getBooleanElse("enabled", false)) {
                 url = null;
@@ -113,8 +111,7 @@ public class DiscordManager implements StartableInitable, ReloadableInitable {
                     url = new URI(webhook);
                 }
             }
-            // not adding these to the config since they may change in the future
-            // mainly for just for allowing more customization
+
             embedImageUrl = validatedConfigURL("embed-image-url", null);
             embedThumbnailUrl = validatedConfigURL("embed-thumbnail-url", "https://crafthead.net/helm/%uuid%");
             embedFooterUrl = validatedConfigURL("embed-footer-url", "https://deneme.ac/images/deneme.png");
@@ -159,7 +156,6 @@ public class DiscordManager implements StartableInitable, ReloadableInitable {
             return;
         }
 
-        // Per-alert overlay — avoids polluting the global static map
         Map<String, String> statics = new HashMap<>(DenemeAPI.INSTANCE.getExternalAPI().getStaticReplacements());
         statics.put("%check%", checkName);
         statics.put("%violations%", Integer.toString(violations));
@@ -202,7 +198,7 @@ public class DiscordManager implements StartableInitable, ReloadableInitable {
         requests.add(new Pair<>(request, future));
 
         if (!taskStarted.getAndSet(true)) {
-            // there's probably a better way to handle rate limits, but this works, so whatever.
+
             DenemeAPI.INSTANCE.getScheduler().getAsyncScheduler().runAtFixedRate(DenemeAPI.INSTANCE.getDenemePlugin(), DiscordManager::tick, 0, 1);
         }
 
@@ -233,7 +229,6 @@ public class DiscordManager implements StartableInitable, ReloadableInitable {
                 requests.remove(pair);
                 sending.set(false);
 
-                // TODO: handle 503 (Service Unavailable)?
                 if (response != null && response.statusCode() >= 400) {
                     LogUtil.error("Encountered status code " + response.statusCode() + " with body " + response.body() + " and headers " + response.headers().map() + " while sending a Discord webhook alert.");
                     pair.second().complete(false);

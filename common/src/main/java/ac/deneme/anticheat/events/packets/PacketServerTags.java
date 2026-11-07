@@ -21,7 +21,7 @@ public class PacketServerTags extends PacketListenerAbstract {
         if (isPlay) {
             player.latencyUtils.addRealTimeTask(player.lastTransactionSent.get(), () -> player.tagManager.handleTagSync(tags));
         } else {
-            // This is during configuration stage, player isn't even in the game yet so no need to lag compensate.
+
             player.tagManager.handleTagSync(tags);
         }
     }

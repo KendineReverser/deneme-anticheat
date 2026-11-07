@@ -48,7 +48,7 @@ public final class EntityTeam {
             label:
             for (String teamPlayer : teams.getPlayers()) {
                 if (teamPlayer.equals(player.user.getName())) {
-                    // Player was removed from their team.
+
                     teamHandler.setPlayerTeam(null);
                     continue;
                 }
@@ -62,19 +62,17 @@ public final class EntityTeam {
                     }
                 }
 
-                // Entity was removed from their team.
                 teamHandler.removeEntityFromTeam(teamPlayer);
                 entries.remove(teamPlayer);
             }
         } else if (mode == WrapperPlayServerTeams.TeamMode.REMOVE) {
 
             EntityTeam playersTeam = teamHandler.getPlayerTeam();
-            // The player's team was deleted, so we must unset the player's team
+
             if (playersTeam != null && playersTeam.name.equals(name)) {
                 teamHandler.setPlayerTeam(null);
             }
 
-            // Also remove the team set on entities
             for (String entry : entries) {
                 teamHandler.removeEntityFromTeam(entry);
             }

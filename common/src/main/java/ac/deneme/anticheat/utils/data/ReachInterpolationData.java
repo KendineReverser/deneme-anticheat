@@ -1,18 +1,4 @@
-// This file was designed and is an original check for DenemeACBukkitLoaderPlugin
-// Copyright (C) 2021 DefineOutside
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 package ac.deneme.anticheat.utils.data;
 
 import ac.deneme.anticheat.player.DenemePlayer;
@@ -28,7 +14,6 @@ import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.util.Vector3d;
 import org.jetbrains.annotations.Nullable;
 
-// You may not copy the check unless you are licensed under GPL
 public class ReachInterpolationData {
     private final SimpleCollisionBox targetLocation;
     /**
@@ -56,8 +41,6 @@ public class ReachInterpolationData {
         this.player = player;
         this.entity = entity;
 
-        // 1.9 -> 1.8 precision loss in packets
-        // (ViaVersion is doing some stuff that makes this code difficult)
         if (player.getClientVersion().isOlderThan(ClientVersion.V_1_9) && PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_9)) {
             targetLocation.expand(0.03125);
         }
@@ -74,11 +57,9 @@ public class ReachInterpolationData {
             interpolationSteps = 1;
         }
 
-        // If the player doesn't tick reliably, their interpolation is anywhere between min and max steps.
         if (unreliableTicking) interpolationStepsHighBound = getInterpolationSteps();
     }
 
-    // While riding entities, there is no interpolation.
     public ReachInterpolationData(DenemePlayer player, SimpleCollisionBox finishedLoc, PacketEntity entity) {
         this.startingLocation = finishedLoc;
         this.targetLocation = finishedLoc;
@@ -108,7 +89,6 @@ public class ReachInterpolationData {
         SimpleCollisionBox box1 = (SimpleCollisionBox) b1;
         SimpleCollisionBox box2 = (SimpleCollisionBox) b2;
 
-        // Calculate the potential overlap along each axis
         double overlapMinX = Math.max(box1.minX, box2.minX);
         double overlapMaxX = Math.min(box1.maxX, box2.maxX);
         double overlapMinY = Math.max(box1.minY, box2.minY);
@@ -116,12 +96,10 @@ public class ReachInterpolationData {
         double overlapMinZ = Math.max(box1.minZ, box2.minZ);
         double overlapMaxZ = Math.min(box1.maxZ, box2.maxZ);
 
-        // Check if there's actual overlap along each axis
         if (overlapMinX > overlapMaxX || overlapMinY > overlapMaxY || overlapMinZ > overlapMaxZ) {
-            return NoCollisionBox.INSTANCE; // No overlap, return null or an appropriate "empty" box representation
+            return NoCollisionBox.INSTANCE;
         }
 
-        // Return the overlapping hitbox
         return new SimpleCollisionBox(overlapMinX, overlapMinY, overlapMinZ, overlapMaxX, overlapMaxY, overlapMaxZ);
     }
 
@@ -165,7 +143,6 @@ public class ReachInterpolationData {
             return false;
         }
 
-        // Vanilla compares boxed Floats here, so exact equality is the correct test.
         return xRot == null || yRot == null || (targetXRot == xRot && targetYRot == yRot);
     }
 
@@ -196,11 +173,6 @@ public class ReachInterpolationData {
         double stepMaxY = (targetLocation.maxY - startingLocation.maxY) / (double) interpSteps;
         double stepMinZ = (targetLocation.minZ - startingLocation.minZ) / (double) interpSteps;
         double stepMaxZ = (targetLocation.maxZ - startingLocation.maxZ) / (double) interpSteps;
-
-        // Each corner of B(s) is linear in s: c + s * stepDelta. Over the closed integer range
-        // [interpolationStepsLowBound, interpolationStepsHighBound], a linear function attains
-        // its extremes at the endpoints. So the axis-wise union of B(s) for all s in that range
-        // equals the axis-wise union of just B(low) and B(high).
 
         double loMinX = startingLocation.minX + interpolationStepsLowBound * stepMinX;
         double loMinY = startingLocation.minY + interpolationStepsLowBound * stepMinY;
@@ -255,9 +227,9 @@ public class ReachInterpolationData {
     }
 
     public void updatePossibleStartingLocation(SimpleCollisionBox possibleLocationCombined) {
-        //DenemeACBukkitLoaderPlugin.staticGetLogger().info(ChatColor.BLUE + "Updated new starting location as second trans hasn't arrived " + startingLocation);
+
         this.startingLocation = combineCollisionBox(startingLocation, possibleLocationCombined);
-        //DenemeACBukkitLoaderPlugin.staticGetLogger().info(ChatColor.BLUE + "Finished updating new starting location as second trans hasn't arrived " + startingLocation);
+
     }
 
     public void tickMovement(boolean incrementLowBound, boolean tickingReliably) {

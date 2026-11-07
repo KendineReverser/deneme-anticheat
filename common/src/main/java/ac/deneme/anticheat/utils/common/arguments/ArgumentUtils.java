@@ -23,7 +23,7 @@ public class ArgumentUtils {
         return string -> {
             if (!string.endsWith("/")) string += "/";
             if (WEBSITE_URL_PATTERN.matcher(string).matches()) return string;
-            //LogUtil.warn("Invalid URL: " + string);
+
             return defaultValue.get();
         };
     }

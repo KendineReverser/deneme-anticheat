@@ -34,14 +34,14 @@ public class PacketEntityHorse extends PacketEntityTrackXRot implements Jumpable
         setAttribute(Attributes.STEP_HEIGHT, 1.0f);
 
         final boolean preAttribute = player.getClientVersion().isOlderThan(ClientVersion.V_1_20_5);
-        // This was horse.jump_strength pre-attribute
+
         trackAttribute(ValuedAttribute.ranged(Attributes.JUMP_STRENGTH, 0.7, 0, preAttribute ? 2 : 32)
                 .withSetRewriter((oldValue, newValue) -> {
-                    // Seems viabackwards doesn't rewrite this (?)
+
                     if (preAttribute && PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_20_5)) {
                         return oldValue;
                     }
-                    // Modern player OR an old server setting legacy horse.jump_strength attribute
+
                     return newValue;
                 }));
         trackAttribute(ValuedAttribute.ranged(Attributes.MOVEMENT_SPEED, 0.225f, 0, 1024));
@@ -94,8 +94,7 @@ public class PacketEntityHorse extends PacketEntityTrackXRot implements Jumpable
 
     @Override
     public void executeJump(DenemePlayer player, Set<VectorData> possibleVectors) {
-        // If the player wants to jump on a horse
-        // Listen to Entity Action -> start jump with horse, stop jump with horse
+
         final boolean wantsToJump = this.getJumpPower() > 0.0F && !this.isJumping() && player.lastOnGround;
         if (!wantsToJump) return;
 
@@ -113,12 +112,8 @@ public class PacketEntityHorse extends PacketEntityTrackXRot implements Jumpable
         }
         double jumpVelocity;
 
-        // This doesn't even work because vehicle jump boost has (likely) been
-        // broken ever since vehicle control became client sided
-        //
-        // But plugins can still send this, so support it anyways
         final OptionalInt jumpBoost = player.compensatedEntities.getPotionLevelForPlayer(PotionTypes.JUMP_BOOST);
-        // this code changed in some version, if someone wants to decompile 12930898935 versions to fix this, feel free to do that
+
         if (jumpBoost.isPresent()) {
             jumpVelocity = jumpFactor + ((jumpBoost.getAsInt() + 1) * 0.1F);
         } else {

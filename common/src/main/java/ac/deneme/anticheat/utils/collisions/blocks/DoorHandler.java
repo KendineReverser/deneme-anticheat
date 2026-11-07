@@ -36,11 +36,6 @@ public class DoorHandler implements CollisionFactory {
         boolean isClosed;
         boolean isRightHinge;
 
-        // 1.12 stores block data for the top door in the bottom block data
-        // ViaVersion can't send 1.12 clients the 1.13 complete data
-        // For 1.13, ViaVersion should just use the 1.12 block data
-        // I hate legacy versions... this is so messy
-        //TODO: This needs to be updated to support corrupted door collision
         if (PacketEvents.getAPI().getServerManager().getVersion().isOlderThanOrEquals(ServerVersion.V_1_12_2)
                 || version.isOlderThanOrEquals(ClientVersion.V_1_12_2)) {
             if (door.getHalf() == Half.LOWER) {
@@ -49,12 +44,10 @@ public class DoorHandler implements CollisionFactory {
                 facingDirection = door.getFacing();
                 isClosed = !door.isOpen();
 
-                // Doors have to be the same material in 1.12 for their block data to be connected together
-                // For example, if you somehow manage to get a jungle top with an oak bottom, the data isn't shared
                 if (above.getType() == door.getType()) {
                     isRightHinge = above.getHinge() == Hinge.RIGHT;
                 } else {
-                    // Default missing value
+
                     isRightHinge = false;
                 }
             } else {

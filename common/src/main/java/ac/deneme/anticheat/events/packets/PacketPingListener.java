@@ -21,7 +21,6 @@ public class PacketPingListener extends PacketListenerAbstract {
     private static final DenemeTransactionSendEvent.Channel SEND_CHANNEL = DenemeAPI.INSTANCE.getEventBus().get(DenemeTransactionSendEvent.class);
     private static final DenemeTransactionReceivedEvent.Channel RECEIVED_CHANNEL = DenemeAPI.INSTANCE.getEventBus().get(DenemeTransactionReceivedEvent.class);
 
-    // Must listen on LOWEST (or maybe low) to stop Tuinity packet limiter from kicking players for transaction/pong spam
     public PacketPingListener() {
         super(PacketListenerPriority.LOWEST);
     }
@@ -64,14 +63,14 @@ public class PacketPingListener extends PacketListenerAbstract {
         player.packetStateData.lastTransactionPacketWasValid = false;
 
         short shortId = (short) id;
-        if (id != shortId // we only use the short range
-                || id > 0 // we only use negative ids
+        if (id != shortId
+                || id > 0
                 || !player.addTransactionResponse(shortId)) return;
 
         player.packetStateData.lastTransactionPacketWasValid = true;
         boolean shouldCancel = !DenemeAPI.INSTANCE.getConfigManager().isDisablePongCancelling();
         if (shouldCancel) {
-            // Not needed for vanilla as vanilla ignores this packet, needed for packet limiters
+
             event.setCancelled(true);
         }
         RECEIVED_CHANNEL.fire(player, id, shouldCancel, event.getTimestamp());
@@ -81,14 +80,14 @@ public class PacketPingListener extends PacketListenerAbstract {
         player.packetStateData.lastServerTransWasValid = false;
 
         short shortId = (short) id;
-        if (id != shortId // we only use the short range
-                || id > 0 // we only use negative ids
+        if (id != shortId
+                || id > 0
                 || !player.didWeSendThatTrans.remove(shortId)) return;
 
         player.packetStateData.lastServerTransWasValid = true;
         player.transactionsSent.add(new ShortToLongPair(shortId, System.nanoTime()));
         if (player.getLastTransactionSent() == 0) {
-            player.getPlayerClockAtLeast(); // update clock
+            player.getPlayerClockAtLeast();
         }
         player.lastTransactionSent.getAndIncrement();
         SEND_CHANNEL.fire(player, id, event.getTimestamp());

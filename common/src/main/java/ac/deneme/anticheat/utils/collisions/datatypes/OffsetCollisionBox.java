@@ -13,8 +13,7 @@ public class OffsetCollisionBox extends SimpleCollisionBox {
     private static final HashSet<StateType> XYZ_OFFSET_BLOCKSTATES = new HashSet<>();
 
     static {
-        // Can we add a hasOffSet to StateType() ?
-        // Or a new BlockTag for XZ and XYZ Offset ?
+
         XZ_OFFSET_BLOCKSTATES.add(StateTypes.MANGROVE_PROPAGULE);
 
         XZ_OFFSET_BLOCKSTATES.addAll(BlockTags.SMALL_FLOWERS.getStates());
@@ -22,20 +21,7 @@ public class OffsetCollisionBox extends SimpleCollisionBox {
         XZ_OFFSET_BLOCKSTATES.add(StateTypes.BAMBOO);
         XZ_OFFSET_BLOCKSTATES.add(StateTypes.POINTED_DRIPSTONE);
         XZ_OFFSET_BLOCKSTATES.add(StateTypes.SULFUR_SPIKE);
-        // Only offsets rendering HitBox on XZ // we should document this somewhere for future reference
-//        XZ_OFFSET_BLOCKSTATES.addAll(BlockTags.TALL_FLOWERS.getStates());
-//        XZ_OFFSET_BLOCKSTATES.add(StateTypes.TALL_SEAGRASS);
-//        XZ_OFFSET_BLOCKSTATES.add(StateTypes.TALL_GRASS);
-//        XZ_OFFSET_BLOCKSTATES.add(StateTypes.LARGE_FERN);
-//        XZ_OFFSET_BLOCKSTATES.add(StateTypes.WARPED_ROOTS);
-//        XZ_OFFSET_BLOCKSTATES.add(StateTypes.NETHER_SPROUTS);
-//        XZ_OFFSET_BLOCKSTATES.add(StateTypes.CRIMSON_ROOTS);
-//        XZ_OFFSET_BLOCKSTATES.add(StateTypes.HANGING_ROOTS);
 
-        // Only offsets rendering on XYZ, not HitBox
-//        XYZ_OFFSET_BLOCKSTATES.add(StateTypes.SHORT_GRASS);
-//        XYZ_OFFSET_BLOCKSTATES.add(StateTypes.FERN);
-//        XYZ_OFFSET_BLOCKSTATES.add(StateTypes.SMALL_DRIPLEAF);
     }
 
     private float maxHorizontalModelOffset = 0.25F;
@@ -50,9 +36,6 @@ public class OffsetCollisionBox extends SimpleCollisionBox {
         if (block.equals(StateTypes.POINTED_DRIPSTONE) || block.equals(StateTypes.SULFUR_SPIKE)) {
             maxHorizontalModelOffset = 0.125F;
         }
-//        else if (block.equals(StateTypes.SMALL_DRIPLEAF)) {
-//            maxVerticalModelOffset = 0.1F;
-//        }
 
         if (XZ_OFFSET_BLOCKSTATES.contains(block)) {
             offsetType = OffsetType.XZ;
@@ -66,7 +49,7 @@ public class OffsetCollisionBox extends SimpleCollisionBox {
 
     @Override
     public SimpleCollisionBox offset(double x, double y, double z) {
-        // In case you want to call .offset() again or get the box values without offset.
+
         resetBlockStateOffSet();
         return switch (offsetType) {
             case NONE -> super.offset(x, y, z);

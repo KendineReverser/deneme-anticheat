@@ -25,7 +25,7 @@ class LeaseStartupLivenessTest {
 
     private final UUID instanceId = UUID.randomUUID();
     private final UUID startupId = UUID.randomUUID();
-    // Heartbeat older than the stale TTL, so only the lease can say this startup is alive.
+
     private final ServerStartupRecord startup = startup(startupId, DB_NOW - STALE_TTL_MS - 1L);
     private final FakeOwnership ownership = new FakeOwnership();
     private final LeaseStartupLiveness liveness =

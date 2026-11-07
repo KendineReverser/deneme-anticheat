@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "id": "denemeanticheat-fabric-intermediary",
   "version": "${version}",
-  "name": "DenemeAC",
-  "description": "Libre simulation anticheat designed for 26.1 with 1.8-26.1 support, powered by PacketEvents 2.0.",
+  "name": "deneme anticheat",
+  "description": "deneme anticheat - server side anticheat for Fabric.",
   "authors": [
-    "DenemeAC"
+    "deneme anticheat"
   ],
-  "license": "GPLv3",
+  "license": "GPL-3.0",
   "environment": "server",
   "entrypoints": {
     "main": [
@@ -41,7 +41,7 @@
     }
   },
   "depends": {
-    "minecraft": "\u003e\u003d1.16.1 \u003c26",
+    "minecraft": "\u003e\u003d1.16.1 \u003c\u003d1.21.11",
     "java": "\u003e\u003d17",
     "fabricloader": "\u003e\u003d0.16",
     "fabric-lifecycle-events-v1": "*",

@@ -27,7 +27,6 @@ public class DynamicCollisionFence extends DynamicConnecting implements Collisio
         boolean south;
         boolean west;
 
-        // 1.13+ servers on 1.13+ clients send the full fence data
         if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_13)
                 && version.isNewerThanOrEquals(ClientVersion.V_1_13)) {
             east = block.getEast() != East.FALSE;

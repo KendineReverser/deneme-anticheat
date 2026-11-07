@@ -87,9 +87,7 @@ public final class HistoryComponentRenderer {
                     Map.of("player", TemplateValue.raw(safePlayer))).component());
         }
         List<Component> out = new ArrayList<>(result.items().size() + 1);
-        // Emit both %max_pages% (new) and %maxPages% (pre-cutover spelling) so
-        // operators upgrading from 1.x with a legacy deneme-history-header that
-        // still references %maxPages% see a correctly-rendered count.
+
         String maxPagesStr = Integer.toString(Math.max(1, maxPages));
         out.add(parse(sender, cfg, "deneme-history-header",
                 "%prefix% &bShowing session history for &f%player% &8[&f%page%&7/&f%max_pages%&8]",
@@ -111,19 +109,14 @@ public final class HistoryComponentRenderer {
         String durationText = ongoing
                 ? "current"
                 : formatDuration(s.durationMs());
-        // Crashed-session marker: closed_at == last_activity means the
-        // crash sweep stamped it (the disconnect path stamps closed_at =
-        // now which is strictly later than the most recent heartbeat).
-        // Skip the marker for ongoing sessions — they don't have closed_at
-        // set yet so the comparison is irrelevant, and the "current"
-        // duration tag already conveys that.
+
         String crashedMarker = (!ongoing && s.endedUnexpectedly())
                 ? cfg.getStringElse("deneme-history-crashed-marker", " &8(&ccrashed&8)")
                 : "";
         String detailCommand = "/deneme history player " + playerDisplayName + " session " + s.sessionOrdinal();
         RenderedTemplate rendered = parse(sender, cfg, "deneme-history-session", SESSION_ROW_FALLBACK,
                 Map.ofEntries(
-                        // Only sanitize untrusted leaves; keep operator-configured fragments intact.
+
                         Map.entry("player", TemplateValue.raw(mmSafe(playerDisplayName))),
                         Map.entry("deneme_version", TemplateValue.raw(nullToUnknown(s.denemeVersion()))),
                         Map.entry("server_name", TemplateValue.raw(nullToUnknown(s.serverName()))),
@@ -167,9 +160,6 @@ public final class HistoryComponentRenderer {
         List<Component> out = new ArrayList<>();
         int perPage = Math.max(1, pageSize);
 
-        // Duration: ongoing sessions show just "current" — the %timeago% field
-        // already carries the elapsed time since start. Historical sessions show
-        // the stored (lastActivity - started) span.
         long elapsedNow = Math.max(0, System.currentTimeMillis() - d.startedEpochMs());
         String durationText = isOngoing
                 ? "current"
@@ -180,7 +170,7 @@ public final class HistoryComponentRenderer {
         int page = pageArg == null ? maxPages : Math.max(1, Math.min(pageArg, maxPages));
 
         Map<String, TemplateValue> metaVars = Map.ofEntries(
-                // Only sanitize untrusted leaves; keep operator-configured fragments intact.
+
                 Map.entry("player", TemplateValue.raw(mmSafe(playerDisplayName))),
                 Map.entry("ordinal", TemplateValue.raw(Integer.toString(d.sessionOrdinal()))),
                 Map.entry("deneme_version", TemplateValue.raw(nullToUnknown(d.denemeVersion()))),
@@ -216,8 +206,7 @@ public final class HistoryComponentRenderer {
         if (detailed) {
             for (int i = from; i < to; i++) out.add(renderViolationLine(sender, cfg, d.violations().get(i), verbose));
         } else {
-            // Group violations in the same bucket. The %checks_list% is built by
-            // joining per-check entries rendered via deneme-history-check-count.
+
             for (int i = from; i < to; i++) out.add(renderBucketLine(sender, cfg, d.buckets().get(i), d, verbose));
         }
         return out;
@@ -229,7 +218,7 @@ public final class HistoryComponentRenderer {
         for (CheckCount c : bucket.checks()) {
             if (!first) checksList.append("&7, ");
             first = false;
-            // Check names can be plugin-authored; render them as plain text.
+
             checksList.append(cfg.getStringElse("deneme-history-check-count",
                             "&f%check_name%&7 x&c%count%")
                     .replace("%check_name%", mmSafe(c.displayName()))
@@ -290,7 +279,7 @@ public final class HistoryComponentRenderer {
 
     private static Component renderViolationLine(Sender sender, ConfigManager cfg, ViolationEntry v, boolean verbose) {
         String verboseText = v.verbose() == null ? "" : v.verbose();
-        // Verbose/check metadata can include user or plugin text; render substitutions as plain text.
+
         RenderedTemplate rendered = parse(sender, cfg, "deneme-history-detail-entry",
                 "&7- &f%check% &8(&b%offset%&8)&7 %verbose%",
                 Map.of(
@@ -299,10 +288,7 @@ public final class HistoryComponentRenderer {
                         "offset", TemplateValue.raw(formatDuration(v.offsetFromSessionStartMs())),
                         "vl", TemplateValue.raw(Double.toString(v.vl())),
                         "verbose", TemplateValue.raw(verbose ? mmSafe(verboseText) : "")));
-        // Hover carries the richer disambiguation — description on its own
-        // line, then the raw verbose below. Shown regardless of the -v
-        // flag, because operators scanning a dense list still want the
-        // quick "what does this check mean" answer without re-running.
+
         Component line = rendered.component();
         boolean hasDescription = !v.description().isBlank();
         if (!hasInlineHover(rendered.raw()) && (!verboseText.isBlank() || hasDescription)) {
@@ -356,13 +342,7 @@ public final class HistoryComponentRenderer {
                                                      @NotNull Predicate<ViolationEntry> filter) {
         List<ViolationEntry> survivors = new ArrayList<>();
         for (ViolationEntry v : d.violations()) if (filter.test(v)) survivors.add(v);
-        // Re-aggregate buckets keyed (bucketStart) → (displayName → count).
-        // TreeMap orders buckets chronologically; LinkedHashMap on the inner
-        // preserves first-seen check order so %checks_list% doesn't reshuffle
-        // row-to-row. checkMeta caches the first ViolationEntry per
-        // displayName so we can reconstruct CheckCount(checkId, stableKey,
-        // displayName, description, count) without a separate lookup —
-        // every violation with the same displayName shares those fields.
+
         TreeMap<Long, Map<String, int[]>> agg = new TreeMap<>();
         Map<String, ViolationEntry> checkMeta = new LinkedHashMap<>();
         long bucketSize = Math.max(1, d.bucketSizeMs());
@@ -389,8 +369,6 @@ public final class HistoryComponentRenderer {
                 d.denemeVersion(), d.serverName(), d.clientVersion(), d.clientBrand(),
                 d.bucketSizeMs(), uniqueChecks, newBuckets, survivors);
     }
-
-    // ---- helpers ----
 
     private static RenderedTemplate parse(Sender sender, ConfigManager cfg, String key, String fallback,
                                           Map<String, TemplateValue> vars) {
@@ -420,17 +398,15 @@ public final class HistoryComponentRenderer {
     /** Renders untrusted template values as plain text before MiniMessage parsing. */
     private static String mmSafe(@Nullable String raw) {
         if (raw == null || raw.isEmpty()) return "";
-        // Strip '%' first so '&%c' cannot become '&c' after placeholder removal.
+
         String stripped = LEGACY_FORMAT_PATTERN.matcher(
                 raw.replace("%", "")).replaceAll("");
-        // Escape backslash before '<' so the added escape isn't itself escaped.
+
         return stripped
                 .replace("\\", "\\\\")
                 .replace("<", "\\<");
     }
 
-    // Canonical legacy alphabet only — leaves AT&T / R&D alone.
-    // Covers §/& sigils, &#RRGGBB hex, and the Bedrock &x&R&R… interleave.
     private static final Pattern LEGACY_FORMAT_PATTERN = Pattern.compile(
             "[§&](?:[0-9a-fk-orxA-FK-ORX]|#[A-Fa-f0-9]{6}|x(?:[§&][A-Fa-f0-9]){6})");
 

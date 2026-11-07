@@ -18,7 +18,7 @@ public class SprintB extends Check implements PostPredictionListener {
 
     @Override
     public boolean isApplicable() {
-        // https://bugs.mojang.com/browse/MC-152728
+
         return player.getClientVersion().isOlderThan(ClientVersion.V_1_14_2) || player.getClientVersion() == ClientVersion.V_1_21_4;
     }
 
@@ -27,12 +27,10 @@ public class SprintB extends Check implements PostPredictionListener {
         if (player.isSlowMovement && player.sneakingSpeedMultiplier < 0.8f && predictionComplete.isChecked()) {
             ClientVersion version = player.getClientVersion();
 
-            // https://github.com/DenemeAnticheat/Deneme/issues/1932
             if (version.isNewerThanOrEquals(ClientVersion.V_1_14) && player.wasFlying && player.lastPose == Pose.FALL_FLYING && !player.isGliding) {
                 return;
             }
 
-            // https://github.com/DenemeAnticheat/Deneme/issues/1948
             if (version == ClientVersion.V_1_21_4 && (Collections.max(player.uncertaintyHandler.pistonX) != 0
                     || Collections.max(player.uncertaintyHandler.pistonY) != 0
                     || Collections.max(player.uncertaintyHandler.pistonZ) != 0)) {

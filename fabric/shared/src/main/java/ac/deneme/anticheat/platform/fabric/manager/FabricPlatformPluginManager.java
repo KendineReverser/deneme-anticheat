@@ -13,7 +13,7 @@ public class FabricPlatformPluginManager implements PlatformPluginManager {
 
     @Override
     public PlatformPlugin[] getPlugins() {
-        // Get all loaded mods from Fabric Loader
+
         Collection<ModContainer> mods = FabricLoader.getInstance().getAllMods();
         PlatformPlugin[] plugins = new PlatformPlugin[mods.size()];
         int i = 0;
@@ -25,7 +25,7 @@ public class FabricPlatformPluginManager implements PlatformPluginManager {
 
     @Override
     public PlatformPlugin getPlugin(String pluginName) {
-        // Look up a mod by its ID
+
         Optional<ModContainer> mod = FabricLoader.getInstance().getModContainer(pluginName);
         return mod.map(FabricPlatformPlugin::new).orElse(null);
     }

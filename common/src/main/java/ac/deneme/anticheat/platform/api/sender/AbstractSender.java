@@ -77,7 +77,7 @@ public final class AbstractSender<T> implements Sender {
     @Override
     public boolean isValid() {
         return true;
-//        return isConsole() || this.plugin.getBootstrap().isPlayerOnline(this.uniqueId);
+
     }
 
     @Override

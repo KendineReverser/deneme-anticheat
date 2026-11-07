@@ -44,8 +44,8 @@ public class PacketPlayerDigging extends PacketListenerAbstract {
 
         if (player.checkManager.getCompensatedCooldown().hasItem(item)) {
             boolean valid = !player.packetStateData.isSlowedByUsingItem() || player.packetStateData.itemInUseHand == hand;
-            if (valid) player.packetStateData.setSlowedByUsingItem(false); // resync, not required
-            return; // The player has a cooldown, and therefore cannot use this item!
+            if (valid) player.packetStateData.setSlowedByUsingItem(false);
+            return;
         }
 
         final ItemType material = item.getType();
@@ -94,14 +94,11 @@ public class PacketPlayerDigging extends PacketListenerAbstract {
         } else if (event.getPacketType() == PacketType.Play.Client.HELD_ITEM_CHANGE) {
             final int slot = new WrapperPlayClientHeldItemChange(event).getSlot();
 
-            // Stop people from spamming the server with out-of-bounds exceptions
             if (slot > 8 || slot < 0) return;
 
             final DenemePlayer player = DenemeAPI.INSTANCE.getPlayerDataManager().getPlayer(event.getUser());
             if (player == null) return;
 
-            // TODO: do we need to do this with block breaks too?
-            // Prevent issues if the player switches slots, while lagging, standing still, and is placing blocks
             CheckManagerListener.handleQueuedPlaces(player, false, 0, 0, System.currentTimeMillis());
 
             if (player.packetStateData.lastSlotSelected != slot) {

@@ -26,7 +26,7 @@ public class Phase extends Check implements PostPredictionListener {
 
     @Override
     public void onPredictionComplete(final PredictionComplete predictionComplete) {
-        if (!player.getSetbackTeleportUtil().blockOffsets && !predictionComplete.getData().isTeleport() && predictionComplete.isChecked()) { // Not falling through world
+        if (!player.getSetbackTeleportUtil().blockOffsets && !predictionComplete.getData().isTeleport() && predictionComplete.isChecked()) {
             SimpleCollisionBox newBB = player.boundingBox;
 
             List<SimpleCollisionBox> boxes = new ArrayList<>();
@@ -35,10 +35,10 @@ public class Phase extends Check implements PostPredictionListener {
             for (SimpleCollisionBox box : boxes) {
                 if (newBB.isIntersected(box) && !oldBB.isIntersected(box)) {
                     if (player.getClientVersion().isOlderThanOrEquals(ClientVersion.V_1_8)) {
-                        // A bit of a hacky way to get the block state, but this is much faster to use the tuinity method for grabbing collision boxes
+
                         WrappedBlockState state = player.compensatedWorld.getBlock((box.minX + box.maxX) / 2, (box.minY + box.maxY) / 2, (box.minZ + box.maxZ) / 2);
                         if (BlockTags.ANVIL.contains(state.getType()) || state.getType() == StateTypes.CHEST || state.getType() == StateTypes.TRAPPED_CHEST) {
-                            continue; // 1.8 glitchy block, ignore
+                            continue;
                         }
                     }
                     flagWithSetback();

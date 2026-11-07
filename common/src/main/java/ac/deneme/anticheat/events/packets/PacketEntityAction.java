@@ -61,16 +61,13 @@ public class PacketEntityAction extends PacketListenerAbstract {
 
                     player.checkManager.get(ElytraA.class).onStartGliding(event);
 
-                    // Starting fall flying is server sided on 1.14 and below
                     if (player.getClientVersion().isOlderThan(ClientVersion.V_1_15)) return;
 
-                    // This shouldn't be needed with latency compensated inventories
-                    // TODO: Remove this?
                     if (player.canGlide()) {
                         player.isGliding = true;
                         player.pointThreeEstimator.updatePlayerGliding();
                     } else {
-                        // A client is flying with a ghost elytra, resync
+
                         player.getSetbackTeleportUtil().executeNonSimulatingForceResync();
                         player.resyncGlidingState();
                         event.setCancelled(true);
@@ -80,7 +77,7 @@ public class PacketEntityAction extends PacketListenerAbstract {
                 case START_JUMPING_WITH_HORSE -> {
                     PacketEntity riding = player.compensatedEntities.self.getRiding();
                     if (riding instanceof JumpableEntity jumpable) {
-                        if (player.vehicleData.pendingJumps.size() >= 20) return; // discard
+                        if (player.vehicleData.pendingJumps.size() >= 20) return;
                         player.vehicleData.pendingJumps.add(new IntToObjectPair<>(action.getJumpBoost(), jumpable));
                     }
                 }

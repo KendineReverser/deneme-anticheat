@@ -24,7 +24,7 @@ public class Fabric1194DenemeEntity extends Fabric1170DenemeEntity {
                         location.getX(),
                         location.getY(),
                         location.getZ(),
-                        EnumSet.noneOf(RelativeMovement.class), // todo change to match paper? Do they do this?
+                        EnumSet.noneOf(RelativeMovement.class),
                         location.getYaw(),
                         location.getPitch()
 

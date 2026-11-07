@@ -25,13 +25,12 @@ public class PredictionEngineNormal extends PredictionEngine {
         staticVectorEndOfTick(player, vector, vector.getY());
     }
 
-    // Vanilla checks slow falling against the Y from before climbing sets it to 0.2
     public static void staticVectorEndOfTick(DenemePlayer player, Vector3dm vector, double fallingY) {
         double adjustedY = vector.getY();
         final OptionalInt levitation = player.compensatedEntities.getPotionLevelForPlayer(PotionTypes.LEVITATION);
         if (levitation.isPresent()) {
             adjustedY += (0.05 * (levitation.getAsInt() + 1) - vector.getY()) * 0.2;
-            // Reset fall distance with levitation
+
             player.fallDistance = 0;
         } else if (player.hasGravity) {
             double gravity = player.compensatedEntities.self.getAttributeValue(Attributes.GRAVITY);
@@ -57,11 +56,7 @@ public class PredictionEngineNormal extends PredictionEngine {
             Vector3dm jump = vector.vector.clone();
 
             if (!player.isFlying) {
-                // Negative jump boost does not allow the player to leave the ground
-                // Negative jump boost doesn't seem to work in water/lava
-                // If the player didn't try to jump
-                // And 0.03 didn't affect onGround status
-                // The player cannot jump
+
                 final OptionalInt jumpBoost = player.compensatedEntities.getPotionLevelForPlayer(PotionTypes.JUMP_BOOST);
                 if (((jumpBoost.isEmpty() || jumpBoost.getAsInt() >= 0) && player.onGround) || !player.lastOnGround)
                     return;
@@ -94,7 +89,6 @@ public class PredictionEngineNormal extends PredictionEngine {
 
         player.isClimbing = Collisions.onClimbable(player, player.x, player.y, player.z);
 
-        // Force 1.13.2 and below players to have something to collide with horizontally to climb
         if (player.lastWasClimbing == 0 && (player.pointThreeEstimator.isNearClimbable() || player.isClimbing) && (player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_14)
                 || !Collisions.isEmpty(player, player.boundingBox.copy().expand(
                 player.clientVelocity.getX(), 0, player.clientVelocity.getZ()).expand(0.5, -SimpleCollisionBox.COLLISION_EPSILON, 0.5))) || walkingOnPowderSnow) {
@@ -111,14 +105,13 @@ public class PredictionEngineNormal extends PredictionEngine {
     @Override
     public Vector3dm handleOnClimbable(Vector3dm vector, DenemePlayer player) {
         if (player.isClimbing) {
-            // Reset fall distance when climbing
+
             player.fallDistance = 0;
 
             vector.setX(DenemeMath.clamp(vector.getX(), -0.15F, 0.15F));
             vector.setZ(DenemeMath.clamp(vector.getZ(), -0.15F, 0.15F));
             vector.setY(Math.max(vector.getY(), -0.15F));
 
-            // Yes, this uses shifting not crouching
             if (vector.getY() < 0.0 && !(player.compensatedWorld.getBlockType(player.lastX, player.lastY, player.lastZ) == StateTypes.SCAFFOLDING) && player.isSneaking && !player.isFlying) {
                 vector.setY(0.0);
             }

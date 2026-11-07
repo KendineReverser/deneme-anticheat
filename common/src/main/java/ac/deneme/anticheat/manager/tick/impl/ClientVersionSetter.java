@@ -9,7 +9,7 @@ public class ClientVersionSetter implements Tickable {
     @Override
     public void tick() {
         for (DenemePlayer player : DenemeAPI.INSTANCE.getPlayerDataManager().getEntries()) {
-            // channel was somehow closed without us getting a disconnect event
+
             if (!ChannelHelper.isOpen(player.user.getChannel())) {
                 DenemeAPI.INSTANCE.getPlayerDataManager().onDisconnect(player.user);
                 continue;

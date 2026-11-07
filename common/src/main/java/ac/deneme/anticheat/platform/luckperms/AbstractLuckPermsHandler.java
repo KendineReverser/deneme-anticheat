@@ -132,7 +132,7 @@ public abstract class AbstractLuckPermsHandler implements StoppableInitable {
     private boolean inheritedGroupMayAffectDenemePermissions(InheritanceNode node) {
         if (luckPerms == null) return true;
         Group group = luckPerms.getGroupManager().getGroup(node.getGroupName());
-        // Refresh if the inherited group was deleted, or if that group can grant Deneme permissions.
+
         return group == null || holderHasDenemePermission(group, new LinkedHashSet<>());
     }
 

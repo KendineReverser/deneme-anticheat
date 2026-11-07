@@ -8,7 +8,7 @@ import java.util.UUID;
 
 @UtilityClass
 public class GeyserUtil {
-    // Floodgate is the authentication system for Geyser on servers that use Geyser as a proxy instead of installing it as a plugin directly on the server
+
     private static final boolean floodgate = ReflectionUtils.hasClass("org.geysermc.floodgate.api.FloodgateApi");
     private static final boolean geyser = ReflectionUtils.hasClass("org.geysermc.api.Geyser");
 

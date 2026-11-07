@@ -17,13 +17,11 @@ data class DependencyIdentifier(
     val group: String,
     val name: String,
     val version: String,
-    val classifier: String = "" // Add classifier field, default to empty string
+    val classifier: String = ""
 ) {
     override fun toString() = "$group:$name:$version${if (classifier.isNotEmpty()) ":$classifier" else ""}"
 }
 
-// Does not support extracting classifiers but while the fabric standard is ambiguous on whether they can be included
-// It does not appear dependency classifiers are in use by any mod I am aware of or can find
 fun parseFabricModJson(jarFile: File, project: Project): Set<DependencyIdentifier> {
     val nestedJars = mutableSetOf<DependencyIdentifier>()
     try {
@@ -63,7 +61,7 @@ fun parseFabricModJson(jarFile: File, project: Project): Set<DependencyIdentifie
 
 fun extractEmbeddedJars(jarFile: File, project: Project): Set<DependencyIdentifier> {
     val embeddedJars = mutableSetOf<DependencyIdentifier>()
-    embeddedJars.addAll(parseFabricModJson(jarFile, project)) // Retain existing logic for top-level fabric.mod.json parsing
+    embeddedJars.addAll(parseFabricModJson(jarFile, project))
     try {
         JarFile(jarFile).use { jar ->
             val entries = jar.entries()
@@ -90,19 +88,16 @@ fun extractEmbeddedJars(jarFile: File, project: Project): Set<DependencyIdentifi
                                 val jsonElement = Json.parseToJsonElement(jsonContent)
                                 val jsonObject = jsonElement.jsonObject
 
-                                // Extract id and parse into group
                                 val id = jsonObject["id"]?.jsonPrimitive?.content
                                     ?: throw IllegalStateException("Missing 'id' in fabric.mod.json of embedded JAR: $entryName")
                                 val idWithDots = id.replace("_", ".")
                                 val lastDotIndex = idWithDots.lastIndexOf(".")
                                 val group = if (lastDotIndex != -1) idWithDots.take(lastDotIndex) else ""
 
-                                // Extract name and version from the JAR filename
                                 val jarName = entryName.substringAfterLast("/").removeSuffix(".jar")
                                 val (name, version) = parseNameAndVersionFromJarName(jarName)
                                     ?: throw IllegalStateException("Could not parse name and version from JAR filename: $jarName")
 
-                                // Create DependencyIdentifier (classifier is empty for now)
                                 val depId = DependencyIdentifier(group, name, version)
                                 embeddedJars.add(depId)
                                 project.logger.debug("Identified embedded dependency from fabric.mod.json and filename: {}", depId)
@@ -122,13 +117,12 @@ fun extractEmbeddedJars(jarFile: File, project: Project): Set<DependencyIdentifi
 
 fun parseNameAndVersionFromJarName(jarName: String): Pair<String, String>? {
     val versionStartRegex = Regex("-(?=\\d)")
-    // Use regex to find the position of the hyphen followed by a digit
+
     val versionStartMatch = versionStartRegex.find(jarName) ?: return null
     val versionStartIndex = versionStartMatch.range.first
 
-    // Split the JAR name into name and version at the version start index
     val name = jarName.take(versionStartIndex)
-    val version = jarName.substring(versionStartIndex + 1) // Skip the hyphen
+    val version = jarName.substring(versionStartIndex + 1)
 
     return if (name.isNotEmpty() && version.isNotEmpty()) {
         Pair(name, version)
@@ -146,7 +140,7 @@ fun shouldExcludeDependency(
     val group = dependency.moduleGroup
     val name = dependency.moduleName
     val version = dependency.moduleVersion
-    // Extract classifier from resolved dependency (if available)
+
     val classifier = dependency.moduleArtifacts.firstOrNull()?.classifier ?: ""
     val depId = DependencyIdentifier(group, name, version, classifier)
 
@@ -212,7 +206,7 @@ fun includeDependencyWithExclusions(
 ) {
     project.logger.debug("Including external dependency as JIJ with dynamic exclusions: {}", depId)
     project.dependencies {
-        // Include dependency with classifier (if present)
+
         "include"("${depId.group}:${depId.name}:${depId.version}${if (depId.classifier.isNotEmpty()) ":${depId.classifier}" else ""}") {
             allEmbeddedDependencies.forEach { embeddedDep ->
                 if (embeddedDep.group.isNotEmpty()) {
@@ -335,6 +329,3 @@ project.afterEvaluate {
         project
     )
 }
-
-// JIJ dependencies are resolved during configuration above. Jar execution
-// must not capture Project objects, so configuration cache can serialize it.

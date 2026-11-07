@@ -45,7 +45,6 @@ public class BaseConfigManager {
     @Getter
     private int updatePermissionTicks = -1;
 
-    // initialize the config
     public void load(ConfigManager config) {
         this.config = config;
 
@@ -84,7 +83,6 @@ public class BaseConfigManager {
         updatePermissionTicks = configuredUpdatePermissionTicks <= 0 ? -1 : configuredUpdatePermissionTicks;
     }
 
-    // ran on start, can be used to handle things that can't be done while loading
     public void start() {}
 
     public boolean isIgnoredClient(String brand) {

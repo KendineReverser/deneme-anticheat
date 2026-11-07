@@ -21,7 +21,7 @@ public class PacketOrderP extends Check implements PacketReceiveListener, Packet
         super(player);
     }
 
-    private byte trimTimer; // let the list shrink eventually
+    private byte trimTimer;
     private final IntArrayList transactions = new IntArrayList(0);
 
     @Override

@@ -115,8 +115,7 @@ public class MetricsBase {
             checkRelocation();
         }
         if (enabled) {
-            // WARNING: Removing the option to opt-out will get your plugin banned from
-            // bStats
+
             startSubmitting();
         }
     }
@@ -130,10 +129,7 @@ public class MetricsBase {
                             thread.setDaemon(true);
                             return thread;
                         });
-        // We want delayed tasks (non-periodic) that will execute in the future to be
-        // cancelled when the scheduler is shutdown.
-        // Otherwise, we risk preventing the server from shutting down even when
-        // MetricsBase#shutdown() is called
+
         scheduler.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
         return scheduler;
     }
@@ -167,7 +163,7 @@ public class MetricsBase {
         final Runnable submitTask =
                 () -> {
                     if (!enabled || !checkServiceEnabledSupplier.get()) {
-                        // Submitting data or service is disabled
+
                         scheduler.shutdown();
                         return;
                     }
@@ -177,14 +173,7 @@ public class MetricsBase {
                         this.submitData();
                     }
                 };
-        // Many servers tend to restart at a fixed time at xx:00 which causes an uneven
-        // distribution of requests on the
-        // bStats backend. To circumvent this problem, we introduce some randomness into
-        // the initial and second delay.
-        // WARNING: You must not modify and part of this Metrics class, including the
-        // submit delay or frequency!
-        // WARNING: Modifying this code will get your plugin banned on bStats. Just
-        // don't do it!
+
         long initialDelay = (long) (1000 * 60 * (3 + Math.random() * 3));
         long secondDelay = (long) (1000 * 60 * (Math.random() * 30));
         scheduler.schedule(submitTask, initialDelay, TimeUnit.MILLISECONDS);
@@ -211,10 +200,10 @@ public class MetricsBase {
         scheduler.execute(
                 () -> {
                     try {
-                        // Send the data
+
                         sendData(data);
                     } catch (Exception e) {
-                        // Something went wrong! :(
+
                         if (logErrors) {
                             errorLogger.accept("Could not submit bStats metrics data", e);
                         }
@@ -228,7 +217,7 @@ public class MetricsBase {
         }
         String url = String.format(REPORT_URL, platform);
         HttpsURLConnection connection = (HttpsURLConnection) new URL(url).openConnection();
-        // Compress the data to save bandwidth
+
         byte[] compressedData = compress(data.toString());
         connection.setRequestMethod("POST");
         connection.addRequestProperty("Accept", "application/json");
@@ -258,17 +247,15 @@ public class MetricsBase {
      * Checks that the class was properly relocated.
      */
     private void checkRelocation() {
-        // You can use the property to disable the check in your test environment
+
         if (System.getProperty("bstats.relocatecheck") == null
                 || !System.getProperty("bstats.relocatecheck").equals("false")) {
-            // Maven's Relocate is clever and changes strings, too. So we have to use this
-            // little "trick" ... :D
+
             final String defaultPackage =
                     new String(new byte[]{'o', 'r', 'g', '.', 'b', 's', 't', 'a', 't', 's'});
             final String examplePackage =
                     new String(new byte[]{'y', 'o', 'u', 'r', '.', 'p', 'a', 'c', 'k', 'a', 'g', 'e'});
-            // We want to make sure no one just copy & pastes the example and uses the wrong
-            // package names
+
             if (MetricsBase.class.getPackage().getName().startsWith(defaultPackage)
                     || MetricsBase.class.getPackage().getName().startsWith(examplePackage)) {
                 throw new IllegalStateException("bStats Metrics class has not been relocated correctly!");

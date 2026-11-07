@@ -7,6 +7,8 @@ import ac.deneme.anticheat.api.common.BasicReloadable;
 import ac.deneme.anticheat.checks.Check;
 import ac.deneme.anticheat.checks.impl.aim.AimDuplicateLook;
 import ac.deneme.anticheat.checks.impl.aim.AimModulo360;
+import ac.deneme.anticheat.checks.impl.aim.AimSensitivity;
+import ac.deneme.anticheat.checks.impl.aim.AimSnap;
 import ac.deneme.anticheat.checks.impl.aim.processor.AimProcessor;
 import ac.deneme.anticheat.checks.impl.badpackets.*;
 import ac.deneme.anticheat.checks.impl.breaking.*;
@@ -40,6 +42,7 @@ import ac.deneme.anticheat.checks.impl.timer.*;
 import ac.deneme.anticheat.checks.impl.vehicle.*;
 import ac.deneme.anticheat.checks.impl.velocity.ExplosionHandler;
 import ac.deneme.anticheat.checks.impl.velocity.KnockbackHandler;
+import ac.deneme.anticheat.checks.impl.velocity.SprintTamper;
 import ac.deneme.anticheat.checks.type.*;
 import ac.deneme.anticheat.events.packets.PacketChangeGameState;
 import ac.deneme.anticheat.events.packets.PacketEntityReplication;
@@ -113,7 +116,6 @@ public class CheckManager implements BasicReloadable {
                 .put(VehicleA.class, new VehicleA(player))
                 .put(VehicleB.class, new VehicleB(player))
 
-        // TODO: migrate the rest of these to pre-via
                 .put(PacketOrderProcessor.class, player.packetOrderProcessor)
                 .put(Reach.class, new Reach(player))
                 .put(PacketEntityReplication.class, player.packetEntityReplication)
@@ -142,7 +144,7 @@ public class CheckManager implements BasicReloadable {
                 .put(MultiActionsC.class, new MultiActionsC(player))
                 .put(MultiActionsD.class, new MultiActionsD(player))
                 .put(PacketOrderO.class, new PacketOrderO(player))
-//                .put(PacketOrderP.class, new PacketOrderP(player))
+
                 .put(VehicleD.class, new VehicleD(player))
                 .put(VehicleE.class, new VehicleE(player))
                 .put(VehicleF.class, new VehicleF(player))
@@ -152,18 +154,21 @@ public class CheckManager implements BasicReloadable {
                 .put(CrashF.class, new CrashF(player))
                 .put(CrashH.class, new CrashH(player))
                 .put(CrashI.class, new CrashI(player))
-                .put(SetbackBlocker.class, new SetbackBlocker(player)) // Must be last class otherwise we can't check while blocking packets
+                .put(SetbackBlocker.class, new SetbackBlocker(player))
 
                 .put(PredictionRunner.class, new PredictionRunner(player))
                 .put(CompensatedCooldown.class, new CompensatedCooldown(player))
                 .put(AimProcessor.class, new AimProcessor(player))
                 .put(AimModulo360.class, new AimModulo360(player))
                 .put(AimDuplicateLook.class, new AimDuplicateLook(player))
+                .put(AimSensitivity.class, new AimSensitivity(player))
+                .put(AimSnap.class, new AimSnap(player))
                 .put(VehiclePredictionRunner.class, new VehiclePredictionRunner(player))
 
                 .put(NegativeTimer.class, new NegativeTimer(player))
                 .put(ExplosionHandler.class, new ExplosionHandler(player))
                 .put(KnockbackHandler.class, new KnockbackHandler(player))
+                .put(SprintTamper.class, new SprintTamper(player))
                 .put(GhostBlockDetector.class, new GhostBlockDetector(player))
                 .put(Phase.class, new Phase(player))
                 .put(Post.class, new Post(player))
@@ -201,7 +206,7 @@ public class CheckManager implements BasicReloadable {
                 .put(ElytraG.class, new ElytraG(player))
                 .put(ElytraH.class, new ElytraH(player))
                 .put(ElytraI.class, new ElytraI(player))
-                .put(SetbackTeleportUtil.class, new SetbackTeleportUtil(player)) // Avoid teleporting to new position, update safe pos last
+                .put(SetbackTeleportUtil.class, new SetbackTeleportUtil(player))
                 .put(CompensatedFireworks.class, player.fireworks)
                 .put(SneakingEstimator.class, new SneakingEstimator(player))
                 .put(LastInstanceManager.class, player.lastInstanceManager)
@@ -241,15 +246,12 @@ public class CheckManager implements BasicReloadable {
                 .put(PositionBreakB.class, new PositionBreakB(player))
                 .put(MultiActionsB.class, new MultiActionsB(player))
 
-        // All checks that have no listeners, generally invoked by other code to flag
-        // TODO migrate more checks to here
-                // BadPacketsB/N/W, VehicleC, and TransactionOrder are packet checks with no listener
                 .put(BadPacketsB.class, new BadPacketsB(player))
                 .put(BadPacketsN.class, new BadPacketsN(player))
                 .put(InvalidInteractTarget.class, new InvalidInteractTarget(player))
                 .put(TransactionOrder.class, new TransactionOrder(player))
                 .put(VehicleC.class, new VehicleC(player))
-                .put(Hitboxes.class, new Hitboxes(player)) // Hitboxes is invoked by Reach
+                .put(Hitboxes.class, new Hitboxes(player))
                 .build();
 
         ArrayList<AbstractCheck> checks = new ArrayList<>();

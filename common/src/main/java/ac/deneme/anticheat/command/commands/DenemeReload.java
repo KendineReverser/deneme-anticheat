@@ -24,7 +24,6 @@ public class DenemeReload implements BuildableCommand {
     private void handleReload(@NotNull CommandContext<Sender> context) {
         Sender sender = context.sender();
 
-        // reload config
         sender.sendMessage(MessageUtil.getParsedComponent(sender, "reloading", "%prefix% &7Reloading config..."));
 
         DenemeAPI.INSTANCE.getExternalAPI().reloadAsync().exceptionally(throwable -> false)

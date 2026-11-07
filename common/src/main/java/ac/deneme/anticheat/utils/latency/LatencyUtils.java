@@ -15,8 +15,6 @@ public class LatencyUtils {
     private final LinkedList<IntToObjectPair<Runnable>> transactionMap = new LinkedList<>();
     private final DenemePlayer player;
 
-    // Built from transactionMap and cleared at start of every handleNettySyncTransaction() call
-    // The actual usage scope of this variable's use is limited to within the synchronized block of handleNettySyncTransaction
     private final ArrayList<Runnable> tasksToRun = new ArrayList<>();
 
     public LatencyUtils(DenemePlayer player) {
@@ -24,7 +22,7 @@ public class LatencyUtils {
     }
 
     public void addRealTimeTask(int transaction, Runnable runnable) {
-        if (player.lastTransactionReceived.get() >= transaction) { // If the player already responded to this transaction
+        if (player.lastTransactionReceived.get() >= transaction) {
             runnable.run();
             return;
         }
@@ -56,16 +54,13 @@ public class LatencyUtils {
         synchronized (this) {
             tasksToRun.clear();
 
-            // First pass: collect tasks and mark them for removal
             ListIterator<IntToObjectPair<Runnable>> iterator = transactionMap.listIterator();
             while (iterator.hasNext()) {
                 IntToObjectPair<Runnable> pair = iterator.next();
 
-                // We are at most a tick ahead when running tasks based on transactions, meaning this is too far
                 if (transaction + 1 < pair.first())
                     break;
 
-                // This is at most tick ahead of what we want
                 if (transaction == pair.first() - 1)
                     continue;
 
@@ -78,7 +73,7 @@ public class LatencyUtils {
                     runnable.run();
                 } catch (Exception e) {
                     LogUtil.error("An error has occurred when running transactions for player: " + player.user.getName(), e);
-                    // Kick the player SO PEOPLE ACTUALLY REPORT PROBLEMS AND KNOW WHEN THEY HAPPEN
+
                     if (CommonDenemeArguments.KICK_ON_TRANSACTION_ERRORS.value()) {
                         player.disconnect(MessageUtil.miniMessage(MessageUtil.replacePlaceholders(player, DenemeAPI.INSTANCE.getConfigManager().getDisconnectPacketError())));
                     }

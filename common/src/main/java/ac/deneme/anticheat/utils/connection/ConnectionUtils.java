@@ -73,7 +73,6 @@ public class ConnectionUtils {
         Object channel = player.user.getChannel();
         Object nativePlayer = player.platformPlayer == null ? null : player.platformPlayer.getNative();
 
-        // call pre-via listeners
         try {
             PacketEventsImplHelper.handlePacket(channel, player.user, nativePlayer, buffer, false, side);
         } catch (RuntimeException e) {
@@ -84,7 +83,6 @@ public class ConnectionUtils {
 
         ByteBufHelper.retain(buffer);
 
-        // pass buffer to next handler
         if (side == PacketSide.SERVER) {
             ChannelHelper.writeAndFlushInContext(channel, ViaVersionUtil.isAvailable ? PRE_VIA_ENCODER_NAME : POST_VIA_ENCODER_NAME, buffer);
         } else {
