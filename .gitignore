@@ -1,0 +1,10 @@
+.gradle/
+build/
+out/
+run/
+*.iml
+.idea/
+.vscode/
+gradle.user.properties
+workspace.gradle.kts
+local.properties

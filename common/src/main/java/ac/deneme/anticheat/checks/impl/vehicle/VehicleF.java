@@ -1,0 +1,71 @@
+package ac.deneme.anticheat.checks.impl.vehicle;
+
+import ac.deneme.anticheat.api.storage.verbose.Verbose;
+import ac.deneme.anticheat.checks.Check;
+import ac.deneme.anticheat.checks.CheckData;
+import ac.deneme.anticheat.checks.type.PacketReceiveListener;
+import ac.deneme.anticheat.player.DenemePlayer;
+import ac.deneme.anticheat.utils.data.KnownInput;
+import ac.deneme.anticheat.utils.data.packetentity.PacketEntity;
+import com.github.retrooper.packetevents.event.PacketReceiveEvent;
+import com.github.retrooper.packetevents.protocol.packettype.PacketType;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientSteerBoat;
+
+@CheckData(name = "VehicleF", stableKey = "deneme.vehicle.boat_input_mismatch", experimental = true, description = "Sent incorrect boat paddle states")
+public class VehicleF extends Check implements PacketReceiveListener {
+    private static final Verbose V =
+            Verbose.of("sent=({bool}, {bool}), expected=({bool}, {bool})");
+
+    public VehicleF(DenemePlayer player) {
+        super(player);
+    }
+
+    @Override
+    public boolean isApplicable() {
+        return player.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_9);
+    }
+
+    private PacketEntity lastTickVehicle;
+
+    @Override
+    public void onPacketReceive(final PacketReceiveEvent event) {
+        if (event.getPacketType() == PacketType.Play.Client.STEER_BOAT) {
+
+            if (lastTickVehicle != player.getVehicle()) return;
+
+            WrapperPlayClientSteerBoat packet = new WrapperPlayClientSteerBoat(event);
+
+            boolean expectedLeft;
+            boolean expectedRight;
+
+            if (player.supportsEndTickPreVia()) {
+                KnownInput input = player.packetStateData.knownInput;
+                expectedLeft = input.forward() || !input.left() && input.right();
+                expectedRight = input.forward() || input.left() && !input.right();
+            } else {
+                expectedLeft = player.vehicleData.nextVehicleForward > 0 || player.vehicleData.nextVehicleHorizontal < 0;
+                expectedRight = player.vehicleData.nextVehicleForward > 0 || player.vehicleData.nextVehicleHorizontal > 0;
+
+                if (player.vehicleData.nextVehicleForward == 0 && packet.isLeftPaddleTurning() && packet.isRightPaddleTurning()) {
+                    return;
+                }
+            }
+
+            if (packet.isLeftPaddleTurning() != expectedLeft || packet.isRightPaddleTurning() != expectedRight) {
+                boolean sentLeft = packet.isLeftPaddleTurning();
+                boolean sentRight = packet.isRightPaddleTurning();
+                if (flag(V.write(verbose()).bool(sentLeft).bool(sentRight).bool(expectedLeft).bool(expectedRight))
+                    && shouldModifyPackets()) {
+                    packet.setLeftPaddleTurning(expectedLeft);
+                    packet.setRightPaddleTurning(expectedRight);
+                    event.markForReEncode(true);
+                }
+            }
+        }
+
+        if (isTickPacket(event.getPacketType())) {
+            lastTickVehicle = player.getVehicle();
+        }
+    }
+}

@@ -1,0 +1,65 @@
+package ac.deneme.anticheat.checks.impl.badpackets;
+
+import ac.deneme.anticheat.api.storage.verbose.Verbose;
+import ac.deneme.anticheat.checks.Check;
+import ac.deneme.anticheat.checks.CheckData;
+import ac.deneme.anticheat.checks.type.PreViaPacketReceiveListener;
+import ac.deneme.anticheat.player.DenemePlayer;
+import com.github.retrooper.packetevents.event.PacketReceiveEvent;
+import com.github.retrooper.packetevents.protocol.packettype.PacketType;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientEntityAction;
+
+@CheckData(name = "BadPacketsG", stableKey = "deneme.badpackets.duplicate_sneak", description = "Sent duplicate sneaking status")
+public class BadPacketsG extends Check implements PreViaPacketReceiveListener {
+    private static final Verbose V = Verbose.of("state={bool}");
+
+    private boolean lastSneaking, respawn;
+
+    public BadPacketsG(DenemePlayer player) {
+        super(player);
+    }
+
+    @Override
+    public boolean isApplicable() {
+
+        return player.getClientVersion().isOlderThan(ClientVersion.V_1_21_2);
+    }
+
+    @Override
+    public void onPreViaPacketReceive(PacketReceiveEvent event) {
+        if (event.getPacketType() == PacketType.Play.Client.ENTITY_ACTION) {
+            WrapperPlayClientEntityAction packet = new WrapperPlayClientEntityAction(event);
+
+            if (packet.getAction() == WrapperPlayClientEntityAction.Action.START_SNEAKING) {
+
+                if (lastSneaking && !respawn) {
+                    boolean state = true;
+                    if (flag(V.write(verbose()).bool(state)) && shouldModifyPackets()) {
+                        event.setCancelled(true);
+                        player.onPacketCancel();
+                    }
+                } else {
+                    lastSneaking = true;
+                }
+                respawn = false;
+            } else if (packet.getAction() == WrapperPlayClientEntityAction.Action.STOP_SNEAKING) {
+                if (!lastSneaking && !respawn) {
+                    boolean state = false;
+                    if (flag(V.write(verbose()).bool(state)) && shouldModifyPackets()) {
+                        event.setCancelled(true);
+                        player.onPacketCancel();
+                    }
+                } else {
+                    lastSneaking = false;
+                }
+                respawn = false;
+            }
+        }
+    }
+
+    public void handleRespawn() {
+
+        respawn = true;
+    }
+}

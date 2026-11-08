@@ -1,0 +1,57 @@
+package ac.deneme.anticheat.events.packets;
+
+import ac.deneme.anticheat.DenemeAPI;
+import ac.deneme.anticheat.utils.anticheat.LogUtil;
+import ac.deneme.anticheat.utils.anticheat.MessageUtil;
+import ac.deneme.anticheat.utils.common.arguments.CommonDenemeArguments;
+import ac.deneme.anticheat.utils.viaversion.ViaVersionUtil;
+import com.github.retrooper.packetevents.event.PacketListenerAbstract;
+import com.github.retrooper.packetevents.event.PacketReceiveEvent;
+import com.github.retrooper.packetevents.protocol.packettype.PacketType;
+import com.github.retrooper.packetevents.protocol.player.User;
+import com.github.retrooper.packetevents.wrapper.configuration.client.WrapperConfigClientPluginMessage;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPluginMessage;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDisconnect;
+import org.jetbrains.annotations.NotNull;
+
+public class PacketPluginMessage extends PacketListenerAbstract {
+
+    public void onPacketReceive(@NotNull PacketReceiveEvent event) {
+        if (event.getPacketType() == PacketType.Play.Client.PLUGIN_MESSAGE) {
+            WrapperPlayClientPluginMessage packet = new WrapperPlayClientPluginMessage(event);
+            checkChannel(event.getUser(), packet.getChannelName());
+        } else if (event.getPacketType() == PacketType.Configuration.Client.PLUGIN_MESSAGE) {
+            WrapperConfigClientPluginMessage packet = new WrapperConfigClientPluginMessage(event);
+            checkChannel(event.getUser(), packet.getChannelName());
+        }
+    }
+
+    private void checkChannel(User user, String channelName) {
+        if (!"vv:proxy_details".equals(channelName)) return;
+        final boolean usingProxy = ProxyAlertMessenger.isUsingProxy();
+
+        if (usingProxy && CommonDenemeArguments.WARN_ON_VIA_PROXY.value()) {
+            LogUtil.warn(
+                    user.getName() + " seems to have connected through a proxy running ViaVersion. "
+                            + "Having ViaVersion installed on the proxy is incompatible with DenemeAC and causes many issues. "
+                            + "Please remove ViaVersion from your proxy server and install it on your backend servers instead."
+            );
+        }
+
+        if (CommonDenemeArguments.KICK_ON_VIA_PROXY.value() && (!usingProxy || ViaVersionUtil.isAvailable)) {
+
+            LogUtil.warn(user.getName() + " is being disconnected for sending ViaVersion proxy data.");
+
+            try {
+                WrapperPlayServerDisconnect disconnect = new WrapperPlayServerDisconnect(
+                        MessageUtil.miniMessage(DenemeAPI.INSTANCE.getConfigManager().getDisconnectPacketError())
+                );
+                user.sendPacket(disconnect);
+            } catch (Exception e) {
+                LogUtil.warn("Failed to send disconnect packet to kick " + user.getName() + "!");
+            }
+            user.closeConnection();
+        }
+    }
+
+}

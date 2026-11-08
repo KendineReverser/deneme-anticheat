@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "denemeanticheat-mc1215",
+  "version": "${version}",
+  "name": "deneme anticheat for 1.21.2 - 1.21.11",
+  "description": "deneme anticheat - server side anticheat for Fabric.",
+  "authors": [
+    "deneme anticheat"
+  ],
+  "license": "GPL-3.0",
+  "environment": "server",
+  "entrypoints": {
+    "denemeMainLoad": [
+      "ac.deneme.anticheat.platform.fabric.mc1216.DenemeACFabric1212LoaderPlugin"
+    ]
+  },
+  "accessWidener": "denemeanticheat.accesswidener",
+  "depends": {
+    "minecraft": ">=1.21.2 \u003c\u003d1.21.11",
+    "fabric-lifecycle-events-v1": "*"
+  }
+}

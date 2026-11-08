@@ -1,0 +1,57 @@
+package ac.deneme.anticheat.events.packets;
+
+import ac.deneme.anticheat.DenemeAPI;
+import ac.deneme.anticheat.player.DenemePlayer;
+import ac.deneme.anticheat.utils.connection.ConnectionUtils;
+import ac.deneme.anticheat.utils.data.RotationData;
+import com.github.retrooper.packetevents.event.PacketListenerAbstract;
+import com.github.retrooper.packetevents.event.PacketListenerPriority;
+import com.github.retrooper.packetevents.event.PacketSendEvent;
+import com.github.retrooper.packetevents.protocol.packettype.PacketType;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBundle;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerRotation;
+
+public class PacketServerPlayerRotation extends PacketListenerAbstract {
+
+    public PacketServerPlayerRotation() {
+        super(PacketListenerPriority.LOW);
+    }
+
+    @Override
+    public boolean isPreVia() {
+        return true;
+    }
+
+    @Override
+    public void onPacketSend(PacketSendEvent event) {
+        if (event.getPacketType() != PacketType.Play.Server.PLAYER_ROTATION) return;
+
+        DenemePlayer player = DenemeAPI.INSTANCE.getPlayerDataManager().getPlayer(event.getUser());
+        if (player == null) return;
+
+        WrapperPlayServerPlayerRotation packet = new WrapperPlayServerPlayerRotation(event);
+
+        if (!Float.isFinite(packet.getPitch())) {
+            packet.setPitch(0);
+            event.markForReEncode(true);
+        }
+        if (!Float.isFinite(packet.getYaw())) {
+            packet.setYaw(0);
+            event.markForReEncode(true);
+        }
+
+        if (!player.packetStateData.sendingBundlePacket) {
+            ConnectionUtils.sendPacketPreVia(player, new WrapperPlayServerBundle());
+            event.getTasksAfterSend().add(() -> ConnectionUtils.sendPacketPreVia(player, new WrapperPlayServerBundle()));
+        }
+        player.sendTransaction();
+        player.pendingRotations.add(RotationData.fromServer(
+                player.getClientVersion(),
+                packet.getYaw(),
+                packet.getPitch(),
+                packet.isRelativeYaw(),
+                packet.isRelativePitch(),
+                player.getLastTransactionSent()
+        ));
+    }
+}
