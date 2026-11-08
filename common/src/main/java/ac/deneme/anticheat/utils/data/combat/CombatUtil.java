@@ -98,6 +98,9 @@ public final class CombatUtil {
         if (target.riding != null) {
             return false;
         }
+        if (player.getTransactionPing() > 300) {
+            return false;
+        }
         return !GeyserUtil.isBedrockPlayer(player.user.getUUID());
     }
 
